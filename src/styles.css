@@ -337,3 +337,46 @@ html,body,button,input,textarea,select{font-family:Inter,system-ui,-apple-system
 .el.ied-on.list{white-space:pre-wrap}
 .ied{display:block;max-width:100%;min-width:2px;min-height:1em;outline:none;cursor:text;caret-color:var(--acc);user-select:text;-webkit-user-select:text;overflow-wrap:anywhere}
 .ied::selection{background:rgba(47,107,255,.28)}
+
+/* ===== v1.8: иерархия интерфейса, настройки вида, подписи холста ===== */
+:root{--acc-h:color-mix(in srgb,var(--acc) 84%,#000);--acc-s:color-mix(in srgb,var(--acc) 10%,#fff);--ls:1;--shadow-pop:0 18px 50px rgba(15,23,42,.18)}
+*{scrollbar-width:thin;scrollbar-color:#CBD5E1 transparent}
+::selection{background:color-mix(in srgb,var(--acc) 22%,transparent)}
+.logo{background:linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 70%,#fff));box-shadow:0 6px 16px color-mix(in srgb,var(--acc) 32%,transparent)}
+/* главное действие ведёт, остальное тише */
+.btn{height:34px;font-weight:500}
+.btn.pri{height:38px;padding:0 18px;font-weight:600;box-shadow:0 6px 16px color-mix(in srgb,var(--acc) 30%,transparent)}
+.btn.pri:hover{transform:translateY(-1px);box-shadow:0 10px 22px color-mix(in srgb,var(--acc) 34%,transparent)}.btn.pri:active{transform:scale(.97)}
+.top .btn:not(.pri),.panel .btn:not(.pri):not(.danger),.sheet .btn:not(.pri):not(.danger){border-color:transparent;background:transparent;color:#475569}
+.panel .btn:not(.pri):not(.danger):not(.ic){background:var(--bg)}
+.top .btn:not(.pri):hover,.panel .btn:not(.pri):not(.danger):hover,.sheet .btn:not(.pri):not(.danger):hover{background:var(--acc-s);color:var(--acc)}
+.panel .btn.danger,.top .btn.danger{background:transparent}
+.top{padding:10px 20px;gap:6px}.top .vr{width:1px;height:20px;background:var(--line);margin:0 6px;flex:none}
+.status{padding:4px 10px;border-radius:999px;background:var(--bg);font-weight:500}
+.seg button.on{color:var(--acc);font-weight:600}
+/* панели: заголовок крупнее, подписи секций тише */
+.ph b{font:700 15px Inter;letter-spacing:-.01em}.ph span{font-size:12px;color:#94A3B8}
+.sec h4,.lib h4,.libn h4,.libm h4,.keys-g h4,.pick h4{font:600 11px Inter;text-transform:uppercase;letter-spacing:.06em;color:#94A3B8}
+#el-text{font-size:15px;line-height:1.5}
+.panel{animation:panin .22s var(--ease)}@keyframes panin{from{opacity:0;transform:translateX(10px)}}
+@media(max-width:860px){.panel{animation:pansheet .24s var(--ease)}@keyframes pansheet{from{opacity:0;transform:translateY(16px)}}}
+.modal{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}.sheet{box-shadow:var(--shadow-pop)}
+.row.on{box-shadow:inset 3px 0 0 var(--acc)}
+/* подписи на холсте не уменьшаются вместе с зумом */
+.band span{font-size:min(calc(13px*var(--ls,1)/var(--z,1)),44px);top:calc(8px/var(--z,1));left:calc(12px/var(--z,1))}
+.cv-head{font-size:calc(13px*var(--ls,1))}
+.dim{font-size:calc(11px*var(--ls,1)/var(--z,1))}
+.dsl,.lbox span{font-size:calc(11px*var(--ls,1)/var(--z,1))}
+.el.ied-on{box-shadow:0 0 0 calc(5px/var(--z,1)) color-mix(in srgb,var(--acc) 16%,transparent)}
+html[data-grid=off] .cv-in{background-image:none}
+/* настройки вида */
+.set-h{margin:18px 0 0;font:600 11px Inter;text-transform:uppercase;letter-spacing:.06em;color:#94A3B8}.set-h:first-child{margin-top:0}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:170px}
+.swt{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);transition:transform var(--t) var(--ease),box-shadow var(--t)}
+.swt:hover{transform:scale(1.12)}.swt.on{box-shadow:0 0 0 2px var(--text)}
+.set-row .seg{flex:none}
+html[data-density=compact] body{font-size:13px}
+html[data-density=compact] .btn{height:30px;padding:0 11px}html[data-density=compact] .btn.ic{width:30px;padding:0}html[data-density=compact] .btn.pri{height:34px}
+html[data-density=compact] .top{padding:6px 14px}html[data-density=compact] .row{padding:6px 8px}
+html[data-density=compact] .panel{padding:12px;gap:8px}html[data-density=compact] .side{padding:12px}
+html[data-motion=off] *,html[data-motion=off] *::before,html[data-motion=off] *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
