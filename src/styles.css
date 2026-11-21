@@ -277,3 +277,9 @@ body{font-size:13px}
 .msel{position:absolute;pointer-events:none;z-index:3;border:calc(1px/var(--z,1)) dashed var(--acc)}
 .mq{position:absolute;pointer-events:none;z-index:4;background:rgba(47,107,255,.08);border:calc(1px/var(--z,1)) solid var(--acc)}
 .algrid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:8px}.algrid .btn.ic{width:100%;padding:0;justify-content:center;height:34px}
+
+/* ===== v1.3: сворачиваемые секции правой панели ===== */
+.sec.fold{gap:0;padding:0}.sec.fold .sh{display:flex;align-items:center;gap:6px;width:100%;padding:11px 14px;border:0;background:none;font:600 11px Inter;color:var(--mute);text-align:left;cursor:pointer;transition:color .15s}
+.sec.fold .sh:hover{color:var(--text)}.sec.fold .sh svg{transition:transform .2s cubic-bezier(.22,.8,.3,1)}.sec.fold.shut .sh svg{transform:rotate(-90deg)}
+.sec.fold .sb{display:flex;flex-direction:column;gap:8px;padding:0 14px 12px;animation:fade .15s}
+@media(prefers-reduced-motion:reduce){.sec.fold .sh svg{transition:none}}
