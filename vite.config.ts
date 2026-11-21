@@ -1,0 +1,2 @@
+import {defineConfig} from 'vite';import react from '@vitejs/plugin-react';import {VitePWA} from 'vite-plugin-pwa';
+export default defineConfig({base:'/ig_prototype/',plugins:[react(),VitePWA({registerType:'autoUpdate',workbox:{clientsClaim:true,skipWaiting:true,cleanupOutdatedCaches:true},manifest:{name:'IG prototype',short_name:'IG prototype',start_url:'/ig_prototype/',scope:'/ig_prototype/',display:'standalone',background_color:'#F6F7F9',theme_color:'#2F6BFF',icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any'}]}})]});
