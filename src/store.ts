@@ -1,14 +1,14 @@
 import {create} from 'zustand';import {immer} from 'zustand/middleware/immer';
 import {save} from './lib/vault';import {migrate,mkBlock,mkFromTpl} from './lib/migrate';import {uid} from './lib/uid';
 import {fresh} from './lib/tpl';import {sheetsFromOutline} from './lib/outline';
-import {FW,DEVS} from './lib/dev';import {defStyle} from './lib/art';import type {PStyle,Role} from './lib/art';import type {Dev} from './lib/dev';
-export {FW,DEVS};export type {Dev};
+import {FW,DEVS,onDev} from './lib/dev';import {defStyle} from './lib/art';import type {PStyle,Role} from './lib/art';import type {Dev} from './lib/dev';
+export {FW,DEVS,onDev};export type {Dev};
 export type Kind='page'|'popup';
 export type ET='text'|'rect'|'btn'|'input'|'img'|'line'|'shape'|'icon'|'mock'|'list';
 export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h'}
 /** авто-лейаут группы: d направление, gap отступ, al выравнивание поперёк, x y начало, mx центр по ширине блока, fl одинаковый поперечный размер */
 export interface Lay{d:'h'|'v';gap:number;al:'s'|'c'|'e';x:number;y:number;mx?:boolean;fl?:boolean}
-export interface Block{id:string;title:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>;guides?:Partial<Record<Dev,{x:number[];y:number[]}>>}
+export interface Block{id:string;title:string;text:string;dv?:Dev[];h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>;guides?:Partial<Record<Dev,{x:number[];y:number[]}>>}
 export interface BlockTpl{id:string;name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
 export interface Sheet{id:string;name:string;kind:Kind;blocks:Block[]}
 export interface Project{id:string;name:string;typeId:string;style:PStyle;sheets:Sheet[];createdAt:number;updatedAt:number}
@@ -29,12 +29,12 @@ else if(/начать/i.test(e.text))to=q?.id;
 else if(/(звонок|заявк|расч[её]т|подробн|выбрать|предложени)/i.test(e.text))to=pop?.id??thx?.id;
 if(to)e.go=to}};
 /** top (y) of every block for a device */
-export const blockTops=(bs:Block[],dev:Dev)=>{let y=0;return bs.map(b=>{const t=y;y+=b.h[dev];return t})};
+export const blockTops=(bs:Block[],dev:Dev)=>{let y=0;return bs.map(b=>{const t=y;if(onDev(b,dev))y+=b.h[dev];return t})};
 interface S{data:Data|null;projectId:string|null;sheetId:string|null;blockId:string|null;elId:string|null;status:'saved'|'saving';clip:{e:El;dev:Dev;n:number}|null;clipM:{es:El[];dev:Dev;n:number}|null;multi:string[];editId:string|null;snap:Block|null;
 enterEdit:(id:string)=>void;exitEdit:(save:boolean)=>void;
 load:(d:Data)=>void;addProject:(name:string,typeId:string)=>void;importOutline:(name:string,text:string)=>void;delProject:(id:string)=>void;openProject:(id:string)=>void;renameProject:(id:string,n:string)=>void;
 addSheet:(name:string,kind:Kind)=>void;renameSheet:(id:string,n:string)=>void;delSheet:(id:string)=>void;setSheet:(id:string)=>void;
-addBlock:(title:string,o?:{after?:string;tpl?:string})=>void;delBlock:(id:string)=>void;moveBlock:(id:string,dir:-1|1)=>void;dupBlock:(id:string)=>void;
+addBlock:(title:string,o?:{after?:string;tpl?:string;dev?:Dev})=>void;delBlock:(id:string,dev?:Dev)=>void;moveBlock:(id:string,dir:-1|1,dev?:Dev)=>void;setDevs:(id:string,devs:Dev[],from?:Dev)=>void;adaptSheet:(dev:Dev,from:Dev)=>void;delAsk:{id:string;dev:Dev}|null;setDelAsk:(v:{id:string;dev:Dev}|null)=>void;dupBlock:(id:string)=>void;
 editBlock:(id:string,patch:Partial<Pick<Block,'title'|'text'>>)=>void;setH:(dev:Dev,id:string,h:number)=>void;setGuides:(id:string,dev:Dev,g:{x:number[];y:number[]})=>void;saveBlockTpl:(id:string,name:string,cat?:string)=>void;delBlockTpl:(id:string)=>void;
 addEl:(dev:Dev,t:ET,x:number,y:number,bid?:string,extra?:Partial<El>)=>void;setStyle:(patch:Partial<PStyle>)=>void;setRole:(r:Role,p:Partial<PStyle['roles'][Role]>)=>void;updEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dragEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dropEl:(dev:Dev,id:string,stay?:boolean)=>void;
 delEl:(dev:Dev,id:string)=>void;dupEl:(dev:Dev,id:string)=>void;moveEl:(dev:Dev,id:string,dir:number)=>void;copyEl:(dev:Dev,id:string)=>void;
@@ -64,13 +64,15 @@ grow(b,dev)}};
 const hugAll=(sh?:Sheet,st?:Project['style'])=>{if(!sh)return;for(const b of sh.blocks)for(const d of LDV){let ch=false;for(const e of b.els[d]){if(!e.hug)continue;const z=hugSize(e,st);if(!z)continue;if(z.w!==undefined&&e.w!==z.w){e.w=z.w;ch=true}if(z.h!==undefined&&e.h!==z.h){e.h=z.h;ch=true}}if(ch)grow(b,d)}};
 const reflowAll=(sh?:Sheet)=>{if(!sh)return;for(const b of sh.blocks)if(b.lay)for(const d of LDV)reflow(b,d)};
 const grow=(b:Block,dev:Dev)=>{const bt=Math.max(0,...b.els[dev].map(e=>e.y+e.h));if(bt+24>b.h[dev])b.h[dev]=Math.ceil((bt+24)/8)*8};
-const blockAt=(bs:Block[],dev:Dev,y:number)=>{const t=blockTops(bs,dev);for(let k=0;k<bs.length;k++)if(y<t[k]+bs[k].h[dev])return k;return bs.length-1};
+const blockAt=(bs:Block[],dev:Dev,y:number)=>{const t=blockTops(bs,dev);let last=-1;for(let k=0;k<bs.length;k++){if(!onDev(bs[k],dev))continue;last=k;if(y<t[k]+bs[k].h[dev])return k}return last<0?0:last};
+/** добавить блок на устройство d; пустой экран заполняется копией с from (x и ширина пересчитываются) */
+const addDevTo=(b:Block,d:Dev,from?:Dev)=>{const was=b.dv??[...DEVS];if(was.includes(d))return false;let copied=false;if(from&&from!==d&&!b.els[d].length&&b.els[from].length){const r=FW[d]/FW[from];b.els[d]=b.els[from].map(e=>{const w=Math.max(8,Math.round(e.w*r));return{...e,id:uid(),w,x:Math.max(0,Math.min(FW[d]-w,Math.round(e.x*r)))}});b.h[d]=Math.max(b.h[d],b.h[from]);copied=true}const nx=[...was,d];if(nx.length>=DEVS.length)delete b.dv;else b.dv=DEVS.filter(x=>nx.includes(x));return copied};
 let t:ReturnType<typeof setTimeout>;let past:Data[]=[],fut:Data[]=[],lastK='',lastT=0;
 export const useStore=create<S>()(immer((set,get)=>{
 const persist=()=>{clearTimeout(t);t=setTimeout(async()=>{await save(get().data);set({status:'saved'})},400)};
 const restore=(d:Data)=>{set(s=>{s.data=d;const p=d.projects.find(x=>x.id===s.projectId)??d.projects[0];s.projectId=p?.id??null;const h=p?.sheets.find(x=>x.id===s.sheetId)??p?.sheets[0];s.sheetId=h?.id??null;if(!h?.blocks.some(b=>b.id===s.blockId))s.blockId=null;if(!h?.blocks.some(b=>b.id===s.editId)){s.editId=null;s.snap=null}if(!hasEl(h,s.elId))s.elId=null;s.status='saving'});persist()};
 const mut=(f:(s:S,p?:Project)=>void,k='')=>{const now=Date.now();if(!(k&&k===lastK&&now-lastT<1200)){past.push(get().data!);if(past.length>60)past.shift();fut=[]}lastK=k;lastT=now;set(s=>{f(s,s.data?.projects.find(p=>p.id===s.projectId));hugAll(curSheet(s),s.data?.projects.find(p=>p.id===s.projectId)?.style);reflowAll(curSheet(s));const p=s.data?.projects.find(p=>p.id===s.projectId);if(p)p.updatedAt=Date.now();s.status='saving'});persist()};
-return{data:null,projectId:null,sheetId:null,blockId:null,elId:null,status:'saved',clip:null,clipM:null,multi:[],editId:null,snap:null,
+return{data:null,projectId:null,sheetId:null,blockId:null,elId:null,status:'saved',clip:null,clipM:null,multi:[],editId:null,snap:null,delAsk:null,
 load:d0=>{past=[];fut=[];const d=migrate(d0);set({data:d,editId:null,snap:null,blockId:null,elId:null,projectId:d.projects[0]?.id??null,sheetId:d.projects[0]?.sheets[0]?.id??null})},
 addProject:(name,typeId)=>mut(s=>{const ty=[...PRESETS,...s.data!.siteTypes].find(x=>x.id===typeId)!;const sheets:Sheet[]=ty.pages.map(p=>({id:uid(),name:p.name,kind:p.kind,blocks:p.blocks.map(b=>mkBlock(b))}));autoLink(sheets);const pr:Project={id:uid(),name,typeId,style:defStyle(),sheets,createdAt:Date.now(),updatedAt:Date.now()};s.data!.projects.unshift(pr);s.projectId=pr.id;s.sheetId=sheets[0]?.id??null;s.blockId=null;s.elId=null}),
 importOutline:(name,text)=>mut(s=>{const sheets=sheetsFromOutline(text);autoLink(sheets);const pr:Project={id:uid(),name,typeId:'import',style:defStyle(),sheets,createdAt:Date.now(),updatedAt:Date.now()};s.data!.projects.unshift(pr);s.projectId=pr.id;s.sheetId=sheets[0]?.id??null;s.blockId=null;s.elId=null}),
@@ -81,11 +83,14 @@ addSheet:(name,kind)=>mut((s,p)=>{if(!p)return;const sh:Sheet={id:uid(),name,kin
 renameSheet:(id,n)=>mut((_,p)=>{const x=p?.sheets.find(q=>q.id===id);if(x)x.name=n}),
 delSheet:id=>mut((s,p)=>{if(!p)return;p.sheets=p.sheets.filter(q=>q.id!==id);if(s.sheetId===id){s.sheetId=p.sheets[0]?.id??null;s.blockId=null;s.elId=null}}),
 setSheet:id=>set({sheetId:id,blockId:null,elId:null,editId:null,snap:null}),
-addBlock:(title,o)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const tp=o?.tpl?s.data!.blockTpls.find(x=>x.id===o.tpl):undefined;const b=tp?mkFromTpl(tp):mkBlock(title);const i=o?.after?sh.blocks.findIndex(x=>x.id===o.after):-1;if(i>=0)sh.blocks.splice(i+1,0,b);else sh.blocks.push(b);s.blockId=b.id;s.elId=null}),
-delBlock:id=>mut(s=>{const sh=curSheet(s);if(sh)sh.blocks=sh.blocks.filter(b=>b.id!==id);if(s.blockId===id){s.blockId=null;s.elId=null}if(s.editId===id){s.editId=null;s.snap=null}}),
+addBlock:(title,o)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const tp=o?.tpl?s.data!.blockTpls.find(x=>x.id===o.tpl):undefined;const b=tp?mkFromTpl(tp):mkBlock(title);if(o?.dev)b.dv=[o.dev];const i=o?.after?sh.blocks.findIndex(x=>x.id===o.after):-1;if(i>=0)sh.blocks.splice(i+1,0,b);else sh.blocks.push(b);s.blockId=b.id;s.elId=null}),
+delBlock:(id,dev)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const b=sh.blocks.find(x=>x.id===id);if(!b)return;const rest=dev?(b.dv??[...DEVS]).filter(d=>d!==dev):[];if(dev&&rest.length){b.dv=DEVS.filter(d=>rest.includes(d))}else sh.blocks=sh.blocks.filter(x=>x.id!==id);if(s.blockId===id){s.blockId=null;s.elId=null}if(s.editId===id){s.editId=null;s.snap=null}}),
 enterEdit:id=>set(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;s.editId=id;s.blockId=id;s.elId=null;s.snap=JSON.parse(JSON.stringify(b))}),
 exitEdit:save=>{if(save){set(s=>{s.editId=null;s.snap=null;s.elId=null});return}mut(s=>{if(s.snap&&s.editId){const sh=curSheet(s);const i=sh?sh.blocks.findIndex(b=>b.id===s.editId):-1;if(sh&&i>=0)sh.blocks[i]=s.snap}s.editId=null;s.snap=null;s.elId=null})},
-moveBlock:(id,dir)=>mut(s=>{const a=curSheet(s)?.blocks;if(!a)return;const i=a.findIndex(b=>b.id===id),j=i+dir;if(i<0||j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]]}),
+moveBlock:(id,dir,dev)=>mut(s=>{const a=curSheet(s)?.blocks;if(!a)return;const i=a.findIndex(b=>b.id===id);if(i<0)return;let j=i+dir;if(dev)while(j>=0&&j<a.length&&!onDev(a[j],dev))j+=dir;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]]}),
+setDevs:(id,devs,from)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b||!devs.length)return;for(const d of devs)addDevTo(b,d,from);const keep=DEVS.filter(d=>devs.includes(d));if(keep.length>=DEVS.length)delete b.dv;else b.dv=keep}),
+adaptSheet:(dev,from)=>mut(s=>{const sh=curSheet(s);if(!sh)return;for(const b of sh.blocks)if(onDev(b,from)&&!onDev(b,dev))addDevTo(b,dev,from)}),
+setDelAsk:v=>set(s=>{s.delAsk=v}),
 dupBlock:id=>mut(s=>{const a=curSheet(s)?.blocks;const i=a?a.findIndex(b=>b.id===id):-1;if(!a||i<0)return;const o=JSON.parse(JSON.stringify(a[i])) as Block;o.id=uid();o.els=fresh(o.els);a.splice(i+1,0,o);s.blockId=o.id;s.elId=null}),
 editBlock:(id,patch)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(b)Object.assign(b,patch)},'e'+id),
 setGuides:(id,dev,g)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;const u=(a:number[])=>[...new Set(a.map(v=>Math.round(v)))].sort((p,q)=>p-q);const gs={...(b.guides??{})} as NonNullable<Block['guides']>;const x=u(g.x),y=u(g.y);if(!x.length&&!y.length)delete gs[dev];else gs[dev]={x,y};if(Object.keys(gs).length)b.guides=gs;else delete b.guides},'g'+id),
@@ -94,7 +99,7 @@ saveBlockTpl:(id,name,cat)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===i
 delBlockTpl:id=>mut(s=>{s.data!.blockTpls=s.data!.blockTpls.filter(x=>x.id!==id)}),
 setStyle:(patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);if(p)Object.assign(p.style,patch)},'pstyle'),
 setRole:(r,patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);if(p)Object.assign(p.style.roles[r],patch)},'prole'+r),
-addEl:(dev,tp,x,y,bid,extra)=>mut(s=>{const sh=curSheet(s);if(!sh)return;if(!sh.blocks.length)sh.blocks.push(mkBlock('Блок'));let i:number,ry:number;if(bid){i=Math.max(0,sh.blocks.findIndex(q=>q.id===bid));ry=y}else{i=y<0?0:blockAt(sh.blocks,dev,y);ry=y-blockTops(sh.blocks,dev)[i]}const b=sh.blocks[i];const [w,h,text]=EL_DEF[tp];const e:El={id:uid(),t:tp,x:Math.max(0,x),y:Math.max(0,Math.round(ry)),w,h,text,...extra};b.els[dev].push(e);grow(b,dev);s.elId=e.id;s.blockId=b.id}),
+addEl:(dev,tp,x,y,bid,extra)=>mut(s=>{const sh=curSheet(s);if(!sh)return;if(!sh.blocks.some(q=>onDev(q,dev))){const nb=mkBlock('Блок');nb.dv=[dev];sh.blocks.push(nb)}let i:number,ry:number;if(bid){i=Math.max(0,sh.blocks.findIndex(q=>q.id===bid));ry=y}else{i=y<0?Math.max(0,sh.blocks.findIndex(q=>onDev(q,dev))):blockAt(sh.blocks,dev,y);ry=y-blockTops(sh.blocks,dev)[i]}const b=sh.blocks[i];const [w,h,text]=EL_DEF[tp];const e:El={id:uid(),t:tp,x:Math.max(0,x),y:Math.max(0,Math.round(ry)),w,h,text,...extra};b.els[dev].push(e);grow(b,dev);s.elId=e.id;s.blockId=b.id}),
 updEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(!f)return;const e=f.e;
 if(e.hug&&!('hug' in patch)){const cw=patch.w!==undefined&&patch.w!==e.w,chh=patch.h!==undefined&&patch.h!==e.h;if((e.hug==='w'&&(cw||chh))||(e.hug==='h'&&chh))delete e.hug}
 Object.assign(e,patch);if(e.hug===undefined)delete e.hug;grow(f.b,dev)},'u'+id),

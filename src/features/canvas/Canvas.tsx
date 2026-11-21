@@ -1,7 +1,9 @@
 import {useEffect,useRef,useState} from 'react';
 import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
-import {useStore,FW,blockTops} from '../../store';
+import {useStore,FW,blockTops,onDev,DEVS} from '../../store';
+import {requestDelBlock,DevIcon} from '../blocks/DelBlock';
+import {DEVN} from '../../lib/dev';
 import type {El,ET,Dev,Block} from '../../store';
 import {toast} from '../../lib/toast';
 import {TIPS} from '../../lib/tpl';
@@ -23,7 +25,7 @@ const {s,sh,st}=useSheet();const ui=useUi();const [vm,setVm]=useState(false);con
 const pick=(t:ET|'sel',ex:Partial<El>={})=>{setTool(t);setArm(ex)};
 const wrap=useRef<HTMLDivElement>(null);const space=useRef(false);const drag=useRef<Drag|null>(null);
 const panRef=useRef<{sx:number;sy:number;l:number;t:number}|null>(null);
-const all=sh?.blocks??[];const editB=all.find(b=>b.id===s.editId);const editing=!!editB;
+const raw=sh?.blocks??[];const all=raw.filter(b=>onDev(b,dev));const editB=raw.find(b=>b.id===s.editId);const editing=!!editB;
 const vis=editB?[editB]:all;const tops=blockTops(vis,dev);
 const total=vis.length?tops[tops.length-1]+vis[vis.length-1].h[dev]:0;
 const flat=vis.flatMap((b,i)=>(b.els?.[dev]??[]).map(e=>({e,b,top:tops[i]})));const els=flat.map(f=>f.e);
@@ -66,7 +68,7 @@ const place=(t:ET,x:Partial<El>)=>{if(!editB)return;pick(t,x);setIns(false)};
 useEffect(()=>{const st=stage();if(!st)return;const h=(e:WheelEvent)=>{if(!(e.ctrlKey||e.metaKey))return;e.preventDefault();setZ(v=>clampZ(v*(e.deltaY<0?1.1:1/1.1)))};st.addEventListener('wheel',h,{passive:false});return()=>st.removeEventListener('wheel',h)},[]);
 // bring the selected block into view (e.g. when picked in the sidebar)
 useEffect(()=>{if(editing)return;const i=all.findIndex(b=>b.id===s.blockId);const st=stage();const w=wrap.current;if(i<0||!st||!w)return;const y=w.getBoundingClientRect().top-st.getBoundingClientRect().top+st.scrollTop+tops[i]*z;if(y<st.scrollTop||y>st.scrollTop+st.clientHeight*.7)st.scrollTo({top:Math.max(0,y-24),behavior:'smooth'})},[s.blockId]);
-const delBlock=(b:Block)=>{s.delBlock(b.id);toast(`Блок «${b.title}» удалён`,{label:'Отменить',run:()=>{s.undo();s.setBlock(b.id)}},6500)};
+const delBlock=(b:Block)=>requestDelBlock(b,dev);
 useEffect(()=>{
 const typing=(e:KeyboardEvent)=>/INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement).tagName)||!!(e.target as HTMLElement).isContentEditable;
 const kd=(e:KeyboardEvent)=>{
@@ -91,7 +93,7 @@ if(e.code==='KeyX'&&cur){e.preventDefault();s.clipSet(dev,cur.id);s.delEl(dev,cu
 if(e.code==='KeyV'&&editing&&s.clip){e.preventDefault();s.clipPaste(dev);return}
 if((e.code==='BracketRight'||e.code==='BracketLeft')&&cur){e.preventDefault();s.moveEl(dev,cur.id,(e.code==='BracketRight'?1:-1)*(e.shiftKey?1e4:1))}
 return}
-if(e.altKey&&!editing&&curB&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();s.moveBlock(curB.id,e.key==='ArrowUp'?-1:1);return}
+if(e.altKey&&!editing&&curB&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();s.moveBlock(curB.id,e.key==='ArrowUp'?-1:1,dev);return}
 if(e.shiftKey&&!e.altKey&&e.code==='KeyR'){e.preventDefault();saveUi({rulers:!ui.rulers});return}
 if(e.shiftKey&&!e.altKey&&e.code==='KeyA'&&editing){e.preventDefault();if(selIds.length<2){toast('Выдели два элемента и больше');return}const bb=editB?.lay?.[dev];const g0=cur?.g??els.find(q=>q.id===selIds[0])?.g;if(g0&&bb?.[g0]&&selIds.every(i=>els.find(q=>q.id===i)?.g===g0))s.delLay(dev,g0);else s.autoLay(dev,selIds);return}
 if(e.altKey&&editing&&!e.shiftKey&&selIds.length){const m=({KeyA:'l',KeyD:'r',KeyH:'c',KeyW:'t',KeyS:'b',KeyV:'m'} as Record<string,'l'|'r'|'c'|'t'|'b'|'m'>)[e.code];if(m){e.preventDefault();if(selIds.length>1)s.alignEls(dev,selIds,m);else if(cur&&editB){const bh=editB.h[dev];s.updEl(dev,cur.id,m==='l'?{x:0}:m==='r'?{x:Math.max(0,W-cur.w)}:m==='c'?{x:Math.max(0,Math.round((W-cur.w)/2))}:m==='t'?{y:0}:m==='b'?{y:Math.max(0,bh-cur.h)}:{y:Math.max(0,Math.round((bh-cur.h)/2))})}return}}
@@ -175,7 +177,7 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 <div className={'cv-in '+(editing?'ed':'pg')} style={{width:W,height:H,transform:`scale(${z})`,'--z':z} as React.CSSProperties}>
 {vis.map((b,i)=><div key={b.id} className={'band'+(i===selBi?' sel':'')} style={{top:tops[i],height:b.h[dev]}}><span>{all.indexOf(b)+1}. {b.title}</span>
 {!editing&&<div className="bt" onPointerDown={stop}><button title="Настройки блока" onClick={()=>s.setBlock(b.id)}><Settings size={14}/></button><button className="ed" title="Редактировать блок (Enter)" onClick={()=>s.enterEdit(b.id)}><Pencil size={14}/><span>Редактировать</span></button><i className="sep"/>
-<button title="Выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1)}><ArrowUp size={14}/></button><button title="Ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1)}><ArrowDown size={14}/></button><button title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={14}/></button><button className="dz" title="Удалить" onClick={()=>delBlock(b)}><Trash2 size={14}/></button></div>}</div>)}
+<button title="Выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1,dev)}><ArrowUp size={14}/></button><button title="Ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1,dev)}><ArrowDown size={14}/></button><button title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={14}/></button><button className="dz" title="Удалить" onClick={()=>delBlock(b)}><Trash2 size={14}/></button></div>}</div>)}
 {editing&&editB&&ui.cols&&(()=>{const c=colInfo();return<div className="cols" style={{height:editB.h[dev],padding:`0 ${c.mar}px`,gap:c.gut,gridTemplateColumns:`repeat(${c.n},1fr)`}}>{Array.from({length:c.n},(_,i)=><i key={i}/>)}</div>})()}
 {flat.map(({e,top})=>{const on=selSet.has(e.id);return<div key={e.id} className={'el '+e.t+(on?' sel':'')+(e.acc?' acc':'')+(e.go?' lnk':'')+(ied===e.id?' ied-on':'')} style={elStyle(e,top,st)} onPointerDown={ev=>down(ev,e)} onDoubleClick={ev=>{if(!editing||tool!=='sel')return;ev.stopPropagation();if(INLINE.has(e.t))startIed(e);else document.getElementById('el-text')?.focus()}}>{ied===e.id?<InlineEdit text={e.text} single={e.t==='btn'||e.t==='input'} onText={t=>s.updEl(dev,e.id,{text:t})} onDone={t=>endIed(e.id,t)}/>:elInner(e)}</div>})}
 {!editing&&vis.slice(0,-1).map((b,i)=><div key={'i'+b.id} className="ins" style={{top:tops[i]+b.h[dev]}}><button className="insb" title="Добавить блок здесь" onPointerDown={stop} onClick={()=>onAdd(b.id)}><Plus size={16}/><span>Добавить блок</span></button></div>)}
@@ -188,7 +190,8 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 {sel&&tool==='sel'&&ied!==sel.e.id&&<div className="selbox" style={{left:sel.e.x,top:sel.top+(sel.e.t==='line'?sel.e.y-6:sel.e.y),width:sel.e.w,height:sel.e.t==='line'?12:sel.e.h}}>{(sel.e.t==='line'?['w','e']:['nw','n','ne','e','se','s','sw','w']).map(k=><u key={k} className={'rz '+k} onPointerDown={ev=>downR(ev,sel.e,k)} onDoubleClick={ev=>{ev.stopPropagation();hugEl(sel.e,k)}}/>)}</div>}
 {selB&&<><div className="bhs" style={{top:tops[selBi]+selB.h[dev]}} onPointerDown={ev=>downB(ev,selB)} onDoubleClick={ev=>{ev.stopPropagation();s.setH(dev,selB.id,Math.max(96,Math.ceil(Math.max(0,...selB.els[dev].map(q=>q.y+q.h))/8)*8+48))}} title="Потяни, чтобы изменить высоту. Двойной клик: по содержимому"/><div className="bh" style={{left:W/2,top:tops[selBi]+selB.h[dev]}} onPointerDown={ev=>downB(ev,selB)} onDoubleClick={ev=>{ev.stopPropagation();s.setH(dev,selB.id,Math.max(96,Math.ceil(Math.max(0,...selB.els[dev].map(q=>q.y+q.h))/8)*8+48))}} title="Потяни, чтобы изменить высоту. Двойной клик: по содержимому"/><div className="dim" style={{left:W/2,top:tops[selBi]+selB.h[dev]+22}}>{W} × {selB.h[dev]}</div></>}
 {sel&&<div className="dim" style={{left:sel.e.x+sel.e.w/2,top:sel.top+sel.e.y+(sel.e.t==='line'?6:sel.e.h)+8}}>{Math.round(sel.e.w)}{sel.e.t==='line'?'':` × ${Math.round(sel.e.h)}`}</div>}
-{!vis.length&&<div className="cv-empty">Страница пустая. Нажми «Добавить блок»: с нуля или из библиотеки</div>}
+{!vis.length&&<div className="cv-empty">{raw.length?`На устройстве «${DEVN[dev]}» пока нет блоков. Добавь новый или скопируй с другого устройства`:'Страница пустая. Нажми «Добавить блок»: с нуля или из библиотеки'}</div>}
+{!vis.length&&!editing&&raw.length>0&&(()=>{const from=DEVS.find(d=>d!==dev&&raw.some(b=>onDev(b,d)));return from?<button className="addblk adapt" style={{left:W/2,top:230}} onPointerDown={stop} onClick={()=>{s.adaptSheet(dev,from);toast(`Блоки скопированы с ${DEVN[from]}. Подгони их под ${DEVN[dev]}`,{label:'Отменить',run:()=>s.undo()},6000)}}><DevIcon d={from} size={16}/>Скопировать все блоки: {DEVN[from]}</button>:null})()}
 {!editing&&<button className="addblk" style={{left:W/2,top:vis.length?total+(selB&&selBi===vis.length-1?64:28):180}} onPointerDown={stop} onClick={()=>onAdd(vis.length?vis[vis.length-1].id:undefined)}><Plus size={16}/>Добавить блок (A)</button>}
 </div></div></div></div>
 {vm&&<ViewMenu onClose={()=>setVm(false)}/>}
@@ -199,22 +202,26 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 
 function BlockPanel({dev,b,idx,editing,onTpl}:{dev:Dev;b:Block;idx:number;editing:boolean;onTpl:()=>void}){
 const s=useStore();const tips=TIPS[b.title]??[];const els=b.els[dev];
-const del=()=>{s.delBlock(b.id);toast(`Блок «${b.title}» удалён`,{label:'Отменить',run:()=>{s.undo();s.setBlock(b.id)}},6500)};
+const del=()=>requestDelBlock(b,dev);
+const devs=DEVS.filter(d=>onDev(b,d));
+const toggleDev=(d:Dev)=>{if(onDev(b,d)){if(devs.length<2){toast('Блок должен остаться хотя бы на одном устройстве');return}s.setDevs(b.id,devs.filter(x=>x!==d));toast(`Блок скрыт на устройстве: ${DEVN[d]}`,{label:'Отменить',run:()=>s.undo()},5000);return}
+const copy=!b.els[d].length&&b.els[dev].length>0;s.setDevs(b.id,[...devs,d],dev);toast(copy?`Блок добавлен на устройство: ${DEVN[d]}. Элементы скопированы с ${DEVN[dev]}, подгони их`:`Блок добавлен на устройство: ${DEVN[d]}`,{label:'Отменить',run:()=>s.undo()},5000)};
 return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>{editing?'Редактирование':'Настройки'}</span>{!editing&&<button className="btn ic" onClick={()=>s.setBlock(null)} aria-label="Закрыть"><X size={14}/></button>}</div>
 <div className="sec"><label className="fld"><span>Название</span><input className="inp" value={b.title} placeholder="Название блока" onChange={e=>s.editBlock(b.id,{title:e.target.value})}/></label>
 <div className="grid2"><label className="num"><span>В</span><input type="number" value={b.h[dev]} onChange={e=>s.setH(dev,b.id,+e.target.value||0)}/></label><label className="num"><span>Ш</span><input type="number" value={FW[dev]} disabled/></label></div>
 {dev==='mobile'&&b.h.mobile>844&&<p className="warn">Блок выше экрана телефона (844 px). Правило: один блок = один экран</p>}
 {!editing&&<button className="btn pri" onClick={()=>s.enterEdit(b.id)}><Pencil size={16}/>Редактировать блок</button>}</div>
+<div className="sec dvsec"><h4>Показывать на</h4><div className="dvs">{DEVS.map(d=><button key={d} className={'dvc'+(onDev(b,d)?' on':'')+(d===dev?' cur':'')} aria-pressed={onDev(b,d)} title={onDev(b,d)?`Скрыть на устройстве: ${DEVN[d]}`:`Добавить на устройство: ${DEVN[d]}`} onClick={()=>toggleDev(d)}><DevIcon d={d} size={15}/>{DEVN[d]}</button>)}</div></div>
 <details className="fold2" open={!!b.text}><summary>Тексты и заметки</summary><textarea className="inp" placeholder="Тексты блока, пожелания дизайнеру, как работает: переходы, раскрытия, кнопки" value={b.text} onChange={e=>s.editBlock(b.id,{text:e.target.value})}/></details>
 {tips.length>0&&<details className="fold2"><summary>Из твоих конспектов</summary><ul className="tipl">{tips.map(t=><li key={t}>{t}</li>)}</ul></details>}
 {editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4>{[...els].reverse().map(x=><button key={x.id} className={'lyr'+(s.elId===x.id?' on':'')} title={NAME[x.t]+(x.text?' · '+x.text:'')} onClick={()=>s.setEl(x.id)}>{(()=>{const I=LI[x.t]??Shapes;return<I size={14}/>})()}<b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>)}</div>}
 {editing&&((b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0))>0&&<div className="sec"><h4>Направляющие · {(b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0)}</h4><button className="btn" onClick={()=>s.setGuides(b.id,dev,{x:[],y:[]})}><X size={14}/>Очистить направляющие</button></div>}
-{!editing&&<div className="sec"><h4>Положение</h4><div className="btnrow"><button className="btn" title="Блок выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1)}><ArrowUp size={16}/>Выше</button><button className="btn" title="Блок ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1)}><ArrowDown size={16}/>Ниже</button></div></div>}
+{!editing&&<div className="sec"><h4>Положение</h4><div className="btnrow"><button className="btn" title="Блок выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1,dev)}><ArrowUp size={16}/>Выше</button><button className="btn" title="Блок ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1,dev)}><ArrowDown size={16}/>Ниже</button></div></div>}
 <div className="sec"><button className="btn" onClick={onTpl}><LayoutTemplate size={16}/>Сохранить как шаблон</button>
 {!editing&&<div className="btnrow"><button className="btn" title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={16}/>Дублировать</button><button className="btn danger" title="Удалить (Delete)" onClick={del}><Trash2 size={16}/>Удалить</button></div>}</div></aside>}
 
 export function RightPanel({dev,onTpl}:{dev:Dev;onTpl:()=>void}){
-const {s,sh,st}=useSheet();const blocks=sh?.blocks??[];const editing=!!s.editId;
+const {s,sh,st}=useSheet();const blocks=(sh?.blocks??[]).filter(b=>onDev(b,dev)||b.id===s.editId);const editing=!!s.editId;
 const ms=editing&&s.multi.includes(s.elId??'')?s.multi.filter(id=>blocks.some(b=>(b.els?.[dev]??[]).some(e=>e.id===id))):[];
 if(ms.length>1)return<MultiPanel dev={dev} ids={ms}/>;
 const f=editing?blocks.flatMap(b=>(b.els?.[dev]??[]).map(e=>({e,b}))).find(x=>x.e.id===s.elId):undefined;

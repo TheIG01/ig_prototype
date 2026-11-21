@@ -4,7 +4,7 @@ import type {Dev} from './dev';import {artHtml,resolve,styleCss} from './art';im
 /** Runs inside the generated page, so it must not reference anything outside itself. */
 function runtime(){
 type E={id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;acc?:boolean;go?:string;a?:string;k?:string};
-type B={id:string;title:string;text:string;h:Record<string,number>;els:Record<string,E[]>};
+type B={id:string;title:string;text:string;dv?:string[];h:Record<string,number>;els:Record<string,E[]>};
 type S={id:string;name:string;kind:string;blocks:B[]};
 const P=JSON.parse(document.getElementById('d')!.textContent||'{}') as {name:string;sheets:S[]};
 const app=document.getElementById('app') as HTMLElement;
@@ -19,14 +19,14 @@ const cur=()=>P.sheets.find(s=>s.id===sid)||P.sheets[0];
 const el=(e:E,dy:number)=>{const go=!!(e.go&&ids[e.go]);
 const st='left:'+e.x+'px;top:'+((e.t==='line'?e.y-6:e.y)+dy)+'px;width:'+e.w+'px;height:'+(e.t==='line'?12:e.h)+'px;'+(e.fs?'font-size:'+e.fs+'px;':'')+(e.b?'font-weight:700;':'')+(e.al==='c'?'text-align:center;justify-content:center;':e.al==='r'?'text-align:right;justify-content:flex-end;':'')+(e.k||'');
 return '<div class="el '+e.t+(go?' go':'')+'" style="'+st+'"'+(go?' data-go="'+e.go+'"':'')+'>'+(e.t==='line'?'<i></i>':e.a?e.a:esc(e.text))+'</div>'};
-const box=(blocks:B[])=>{let y=0,x0=1e9,x1=0,y0=1e9,y1=0;for(const b of blocks){for(const e of b.els[dev]){x0=Math.min(x0,e.x);x1=Math.max(x1,e.x+e.w);y0=Math.min(y0,y+e.y);y1=Math.max(y1,y+e.y+e.h)}y+=b.h[dev]}return x1>x0?{x0:x0-24,x1:x1+24,y0:y0-24,y1:y1+24}:{x0:0,x1:FW[dev],y0:0,y1:y}};
+const box=(blocks:B[])=>{let y=0,x0=1e9,x1=0,y0=1e9,y1=0;for(const b of blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;for(const e of b.els[dev]){x0=Math.min(x0,e.x);x1=Math.max(x1,e.x+e.w);y0=Math.min(y0,y+e.y);y1=Math.max(y1,y+e.y+e.h)}y+=b.h[dev]}return x1>x0?{x0:x0-24,x1:x1+24,y0:y0-24,y1:y1+24}:{x0:0,x1:FW[dev],y0:0,y1:y}};
 const frame=(blocks:B[],k:number,lines:boolean,c?:{x0:number;x1:number;y0:number;y1:number})=>{let y=0,inner='';
-for(const b of blocks){const h=b.h[dev];inner+=b.els[dev].map(e=>el(e,y)).join('');y+=h;if(lines)inner+='<i class="bd" style="top:'+y+'px"></i>'}
+for(const b of blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;const h=b.h[dev];inner+=b.els[dev].map(e=>el(e,y)).join('');y+=h;if(lines)inner+='<i class="bd" style="top:'+y+'px"></i>'}
 const cx=c?c.x0:0,cy=c?c.y0:0,cw=c?c.x1-c.x0:FW[dev],ch=c?c.y1-c.y0:y;
 return '<div class="fw" style="width:'+cw*k+'px;height:'+ch*k+'px"><div class="fi" style="width:'+FW[dev]+'px;height:'+y+'px;transform:translate('+(-cx*k)+'px,'+(-cy*k)+'px) scale('+k+')">'+inner+'</div></div>'};
 const report=()=>{const k=dev==='desktop'?980/1440:dev==='tablet'?.85:1;const notes=document.body.getAttribute('data-notes')==='1';
 app.innerHTML='<section class="cover"><h1>'+esc(P.name)+'</h1><p>Прототип · '+dev+' '+FW[dev]+' px · '+new Date().toLocaleDateString('ru-RU')+'</p></section>'+
-P.sheets.map(s=>'<section><h2>'+(s.kind==='popup'?'Попап: ':'Страница: ')+esc(s.name)+'</h2>'+s.blocks.map((b,i)=>'<figure><figcaption>'+(i+1)+'. '+esc(b.title)+'</figcaption>'+frame([b],k,false)+(notes&&b.text.trim()?'<p class="nt">'+esc(b.text)+'</p>':'')+'</figure>').join('')+'</section>').join('')};
+P.sheets.map(s=>'<section><h2>'+(s.kind==='popup'?'Попап: ':'Страница: ')+esc(s.name)+'</h2>'+s.blocks.filter(b=>!b.dv||b.dv.indexOf(dev)>=0).map((b,i)=>'<figure><figcaption>'+(i+1)+'. '+esc(b.title)+'</figcaption>'+frame([b],k,false)+(notes&&b.text.trim()?'<p class="nt">'+esc(b.text)+'</p>':'')+'</figure>').join('')+'</section>').join('')};
 const bar=()=>'<header><button data-act="back"'+(hist.length||pop?'':' disabled')+'>‹ Назад</button><b>'+esc(P.name)+'</b><span>'+esc(cur().name)+'</span><i class="sp"></i><nav>'+
 ['desktop','tablet','mobile'].map(d=>'<button data-dev="'+d+'" class="'+(d===dev?'on':'')+'">'+(d==='desktop'?'Desktop':d==='tablet'?'Tablet':'Mobile')+'</button>').join('')+'</nav><button data-act="hint" class="'+(hint?'on':'')+'">Подсветка ссылок</button></header>';
 const proto=()=>{const W=FW[dev];const w=Math.min(innerWidth-(innerWidth>700?48:0),W);const sh=cur();const ps=pop?P.sheets.find(s=>s.id===pop):undefined;
@@ -68,7 +68,7 @@ body[data-mode=report] .fw{margin:0;box-shadow:none;border:1px solid #CBD5E1}.nt
 @page{size:A4 landscape;margin:12mm}`;
 export function buildHtml(p:Project,mode:'proto'|'report',o:{dev?:Dev;notes?:boolean}={}){
 const ex=(a:El[])=>a.map(e=>({...resolve(e,p.style),a:artHtml(e),k:styleCss(e,p.style)}));
-const data={name:p.name,sheets:p.sheets.map(s=>({id:s.id,name:s.name,kind:s.kind,blocks:s.blocks.map(b=>({id:b.id,title:b.title,text:mode==='report'&&o.notes?b.text:'',h:b.h,els:{desktop:ex(b.els.desktop),tablet:ex(b.els.tablet),mobile:ex(b.els.mobile)}}))}))};
+const data={name:p.name,sheets:p.sheets.map(s=>({id:s.id,name:s.name,kind:s.kind,blocks:s.blocks.map(b=>({id:b.id,dv:b.dv,title:b.title,text:mode==='report'&&o.notes?b.text:'',h:b.h,els:{desktop:ex(b.els.desktop),tablet:ex(b.els.tablet),mobile:ex(b.els.mobile)}}))}))};
 const json=JSON.stringify(data).replace(/</g,'\\u003c');
 const esc=p.name.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'} as Record<string,string>)[c]);
 return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc} · прототип</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;700&family=Montserrat:wght@500;700&family=Playfair+Display:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"><style>${CSS}</style></head><body data-mode="${mode}" data-start="${o.dev??''}" data-notes="${o.notes?'1':''}"><div id="app"></div><script id="d" type="application/json">${json}</script><script>(${runtime.toString()})()</script></body></html>`}

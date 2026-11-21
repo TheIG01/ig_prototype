@@ -514,3 +514,49 @@ kbd{font-size:calc(11.5px*var(--u))}.krow{font-size:calc(13.5px*var(--u))}
 html[data-density=compact] .row{min-height:calc(28px*var(--u))}
 html[data-density=compact] .sec{padding:10px 12px}
 @media(max-width:860px){.panel{width:auto}.tools button{width:40px;height:40px}}
+
+/* ===== v1.11: тихие линейки, устройства блока, окно удаления, полировка ===== */
+.rl{opacity:.55;transition:opacity .2s var(--ease);background:transparent!important;border-color:rgba(15,23,42,.05)!important}
+.rl:hover{opacity:1}
+.rl line{stroke:rgba(100,116,139,.45);stroke-width:1}
+.rl text{font-size:9px;font-weight:500;fill:#8B97A8}
+.rl .rl-band{fill:color-mix(in srgb,var(--acc) 9%,transparent)}
+.rl-body{background:transparent}
+/* устройства блока */
+.dvs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.dvc{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px 8px;border-radius:12px;background:#F4F6F9;border:1.5px solid transparent;color:var(--mute);font-size:calc(12px*var(--u));font-weight:500;transition:all var(--t) var(--ease)}
+.dvc:hover{background:var(--acc-s);color:var(--acc)}
+.dvc.on{background:var(--acc-s);border-color:color-mix(in srgb,var(--acc) 55%,transparent);color:var(--acc);font-weight:600}
+.dvc.cur{box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 14%,transparent)}
+.dvt{font-style:normal;font-size:calc(10.5px*var(--u));font-weight:600;color:var(--acc);background:var(--acc-s);padding:1px 7px;border-radius:999px;flex:none;white-space:nowrap}
+.row.sm.on .dvt{background:#fff}
+.addblk.adapt{color:var(--acc);border-color:var(--acc);background:var(--acc-s)}
+.addblk.adapt:hover{background:var(--acc);color:#fff}
+/* окно удаления блока */
+.sheet.dl{max-width:440px}
+.delo-list{display:flex;flex-direction:column;gap:8px;margin:2px 0 14px}
+.delo{display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:14px 16px;border-radius:16px;border:1.5px solid var(--line);background:#fff;transition:all var(--t) var(--ease)}
+.delo:hover,.delo:focus-visible{border-color:var(--acc);background:var(--acc-s);transform:translateY(-1px)}
+.delo b{display:block;font-weight:600;font-size:calc(14px*var(--u))}
+.delo small{display:block;margin-top:2px;color:var(--mute);font-size:calc(12.5px*var(--u));line-height:1.35}
+.delo-ic{width:40px;height:40px;border-radius:12px;background:var(--acc-s);color:var(--acc);display:grid;place-items:center;flex:none}
+.delo.bad:hover,.delo.bad:focus-visible{border-color:#DC2626;background:#FEF2F2}
+.delo.bad .delo-ic{background:#FEF2F2;color:#DC2626}
+/* общая полировка */
+::selection{background:color-mix(in srgb,var(--acc) 22%,transparent)}
+*{scrollbar-width:thin;scrollbar-color:rgba(100,116,139,.35) transparent}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:rgba(100,116,139,.3);border-radius:999px;border:3px solid transparent;background-clip:content-box}::-webkit-scrollbar-thumb:hover{background:rgba(100,116,139,.5);background-clip:content-box;border:3px solid transparent}
+.top{background:rgba(255,255,255,.86);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom-color:rgba(15,23,42,.07)}
+.stage{background:radial-gradient(1200px 600px at 50% -10%,#EEF1F6,var(--cvbg) 70%)}
+.cv{box-shadow:0 0 0 1px rgba(15,23,42,.07),0 18px 50px rgba(15,23,42,.07)}
+.panel,.side{background:#fff}
+.panel .ph{background:rgba(255,255,255,.92);backdrop-filter:blur(8px)}
+.tools{background:rgba(255,255,255,.92);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px)}
+.row.on{box-shadow:inset 3px 0 0 var(--acc)}
+.row:active,.btn:active,.tools button:active{transform:scale(.97)}
+.btn.pri:hover{transform:translateY(-1px);box-shadow:0 6px 16px color-mix(in srgb,var(--acc) 34%,transparent)}
+.sheet{box-shadow:0 30px 80px rgba(15,23,42,.22)}
+.modal{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);background:rgba(15,23,42,.32)}
+.toast{backdrop-filter:blur(8px)}
+.cv-empty{font-size:calc(15px/var(--z,1));color:#64748B;padding:0 40px}
+@media(prefers-reduced-motion:reduce){.delo:hover{transform:none}.btn.pri:hover{transform:none}}
