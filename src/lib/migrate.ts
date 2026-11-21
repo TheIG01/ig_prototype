@@ -22,6 +22,6 @@ for(const t of d.blockTpls){const n=emptyBuild();t.h={...n.h,...(t.h??{})};t.els
 return d as Data}
 const DV:Dev[]=['desktop','tablet','mobile'];
 /** Any block, any schema version: guarantee id, text, h and els for all three sizes. */
-function fixBlock(b:any){const n=emptyBuild();b.id??=uid();b.title??='Блок';b.text??='';
+function fixBlock(b:any){const n=emptyBuild();b.id??=uid();b.title??='Блок';if(b.title==='Оффер')b.title='1 экран';b.text??='';
 b.h={...n.h,...(b.h??{})};b.els={...n.els,...(b.els??{})};
 for(const dv of DV){if(!Array.isArray(b.els[dv]))b.els[dv]=[];if(typeof b.h[dv]!=='number')b.h[dv]=n.h[dv]}}

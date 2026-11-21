@@ -13,11 +13,12 @@ const HK:Record<string,string>={sel:'V',text:'T',rect:'R',btn:'B',input:'F',img:
 const G=8;const snap=(v:number,raw:boolean)=>raw?Math.round(v):Math.round(v/G)*G;
 const clampZ=(v:number)=>Math.max(.1,Math.min(4,v));
 function useSheet(){const s=useStore();const pr=s.data?.projects.find(p=>p.id===s.projectId);const sh=pr?.sheets.find(x=>x.id===s.sheetId);return{s,sh,st:pr?.style}}
-type Drag={id:string;m:'move'|'size'|'bh';sx:number;sy:number;x:number;y:number;w:number;h:number};
+type Drag={id:string;m:'move'|'bh'|'draw'|'rs';dir?:string;t?:ET;ex?:Partial<El>;sx:number;sy:number;x:number;y:number;w:number;h:number};
 const stop=(e:React.PointerEvent)=>e.stopPropagation();
 
 export function Canvas({dev,W,onAdd}:{dev:Dev;W:number;onAdd:(after?:string)=>void}){
-const {s,sh,st}=useSheet();const [ins,setIns]=useState(false);const [tool,setTool]=useState<ET|'sel'>('sel');const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);
+const {s,sh,st}=useSheet();const [ins,setIns]=useState(false);const [tool,setTool]=useState<ET|'sel'>('sel');const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);const [arm,setArm]=useState<Partial<El>>({});const [gd,setGd]=useState<{v:number[];h:number[]}|null>(null);
+const pick=(t:ET|'sel',ex:Partial<El>={})=>{setTool(t);setArm(ex)};
 const wrap=useRef<HTMLDivElement>(null);const space=useRef(false);const drag=useRef<Drag|null>(null);
 const panRef=useRef<{sx:number;sy:number;l:number;t:number}|null>(null);
 const all=sh?.blocks??[];const editB=all.find(b=>b.id===s.editId);const editing=!!editB;
@@ -30,8 +31,8 @@ const H=editing?Math.max(720,total+240):Math.max(900,total+280);
 const stage=()=>wrap.current?.closest('.stage') as HTMLElement|null;
 const fit=()=>{const w=stage()?.clientWidth??1000;setZ(clampZ(Math.min(1,(w-48)/W)))};
 useEffect(fit,[W]);
-useEffect(()=>{if(!editing){setTool('sel');setIns(false)}},[editing]);
-const place=(t:ET,x:Partial<El>)=>{if(!editB)return;const w=x.w??240,h=x.h??120;const n=editB.els[dev].length%5*16;s.addEl(dev,t,Math.max(0,snap((W-w)/2+n,false)),Math.max(16,snap((editB.h[dev]-h)/2+n,false)),editB.id,x);setTool('sel');setIns(false)};
+useEffect(()=>{if(!editing){setTool('sel');setArm({});setIns(false)}},[editing]);
+const place=(t:ET,x:Partial<El>)=>{if(!editB)return;pick(t,x);setIns(false)};
 useEffect(()=>{const st=stage();if(!st)return;const h=(e:WheelEvent)=>{if(!(e.ctrlKey||e.metaKey))return;e.preventDefault();setZ(v=>clampZ(v*(e.deltaY<0?1.1:1/1.1)))};st.addEventListener('wheel',h,{passive:false});return()=>st.removeEventListener('wheel',h)},[]);
 // bring the selected block into view (e.g. when picked in the sidebar)
 useEffect(()=>{if(editing)return;const i=all.findIndex(b=>b.id===s.blockId);const st=stage();const w=wrap.current;if(i<0||!st||!w)return;const y=w.getBoundingClientRect().top-st.getBoundingClientRect().top+st.scrollTop+tops[i]*z;if(y<st.scrollTop||y>st.scrollTop+st.clientHeight*.7)st.scrollTo({top:Math.max(0,y-24),behavior:'smooth'})},[s.blockId]);
@@ -58,10 +59,10 @@ if(e.shiftKey&&e.code==='Digit0'){e.preventDefault();setZ(1);return}
 if(e.shiftKey&&e.code==='Digit1'){e.preventDefault();fit();return}
 if(e.code==='KeyA'&&!e.shiftKey){e.preventDefault();if(!editing)onAdd(s.blockId??undefined);return}
 if(e.code==='KeyE'&&!e.shiftKey){e.preventDefault();if(editing)setIns(v=>!v);else if(curB){s.enterEdit(curB.id);setIns(true)}return}
-const tk=e.shiftKey?undefined:KEYS[e.code];if(tk){if(editing)setTool(tk);else if(curB){s.enterEdit(curB.id);setTool(tk)}return}
+const tk=e.shiftKey?undefined:KEYS[e.code];if(tk){if(editing)pick(tk);else if(curB){s.enterEdit(curB.id);pick(tk)}return}
 if(e.code==='Equal'||e.code==='NumpadAdd'){setZ(v=>clampZ(v+.1));return}
 if(e.code==='Minus'||e.code==='NumpadSubtract'){setZ(v=>clampZ(v-.1));return}
-if(e.key==='Escape'){if(ins){setIns(false);return}if(tool!=='sel'){setTool('sel');return}if(cur){s.setBlock(s.editId);return}if(editing){s.exitEdit(true);return}if(s.blockId)s.setBlock(null);return}
+if(e.key==='Escape'){if(ins){setIns(false);return}if(tool!=='sel'){pick('sel');return}if(cur){s.setBlock(s.editId);return}if(editing){s.exitEdit(true);return}if(s.blockId)s.setBlock(null);return}
 if(e.key==='Tab'&&editing&&els.length&&(e.target as HTMLElement).tagName==='BODY'){e.preventDefault();const i=els.findIndex(x=>x.id===s.elId);const n=i<0?(e.shiftKey?els.length-1:0):(i+(e.shiftKey?-1:1)+els.length)%els.length;s.setEl(els[n].id);return}
 if(e.key==='Enter'){if(!editing&&curB){e.preventDefault();s.enterEdit(curB.id)}else if(cur){e.preventDefault();document.getElementById('el-text')?.focus()}return}
 if(!cur){if(!editing&&curB&&(e.key==='Delete'||e.key==='Backspace')){e.preventDefault();delBlock(curB)}return}
@@ -72,18 +73,47 @@ const ku=(e:KeyboardEvent)=>{if(e.code!=='Space')return;if(space.current){space.
 const off=()=>{space.current=false;setPan(false)};
 addEventListener('keydown',kd);addEventListener('keyup',ku);addEventListener('blur',off);
 return()=>{removeEventListener('keydown',kd);removeEventListener('keyup',ku);removeEventListener('blur',off)}});
-const down=(e:React.PointerEvent,el:El,m:'move'|'size')=>{if(!editing||tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();s.setEl(el.id);drag.current={id:el.id,m,sx:e.clientX,sy:e.clientY,x:el.x,y:el.y,w:el.w,h:el.h};wrap.current!.setPointerCapture(e.pointerId)};
+const pt=(e:{clientX:number;clientY:number})=>{const r=wrap.current!.getBoundingClientRect();return{x:(e.clientX-r.left)/z,y:(e.clientY-r.top)/z}};
+const down=(e:React.PointerEvent,el:El)=>{if(!editing||tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();s.setEl(el.id);drag.current={id:el.id,m:'move',t:el.t,sx:e.clientX,sy:e.clientY,x:el.x,y:el.y,w:el.w,h:el.h};wrap.current!.setPointerCapture(e.pointerId)};
+const downR=(e:React.PointerEvent,el:El,dir:string)=>{if(!editing||tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();drag.current={id:el.id,m:'rs',dir,t:el.t,sx:e.clientX,sy:e.clientY,x:el.x,y:el.y,w:el.w,h:el.h};wrap.current!.setPointerCapture(e.pointerId)};
 const downB=(e:React.PointerEvent,b:Block)=>{if(tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();drag.current={id:b.id,m:'bh',sx:e.clientX,sy:e.clientY,x:0,y:0,w:0,h:b.h[dev]};wrap.current!.setPointerCapture(e.pointerId)};
+/** draw a new element by dragging a rectangle (Shift = proportions, Alt = no grid) */
+const drawTo=(e:React.PointerEvent,d:Drag)=>{const p=pt(e),raw=e.altKey,ln=d.t==='line';let w=snap(p.x,raw)-d.x,h=snap(p.y,raw)-d.y;
+if(e.shiftKey&&!ln){const m=Math.max(Math.abs(w),Math.abs(h));w=(w<0?-1:1)*m;h=(h<0?-1:1)*m}
+const L=Math.max(0,Math.min(d.x,d.x+w)),R=Math.min(W,Math.max(d.x,d.x+w)),T=ln?d.y:Math.max(0,Math.min(d.y,d.y+h)),B=ln?d.y:Math.max(d.y,d.y+h);
+d.w=Math.max(1,R-L);d.h=ln?0:Math.max(1,B-T);s.dragEl(dev,d.id,{x:L,y:T,w:d.w,h:d.h})};
 const move=(e:React.PointerEvent)=>{const p=panRef.current;if(p){const st=stage();if(st){st.scrollLeft=p.l-(e.clientX-p.sx);st.scrollTop=p.t-(e.clientY-p.sy)}return}
 const d=drag.current;if(!d)return;const dx=(e.clientX-d.sx)/z,dy=(e.clientY-d.sy)/z,raw=e.altKey;
 if(d.m==='bh')s.setH(dev,d.id,snap(d.h+dy,raw));
-else if(d.m==='move')s.dragEl(dev,d.id,{x:Math.max(0,Math.min(W-d.w,snap(d.x+dx,raw))),y:snap(d.y+dy,raw)});
-else s.updEl(dev,d.id,{w:Math.max(16,Math.min(W-d.x,snap(d.w+dx,raw))),h:d.h?Math.max(16,snap(d.h+dy,raw)):0})};
-const create=(e:React.PointerEvent)=>{const r=wrap.current!.getBoundingClientRect();const x=(e.clientX-r.left)/z,y=(e.clientY-r.top)/z;
-if(!editing||tool==='sel'){if(editing){s.setBlock(s.editId);return}const i=y>=0&&y<total?vis.findIndex((_,k)=>y>=tops[k]&&y<tops[k]+vis[k].h[dev]):-1;s.setBlock(i>=0?vis[i].id:null);return}
-s.addEl(dev,tool,snap(x,false),snap(y,false),s.editId??undefined);setTool('sel')};
+else if(d.m==='draw'){if(!d.id){if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<4)return;s.addEl(dev,d.t!,d.x,d.y,s.editId??undefined,{...d.ex,w:1,h:d.t==='line'?0:1});d.id=useStore.getState().elId??''}
+if(d.id)drawTo(e,d)}
+else if(d.m==='rs'){const D=d.dir??'',ln=d.t==='line';let L=d.x,R=d.x+d.w,T=d.y,B=d.y+d.h;
+if(D.includes('e'))R=snap(R+dx,raw);if(D.includes('w'))L=snap(L+dx,raw);if(!ln){if(D.includes('s'))B=snap(B+dy,raw);if(D.includes('n'))T=snap(T+dy,raw)}
+L=Math.max(0,L);R=Math.min(W,R);T=Math.max(0,T);
+if(R-L<16){if(D.includes('w'))L=R-16;else R=L+16}if(!ln&&B-T<16){if(D.includes('n'))T=B-16;else B=T+16}
+if(e.shiftKey&&!ln&&D.length===2&&d.h){const nh=Math.round((R-L)/(d.w/d.h));if(D.includes('n'))T=B-nh;else B=T+nh}
+s.updEl(dev,d.id,{x:L,y:Math.max(0,T),w:R-L,h:ln?0:B-T})}
+else if(d.m==='move'){let nx=snap(d.x+dx,raw),ny=snap(d.y+dy,raw);const g={v:[] as number[],h:[] as number[]};
+if(!raw&&editB){const T=6/z,bh=editB.h[dev],o=editB.els[dev].filter(q=>q.id!==d.id);
+const xs=[0,W/2,W,...o.flatMap(q=>[q.x,q.x+q.w/2,q.x+q.w])],ys=[0,bh/2,bh,...o.flatMap(q=>[q.y,q.y+q.h/2,q.y+q.h])];
+const mx=[0,d.w/2,d.w],my=[0,d.h/2,d.h];const px=d.x+dx,py=d.y+dy;let bx=T,by=T;
+for(const m of mx)for(const t of xs){const df=Math.abs(t-(px+m));if(df<bx){bx=df;nx=Math.round(t-m)}}
+for(const m of my)for(const t of ys){const df=Math.abs(t-(py+m));if(df<by){by=df;ny=Math.round(t-m)}}
+nx=Math.max(0,Math.min(W-d.w,nx));ny=Math.max(0,ny);
+for(const m of mx)for(const t of xs)if(Math.abs(t-(nx+m))<.5&&!g.v.includes(t))g.v.push(t);
+for(const m of my)for(const t of ys)if(Math.abs(t-(ny+m))<.5&&!g.h.includes(t))g.h.push(t)}
+else{nx=Math.max(0,Math.min(W-d.w,nx));ny=Math.max(0,ny)}
+setGd(g.v.length||g.h.length?g:null);s.dragEl(dev,d.id,{x:nx,y:ny})}};
+const create=(e:React.PointerEvent)=>{const p=pt(e),x=p.x,y=p.y;
+if(editing&&tool!=='sel'){drag.current={id:'',m:'draw',t:tool,ex:arm,sx:e.clientX,sy:e.clientY,x:Math.max(0,snap(x,e.altKey)),y:Math.max(0,snap(y,e.altKey)),w:0,h:0};wrap.current!.setPointerCapture(e.pointerId);return}
+if(editing){s.setBlock(s.editId);return}const i=y>=0&&y<total?vis.findIndex((_,k)=>y>=tops[k]&&y<tops[k]+vis[k].h[dev]):-1;s.setBlock(i>=0?vis[i].id:null)};
 const press=(e:React.PointerEvent)=>{if(space.current||e.button===1){e.preventDefault();const st=stage();if(!st)return;panRef.current={sx:e.clientX,sy:e.clientY,l:st.scrollLeft,t:st.scrollTop};wrap.current!.setPointerCapture(e.pointerId);return}if(e.button!==0)return;create(e)};
-const up=()=>{const d=drag.current;if(d&&d.m==='move')s.dropEl(dev,d.id,editing);drag.current=null;panRef.current=null};
+const up=()=>{const d=drag.current;drag.current=null;panRef.current=null;setGd(null);if(!d)return;
+if(d.m==='move')s.dropEl(dev,d.id,editing);
+else if(d.m==='draw'){const ln=d.t==='line';
+if(!d.id)s.addEl(dev,d.t!,d.x,d.y,s.editId??undefined,d.ex);
+else s.updEl(dev,d.id,{w:Math.max(16,d.w),h:ln?0:Math.max(d.t==='text'?24:16,d.h)});
+pick('sel');if(d.t==='text')setTimeout(()=>{const i=document.getElementById('el-text') as HTMLInputElement|null;i?.focus();i?.select?.()},80)}};
 const dbl=()=>{if(editing)document.getElementById('el-text')?.focus();else if(s.blockId)s.enterEdit(s.blockId)};
 return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок ${all.indexOf(editB)+1} · ${editB.title}`:sh?.name} · {{desktop:'Desktop',tablet:'Tablet',mobile:'Mobile'}[dev]} · {W}</div>
 <div className="cv" ref={wrap} style={{width:W*z,height:H*z,cursor:pan?'grab':editing&&tool!=='sel'?'crosshair':'default'}} onPointerDown={press} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={dbl}>
@@ -91,15 +121,18 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 {vis.map((b,i)=><div key={b.id} className={'band'+(i===selBi?' sel':'')} style={{top:tops[i],height:b.h[dev]}}><span>{all.indexOf(b)+1}. {b.title}</span>
 {!editing&&<div className="bt" onPointerDown={stop}><button title="Настройки блока" onClick={()=>s.setBlock(b.id)}><Settings size={14}/></button><button className="ed" title="Редактировать блок (Enter)" onClick={()=>s.enterEdit(b.id)}><Pencil size={14}/>Редактировать</button><i className="sep"/>
 <button title="Выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1)}><ArrowUp size={14}/></button><button title="Ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1)}><ArrowDown size={14}/></button><button title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={14}/></button><button className="dz" title="Удалить" onClick={()=>delBlock(b)}><Trash2 size={14}/></button></div>}</div>)}
-{flat.map(({e,top})=>{const on=e.id===s.elId&&editing;return<div key={e.id} className={'el '+e.t+(on?' sel':'')+(e.acc?' acc':'')+(e.go?' lnk':'')} style={elStyle(e,top,st)} onPointerDown={ev=>down(ev,e,'move')}>{elInner(e)}{on&&<u className="rz" onPointerDown={ev=>down(ev,e,'size')}/>}</div>})}
+{flat.map(({e,top})=>{const on=e.id===s.elId&&editing;return<div key={e.id} className={'el '+e.t+(on?' sel':'')+(e.acc?' acc':'')+(e.go?' lnk':'')} style={elStyle(e,top,st)} onPointerDown={ev=>down(ev,e)}>{elInner(e)}</div>})}
 {!editing&&vis.slice(0,-1).map((b,i)=><div key={'i'+b.id} className="ins" style={{top:tops[i]+b.h[dev]}}><button className="insb" title="Добавить блок здесь" onPointerDown={stop} onClick={()=>onAdd(b.id)}><Plus size={16}/><span>Добавить блок</span></button></div>)}
+{gd&&editB&&<>{gd.v.map(x=><i key={'v'+x} className="gd" style={{left:x,top:0,height:editB.h[dev],width:'calc(1px/var(--z,1))'}}/>)}{gd.h.map(y=><i key={'h'+y} className="gd" style={{top:y,left:0,width:W,height:'calc(1px/var(--z,1))'}}/>)}</>}
+{sel&&tool==='sel'&&<div className="selbox" style={{left:sel.e.x,top:sel.top+(sel.e.t==='line'?sel.e.y-6:sel.e.y),width:sel.e.w,height:sel.e.t==='line'?12:sel.e.h}}>{(sel.e.t==='line'?['w','e']:['nw','n','ne','e','se','s','sw','w']).map(k=><u key={k} className={'rz '+k} onPointerDown={ev=>downR(ev,sel.e,k)}/>)}</div>}
 {selB&&<><div className="bh" style={{left:W/2,top:tops[selBi]+selB.h[dev]}} onPointerDown={ev=>downB(ev,selB)}/><div className="dim" style={{left:W/2,top:tops[selBi]+selB.h[dev]+22}}>{W} × {selB.h[dev]}</div></>}
 {sel&&<div className="dim" style={{left:sel.e.x+sel.e.w/2,top:sel.top+sel.e.y+(sel.e.t==='line'?6:sel.e.h)+8}}>{Math.round(sel.e.w)}{sel.e.t==='line'?'':` × ${Math.round(sel.e.h)}`}</div>}
 {!vis.length&&<div className="cv-empty">Страница пустая. Нажми «Добавить блок»: с нуля или из библиотеки</div>}
 {!editing&&<button className="addblk" style={{left:W/2,top:vis.length?total+28:180}} onPointerDown={stop} onClick={()=>onAdd(vis.length?vis[vis.length-1].id:undefined)}><Plus size={16}/>Добавить блок (A)</button>}
 </div></div></div>
 {editing&&ins&&<InsertPanel onPick={place} onClose={()=>setIns(false)}/>}
-<div className="tools">{editing&&<>{TOOLS.map(([k,l,I])=><button key={k} className={tool===k?'on':''} title={`${l} (${HK[k]})`} onClick={()=>setTool(k)}><I size={18}/></button>)}<button className={ins?'on':''} title="Элементы: фигуры, иконки, мокапы (E)" onClick={()=>setIns(v=>!v)}><Shapes size={18}/></button><i className="vr"/></>}
+{editing&&tool!=='sel'&&<div className="armhint">{tool==='line'?'Потяни, чтобы провести линию':'Потяни на холсте, чтобы нарисовать'} · клик — размер по умолчанию · Shift — пропорции · Alt — без сетки · Esc — отмена</div>}
+<div className="tools">{editing&&<>{TOOLS.map(([k,l,I])=><button key={k} className={tool===k?'on':''} title={`${l} (${HK[k]})`} onClick={()=>pick(k)}><I size={18}/></button>)}<button className={ins||['shape','icon','mock','list'].includes(tool)?'on':''} title="Элементы: фигуры, иконки, мокапы (E)" onClick={()=>setIns(v=>!v)}><Shapes size={18}/></button><i className="vr"/></>}
 <button title="Уменьшить (−)" onClick={()=>setZ(clampZ(z-.1))}><Minus size={16}/></button><button className="zv" title="100% (Shift+0)" onClick={()=>setZ(1)}>{Math.round(z*100)}%</button><button title="Увеличить (+)" onClick={()=>setZ(clampZ(z+.1))}><Plus size={16}/></button><button title="Вписать (Shift+1)" onClick={fit}><Maximize size={16}/></button></div></>}
 
 function BlockPanel({dev,b,idx,editing,onTpl}:{dev:Dev;b:Block;idx:number;editing:boolean;onTpl:()=>void}){

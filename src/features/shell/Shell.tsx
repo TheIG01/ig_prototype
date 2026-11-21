@@ -129,8 +129,8 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 <button type="button" className="am" onClick={()=>{aiPack(pr);close()}}><span className="amic"><Sparkles size={20}/></span><b>Для нейросети</b><small>brief.md и project.json: структура, координаты, акценты, переходы</small></button></div></Ask>}
 {modal==='imp'&&<Ask title="Импорт структуры из майнд-карты" wide onClose={close}><form onSubmit={e=>{e.preventDefault();const n=name.trim()||'Новый проект';if(!outline.trim())return;s.importOutline(n,outline);toast('Проект собран из текста');close()}}>
 <input className="inp" autoFocus placeholder="Название проекта" value={name} onChange={e=>setName(e.target.value)}/>
-<textarea className="inp outl" placeholder={'Вставь текстовую структуру. Например:\n# Главная\n## Оффер\nЗаголовок и подзаголовок\n## Преимущества\n# Спасибо\n## Подтверждение'} value={outline} onChange={e=>setOutline(e.target.value)}/>
-<p className="txt">Уровень 1 это страница, уровень 2 блок, глубже это текст блока. Подходят заголовки markdown (#, ##) или список с отступами из экспорта майнд-карты. Знакомые блоки (Оффер, Тарифы, FAQ…) сразу получают макет, остальные пустые. Попап: добавь слово «попап» к названию страницы</p>
+<textarea className="inp outl" placeholder={'Вставь текстовую структуру. Например:\n# Главная\n## 1 экран\nЗаголовок и подзаголовок\n## Преимущества\n# Спасибо\n## Подтверждение'} value={outline} onChange={e=>setOutline(e.target.value)}/>
+<p className="txt">Уровень 1 это страница, уровень 2 блок, глубже это текст блока. Подходят заголовки markdown (#, ##) или список с отступами из экспорта майнд-карты. Знакомые блоки (1 экран, Тарифы, FAQ…) сразу получают макет, остальные пустые. Попап: добавь слово «попап» к названию страницы</p>
 <button className="btn pri" style={{width:'100%',justifyContent:'center'}}>Собрать проект</button></form></Ask>}
 {form&&<Ask title={TITLE[modal]} xl={modal==='block'} onClose={close}><form onSubmit={submit}>
 <input className="inp" autoFocus placeholder={modal==='block'?'Поиск или название нового блока':'Название'} value={name} onChange={e=>setName(e.target.value)}/>

@@ -261,3 +261,14 @@ body{font-size:13px}
 .cs-row{gap:4px}.cs{width:15px;height:15px}
 .fmt select.inp{flex:1;min-width:74px;width:auto}.fmt .btn.ic{flex:none}
 .prev.lst{width:100%!important;height:auto!important}
+
+/* v1.1 Figma-like editing: 8 handles, smart guides, draw hint */
+.selbox{position:absolute;pointer-events:none;z-index:3}
+.selbox .rz{position:absolute;right:auto;bottom:auto;pointer-events:auto;width:calc(10px/var(--z,1));height:calc(10px/var(--z,1));background:#fff;border:calc(1.5px/var(--z,1)) solid var(--acc);border-radius:calc(2px/var(--z,1));transform:translate(-50%,-50%);box-sizing:border-box;touch-action:none}
+.selbox .rz::after{content:'';position:absolute;inset:calc(-6px/var(--z,1))}
+.rz.nw{left:0;top:0;cursor:nwse-resize}.rz.n{left:50%;top:0;cursor:ns-resize}.rz.ne{left:100%;top:0;cursor:nesw-resize}.rz.e{left:100%;top:50%;cursor:ew-resize}
+.rz.se{left:100%;top:100%;cursor:nwse-resize}.rz.s{left:50%;top:100%;cursor:ns-resize}.rz.sw{left:0;top:100%;cursor:nesw-resize}.rz.w{left:0;top:50%;cursor:ew-resize}
+.gd{position:absolute;background:#F43F5E;pointer-events:none;z-index:4}
+.armhint{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);background:var(--text);color:#fff;font:500 12.5px/1.4 Inter,system-ui,sans-serif;padding:8px 14px;border-radius:999px;z-index:5;pointer-events:none;max-width:94%;text-align:center;animation:fadeup .18s cubic-bezier(.22,.8,.3,1)}
+@keyframes fadeup{from{opacity:0;transform:translate(-50%,6px)}}
+@media (prefers-reduced-motion:reduce){.armhint{animation:none}}

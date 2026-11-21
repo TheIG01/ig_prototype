@@ -21,5 +21,5 @@ else if(blk){blk.text+=(blk.text?'\n':'')+(md||lvl<=2?'':'– ')+t}}
 return out}
 export function sheetsFromOutline(src:string):Sheet[]{
 return parseOutline(src).map(p=>({id:uid(),name:p.name,kind:p.kind,blocks:p.blocks.map(b=>{
-const t=TPLS.find(x=>b.title.toLowerCase().startsWith(x.name.toLowerCase()));const n=t?buildTpl(t):emptyBuild();
+const tl=b.title.toLowerCase().replace(/^оффер/,'1 экран');const t=TPLS.find(x=>tl.startsWith(x.name.toLowerCase()));const n=t?buildTpl(t):emptyBuild();
 const bl:Block={id:uid(),title:b.title,text:b.text,h:n.h,els:n.els};return bl})}))}

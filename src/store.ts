@@ -14,10 +14,10 @@ export interface SiteType{id:string;name:string;builtin?:boolean;pages:{name:str
 export interface Data{schemaVersion:5;projects:Project[];siteTypes:SiteType[];blockTpls:BlockTpl[]}
 const P=(name:string,blocks:string[],kind:Kind='page')=>({name,kind,blocks});
 export const PRESETS:SiteType[]=[
-{id:'landing',name:'Лендинг',builtin:true,pages:[P('Главная',['Шапка','Оффер','Проблемы','Преимущества','Как работаем','Кейсы','Отзывы','Тарифы','FAQ','Форма заявки','Подвал']),P('Заявка',['Форма'],'popup'),P('Спасибо',['Подтверждение'])]},
-{id:'multi',name:'Многостраничный',builtin:true,pages:[P('Главная',['Шапка','Оффер','Услуги','О компании','Отзывы','Подвал']),P('Услуги',['Шапка','Список услуг','Форма заявки','Подвал']),P('О нас',['Шапка','История','Команда','Подвал']),P('Контакты',['Шапка','Контакты','Карта','Подвал'])]},
+{id:'landing',name:'Лендинг',builtin:true,pages:[P('Главная',['Шапка','1 экран','Проблемы','Преимущества','Как работаем','Кейсы','Отзывы','Тарифы','FAQ','Форма заявки','Подвал']),P('Заявка',['Форма'],'popup'),P('Спасибо',['Подтверждение'])]},
+{id:'multi',name:'Многостраничный',builtin:true,pages:[P('Главная',['Шапка','1 экран','Услуги','О компании','Отзывы','Подвал']),P('Услуги',['Шапка','Список услуг','Форма заявки','Подвал']),P('О нас',['Шапка','История','Команда','Подвал']),P('Контакты',['Шапка','Контакты','Карта','Подвал'])]},
 {id:'shop',name:'Интернет-магазин',builtin:true,pages:[P('Главная',['Шапка','Баннер','Категории','Хиты','Преимущества','Подвал']),P('Каталог',['Шапка','Фильтры','Сетка товаров','Подвал']),P('Товар',['Шапка','Галерея','Описание','Похожие','Подвал']),P('Корзина',['Шапка','Список','Итого','Подвал'])]},
-{id:'quiz',name:'Квиз',builtin:true,pages:[P('Старт',['Оффер','Кнопка старта']),P('Вопрос',['Прогресс','Вопрос','Варианты','Далее']),P('Контакты',['Бонус','Форма заявки']),P('Спасибо',['Подтверждение'])]}];
+{id:'quiz',name:'Квиз',builtin:true,pages:[P('Старт',['1 экран','Кнопка старта']),P('Вопрос',['Прогресс','Вопрос','Варианты','Далее']),P('Контакты',['Бонус','Форма заявки']),P('Спасибо',['Подтверждение'])]}];
 /** wires typical buttons: header/CTA -> popup, forms -> thanks page, quiz start -> first question */
 const autoLink=(sheets:Sheet[])=>{const pop=sheets.find(x=>x.kind==='popup');const thx=sheets.find(x=>x.kind!=='popup'&&/спасибо/i.test(x.name));const q=sheets.find(x=>x.kind!=='popup'&&/вопрос/i.test(x.name));
 for(const sh of sheets)for(const b of sh.blocks)for(const d of DEVS)for(const e of b.els[d]){if(e.t!=='btn')continue;let to:string|undefined;
