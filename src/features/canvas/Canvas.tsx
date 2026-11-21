@@ -23,7 +23,7 @@ const panRef=useRef<{sx:number;sy:number;l:number;t:number}|null>(null);
 const all=sh?.blocks??[];const editB=all.find(b=>b.id===s.editId);const editing=!!editB;
 const vis=editB?[editB]:all;const tops=blockTops(vis,dev);
 const total=vis.length?tops[tops.length-1]+vis[vis.length-1].h[dev]:0;
-const flat=vis.flatMap((b,i)=>b.els[dev].map(e=>({e,b,top:tops[i]})));const els=flat.map(f=>f.e);
+const flat=vis.flatMap((b,i)=>(b.els?.[dev]??[]).map(e=>({e,b,top:tops[i]})));const els=flat.map(f=>f.e);
 const sel=editing?flat.find(f=>f.e.id===s.elId):undefined;
 const selBi=sel?-1:vis.findIndex(b=>b.id===s.blockId);const selB=selBi>=0?vis[selBi]:undefined;
 const H=editing?Math.max(720,total+240):Math.max(900,total+280);
@@ -119,7 +119,7 @@ return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>
 
 export function RightPanel({dev,onTpl}:{dev:Dev;onTpl:()=>void}){
 const {s,sh,st}=useSheet();const blocks=sh?.blocks??[];const editing=!!s.editId;
-const f=editing?blocks.flatMap(b=>b.els[dev].map(e=>({e,b}))).find(x=>x.e.id===s.elId):undefined;
+const f=editing?blocks.flatMap(b=>(b.els?.[dev]??[]).map(e=>({e,b}))).find(x=>x.e.id===s.elId):undefined;
 if(f&&st)return<ElPanel dev={dev} e={f.e} b={f.b} st={st}/>;
 const bi=blocks.findIndex(x=>x.id===s.blockId);
 if(bi>=0)return<BlockPanel dev={dev} b={blocks[bi]} idx={bi} editing={editing} onTpl={onTpl}/>;
