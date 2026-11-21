@@ -106,10 +106,10 @@ return<div className={'app'+(hide?' nosb':'')}>
 <i className="vr"/>
 <button className="btn ic" onClick={()=>s.undo()} title="Отменить (Ctrl+Z)"><Undo2 size={16}/></button><button className="btn ic" onClick={()=>s.redo()} title="Повторить (Ctrl+Shift+Z)"><Redo2 size={16}/></button>
 <i className="vr"/>
-{!ed&&pr&&<button className="btn ic" onClick={()=>openForm('type')} title="Сохранить структуру как тип сайта"><BookmarkPlus size={16}/></button>}
-{!ed&&<><button className="btn ic" onClick={backup} title="Скачать копию"><Download size={16}/></button></>}
-{!ed&&<><button className="btn ic" onClick={()=>file.current?.click()} title="Загрузить копию"><Upload size={16}/></button><input ref={file} type="file" accept=".json" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f){setPend(f);setModal('rst')}}}/></>}
-{!ed&&pr&&<button className="btn pri" onClick={openPreview} title="Просмотр для заказчика (P)"><Eye size={16}/>Просмотр</button>}{!ed&&pr&&<button className="btn" onClick={()=>setModal('share')} title="Отдать заказчику"><Share2 size={16}/>Экспорт</button>}{!ed&&pr&&<button className="btn" onClick={()=>aiPack(pr)} title="Скачать brief.md и project.json"><Sparkles size={16}/>Для ИИ</button>}
+{!ed&&pr&&<button className="btn ic sec2" onClick={()=>openForm('type')} title="Сохранить структуру как тип сайта"><BookmarkPlus size={16}/></button>}
+{!ed&&<><button className="btn ic sec2" onClick={backup} title="Скачать копию"><Download size={16}/></button></>}
+{!ed&&<><button className="btn ic sec2" onClick={()=>file.current?.click()} title="Загрузить копию"><Upload size={16}/></button><input ref={file} type="file" accept=".json" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f){setPend(f);setModal('rst')}}}/></>}
+{!ed&&pr&&<button className="btn pri" onClick={openPreview} title="Просмотр для заказчика (P)"><Eye size={16}/>Просмотр</button>}{!ed&&pr&&<button className="btn" onClick={()=>setModal('share')} title="Отдать заказчику"><Share2 size={16}/><span className="tl">Экспорт</span></button>}{!ed&&pr&&<button className="btn" onClick={()=>aiPack(pr)} title="Скачать brief.md и project.json"><Sparkles size={16}/><span className="tl">Для ИИ</span></button>}
 <button className="btn ic mobonly" onClick={()=>setModal('set')} title="Настройки"><Settings size={16}/></button>
 {ed&&<><i className="vr"/><button className="btn" onClick={cancelEdit} title="Откатить все правки в этом блоке">Не сохранять</button><button className="btn pri" onClick={()=>s.exitEdit(true)} title="Ctrl+Enter">Сохранить</button></>}
 <span className={'status'+(s.status==='saving'?' s':'')}><i/>{s.status==='saving'?'Сохраняю':'Сохранено'}</span></div>

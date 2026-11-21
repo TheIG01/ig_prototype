@@ -421,94 +421,96 @@ html[data-dims=off] .dim{display:none}
 .sheet{max-height:90vh;overflow:auto}
 .set-row .nm{width:84px;margin:0;text-align:center}
 
-/* ===== v1.10: видимость интерфейса. Размер задаёт --u (Настройки → Вид → Размер интерфейса) ===== */
-:root{--u:1.1;--mute:#4B5A70;--hint:#64748B;--line:rgba(15,23,42,.11)}
-html[data-size=m]{--u:1}html[data-size=l]{--u:1.1}html[data-size=xl]{--u:1.22}
-body{font-size:calc(14px*var(--u))}
-.btn{height:calc(34px*var(--u));font-size:calc(13.5px*var(--u));font-weight:500;padding:0 calc(14px*var(--u));color:var(--text);border-color:rgba(15,23,42,.14)}
-.btn svg{width:calc(17px*var(--u));height:calc(17px*var(--u));stroke-width:2}
-.btn.ic{width:calc(34px*var(--u));padding:0}
-.btn.pri{font-weight:600;box-shadow:0 4px 12px color-mix(in srgb,var(--acc) 32%,transparent)}
+/* ===== v1.10: золотая середина. Размер задаёт --u (Настройки → Вид → Размер интерфейса) ===== */
+:root{--u:1;--mute:#52627A;--hint:#64748B;--line:rgba(15,23,42,.09);--ink2:#334155}
+html[data-size=m]{--u:1}html[data-size=l]{--u:1.07}html[data-size=xl]{--u:1.16}
+body{font-size:calc(13.5px*var(--u))}
+.btn{height:calc(32px*var(--u));font-size:calc(13.5px*var(--u));font-weight:500;padding:0 calc(13px*var(--u));border-color:rgba(15,23,42,.13)}
+.btn svg{width:calc(16px*var(--u));height:calc(16px*var(--u));stroke-width:2}
+.btn.ic{width:calc(32px*var(--u));padding:0}
+.btn.pri{font-weight:600;box-shadow:0 3px 10px color-mix(in srgb,var(--acc) 28%,transparent)}
 .btn.on{font-weight:600}
-.inp,.num{height:calc(36px*var(--u));font-size:calc(14px*var(--u))}
-.num{font-size:calc(13px*var(--u));color:#334155;font-weight:600}.num input{font-size:calc(14px*var(--u));font-weight:500;font-variant-numeric:tabular-nums}
-.seg button{height:calc(30px*var(--u));font-size:calc(13px*var(--u));font-weight:500;color:#334155}.seg button.on{font-weight:600;color:var(--text)}
-/* верхняя панель */
-.top{min-height:calc(56px*var(--u));padding:0 16px;gap:8px}
-.ttl{font-size:calc(16px*var(--u))}.crumb{font-size:calc(14px*var(--u));color:#334155;max-width:260px}
-.status{font-size:calc(13px*var(--u));color:#334155}.status i{width:9px;height:9px}
-/* рейка */
-.app{grid-template-columns:calc(60px*var(--u)) calc(272px*var(--u)) 1fr}.app.nosb{grid-template-columns:calc(60px*var(--u)) 1fr}
-.rb{width:calc(44px*var(--u));height:calc(44px*var(--u));color:#B6C2D6}.rb svg{width:calc(21px*var(--u));height:calc(21px*var(--u))}
-.rail .logo{width:calc(36px*var(--u));height:calc(36px*var(--u));font-size:calc(14px*var(--u))}
+.btn:not(.pri):not(.on):hover{background:var(--acc-s);border-color:color-mix(in srgb,var(--acc) 45%,transparent);color:var(--acc)}
+.inp,.num{height:calc(34px*var(--u));font-size:calc(13.5px*var(--u))}
+.inp{background:#F4F6F9;border-color:transparent}.inp:hover{border-color:rgba(15,23,42,.12)}.inp:focus{outline:0;background:#fff;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 18%,transparent)}
+.num{font-size:calc(12.5px*var(--u));color:var(--ink2);font-weight:600;background:#F4F6F9;border:1px solid transparent;transition:all var(--t)}
+.num:focus-within{background:#fff;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 18%,transparent)}
+.num input{font-size:calc(13.5px*var(--u));font-weight:500;font-variant-numeric:tabular-nums}
+.seg button{height:calc(28px*var(--u));font-size:calc(13px*var(--u));font-weight:500;color:var(--ink2)}.seg button.on{font-weight:600;color:var(--text)}
+/* верхняя панель: подписи второстепенных кнопок прячутся по ширине, ничего не уходит за край */
+.top{container-type:inline-size;min-height:calc(52px*var(--u));padding:0 14px;gap:6px}
+.ttl{font-size:calc(15px*var(--u))}.crumb{font-size:calc(13.5px*var(--u));color:var(--ink2)}
+.status{font-size:calc(12.5px*var(--u));color:var(--ink2)}
+@container (max-width:1280px){.top .tl{display:none}.top .btn:has(>.tl){width:calc(32px*var(--u));padding:0;justify-content:center}}
+@container (max-width:1020px){.top .sec2,.top .sec2+.sec2{display:none}.top .crumb{display:none}}
+/* рейка и боковая панель */
+.app{grid-template-columns:calc(56px*var(--u)) calc(256px*var(--u)) 1fr}.app.nosb{grid-template-columns:calc(56px*var(--u)) 1fr}
+.rb{width:calc(40px*var(--u));height:calc(40px*var(--u));color:#B6C2D6}.rb svg{width:calc(20px*var(--u));height:calc(20px*var(--u))}
+.rail .logo{width:calc(32px*var(--u));height:calc(32px*var(--u));font-size:calc(13px*var(--u))}
 /* дерево */
-.side h3{font-size:calc(12.5px*var(--u));color:#334155;font-weight:700}.side h3 small{font-weight:500;color:var(--hint)}
-.row{min-height:calc(36px*var(--u));font-size:calc(14px*var(--u));padding:5px 10px;color:var(--text)}
-.row svg{width:calc(17px*var(--u));height:calc(17px*var(--u));flex:none}
-.row.sm{font-size:calc(14px*var(--u));padding:5px 8px}
-.row.sm .no{width:calc(22px*var(--u));height:calc(22px*var(--u));font-size:calc(12px*var(--u))}
-.row .av{width:calc(26px*var(--u));height:calc(26px*var(--u));font-size:calc(12px*var(--u))}
-.row small,.tag{font-size:calc(12px*var(--u));color:#475569}.tag{padding:2px 9px;background:#EEF1F6}
-.tc.layers .row{min-height:calc(30px*var(--u));font-size:calc(13px*var(--u));color:#334155}
-.lyr{font-size:calc(13px*var(--u));padding:7px 8px}.lyr svg{color:#64748B}
-.ra i{width:calc(26px*var(--u));height:calc(26px*var(--u))}.ra i svg{width:calc(15px*var(--u));height:calc(15px*var(--u))}
-.ra i,.row .x{color:#334155}
+.side{padding:12px 10px;gap:2px}
+.side h3{font-size:calc(12px*var(--u));color:var(--ink2);font-weight:600}.side h3 small{font-weight:400;color:var(--hint)}
+.row{min-height:calc(32px*var(--u));font-size:calc(13.5px*var(--u));padding:4px 9px}
+.row svg{width:calc(16px*var(--u));height:calc(16px*var(--u));flex:none}
+.row.sm{font-size:calc(13.5px*var(--u));padding:4px 8px}
+.row.sm .no{width:calc(21px*var(--u));height:calc(21px*var(--u));font-size:calc(11.5px*var(--u))}
+.row .av{width:calc(24px*var(--u));height:calc(24px*var(--u));font-size:calc(12px*var(--u))}
+.row.on{font-weight:600}
+.row small,.tag{font-size:calc(11.5px*var(--u));color:var(--mute)}.tag{padding:2px 8px;background:#EEF1F6}
+.tc.layers .row{min-height:calc(28px*var(--u));font-size:calc(12.5px*var(--u));color:var(--ink2)}
+.lyr{font-size:calc(12.5px*var(--u));padding:6px 8px}.lyr svg{color:#64748B}
+.ra i{width:calc(24px*var(--u));height:calc(24px*var(--u))}.ra i svg{width:calc(14px*var(--u));height:calc(14px*var(--u))}
+.ra i,.row .x{color:var(--ink2)}
 /* правая панель */
-.panel{width:calc(292px*var(--u))}
-.panel .ph{padding:12px 16px}.ph b{font-size:calc(16px*var(--u))}.ph span{font-size:calc(13px*var(--u));color:#475569}
-.sec{padding:14px 16px;gap:10px}
-.sec h4,.lib h4,.libn h4,.libm h4,.keys-g h4,.pick h4{font-size:calc(12px*var(--u));font-weight:700;color:#475569;letter-spacing:.05em}
-.set-h{font-size:calc(12px*var(--u));color:#475569}
-.sec.fold .sh,details.fold2>summary{font-size:calc(12.5px*var(--u));font-weight:700;color:#334155;padding:13px 16px;text-transform:uppercase;letter-spacing:.05em}
-.sec.fold .sh svg{width:calc(15px*var(--u));height:calc(15px*var(--u))}
-.sec.fold .sb{padding:0 16px 14px}
-details.fold2>:not(summary){margin:0 16px 14px;width:calc(100% - 32px)}
-.fld span,.clr,.rng{font-size:calc(13px*var(--u));color:#334155}
-.clr{min-height:calc(34px*var(--u))}.rng output{color:var(--text);font-weight:600}
-.up{font-size:calc(13.5px*var(--u));font-weight:600;padding:4px 0}
-.hint,.tipl,.tips ul,.warn{font-size:calc(13px*var(--u))}
-.btnrow .btn{height:calc(36px*var(--u))}
-.fmt .btn.ic{width:calc(38px*var(--u));height:calc(36px*var(--u));border-color:rgba(15,23,42,.14)}
-.fmt .btn.ic svg{width:calc(18px*var(--u));height:calc(18px*var(--u))}
+.panel{width:calc(280px*var(--u))}
+.panel .ph{padding:11px 14px}.ph b{font-size:calc(14.5px*var(--u))}.ph span{font-size:calc(12.5px*var(--u));color:var(--mute)}
+.sec{padding:13px 14px;gap:9px}
+.sec h4,.lib h4,.libn h4,.libm h4,.keys-g h4,.pick h4{font-size:calc(12px*var(--u));font-weight:600;color:var(--mute);letter-spacing:.01em;text-transform:none}
+.set-h{font-size:calc(12px*var(--u));color:var(--mute);text-transform:none;letter-spacing:.01em;font-weight:600}
+.sec.fold .sh,details.fold2>summary{font-size:calc(13px*var(--u));font-weight:600;color:#1E293B;padding:12px 14px;text-transform:none;letter-spacing:0}
+.sec.fold .sh svg{width:calc(14px*var(--u));height:calc(14px*var(--u))}
+.sec.fold .sb{padding:0 14px 13px}
+details.fold2>:not(summary){margin:0 14px 13px;width:calc(100% - 28px)}
+.fld span,.clr,.rng{font-size:calc(12.5px*var(--u));color:var(--ink2)}
+.clr{min-height:calc(32px*var(--u))}.rng output{color:var(--text);font-weight:600}
+.up{font-size:calc(13px*var(--u));font-weight:600}
+.hint,.tipl,.tips ul,.warn{font-size:calc(12.5px*var(--u))}
+.btnrow .btn{height:calc(34px*var(--u))}
+.fmt .btn.ic{width:calc(36px*var(--u));height:calc(34px*var(--u))}
+.fmt .btn.ic svg{width:calc(17px*var(--u));height:calc(17px*var(--u))}
 .fmt .btn.ic.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.algrid .btn.ic{height:calc(38px*var(--u))}
-.cs{width:calc(22px*var(--u));height:calc(22px*var(--u))}.cs-row{gap:calc(7px*var(--u))}
-.cs.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--acc)}
-.sl{height:calc(34px*var(--u))!important;max-width:170px}
-.panel textarea.inp,.ep textarea.inp{font-size:calc(14px*var(--u));line-height:1.5}
-.panel.idle .row{margin:0 10px}.panel.idle .hint{padding:14px 16px}
-kbd{font-size:calc(12px*var(--u));padding:5px 8px}.krow{font-size:calc(14px*var(--u))}
-/* тулбар снизу */
-.tools{bottom:calc(20px + env(safe-area-inset-bottom,0px));padding:7px;gap:3px;border-radius:999px;box-shadow:0 12px 36px rgba(15,23,42,.18),0 0 0 1px rgba(15,23,42,.06)}
-.tools button{width:calc(44px*var(--u));height:calc(44px*var(--u));color:#334155}
-.tools button svg{width:calc(21px*var(--u));height:calc(21px*var(--u));stroke-width:2}
+.algrid .btn.ic{height:calc(34px*var(--u))}
+.cs{width:calc(20px*var(--u));height:calc(20px*var(--u))}.cs-row{gap:calc(6px*var(--u))}
+.sl{height:calc(32px*var(--u))!important;max-width:160px}
+.panel textarea.inp,.ep textarea.inp{font-size:calc(13.5px*var(--u));line-height:1.5}
+kbd{font-size:calc(11.5px*var(--u))}.krow{font-size:calc(13.5px*var(--u))}
+/* тулбар снизу: компактный, подсказка клавиши при наведении */
+.tools{bottom:calc(16px + env(safe-area-inset-bottom,0px));padding:5px;gap:2px;box-shadow:0 10px 30px rgba(15,23,42,.15),0 0 0 1px rgba(15,23,42,.05)}
+.tools button{position:relative;width:calc(40px*var(--u));height:calc(40px*var(--u));color:var(--ink2)}
+.tools button svg{width:calc(19px*var(--u));height:calc(19px*var(--u));stroke-width:2}
 .tools button:hover{background:var(--acc-s);color:var(--acc)}
-.tools button.on{background:var(--acc);color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--acc) 40%,transparent)}
-.tools .vr{height:calc(26px*var(--u));margin:0 7px}
-.tools button.zv{min-width:calc(62px*var(--u));font-size:calc(14px*var(--u));font-weight:700;color:var(--text)}
-.armhint{font-size:calc(14px*var(--u));padding:10px 18px;bottom:calc(86px*var(--u))}
-.ins-p{bottom:calc(88px*var(--u))}.vmenu{bottom:calc(88px*var(--u))}
-.vmi{height:calc(38px*var(--u));font-size:calc(14px*var(--u))}
-.ins-g .cell small{font-size:calc(12px*var(--u));color:#334155}
-.ins-f{font-size:calc(12px*var(--u))}
-/* холст: подписи и ручки заметнее */
-.cv-head{font-size:calc(14px*var(--u));font-weight:700;color:#334155}
-.band span{color:#64748B;font-weight:700}
-.band{border-bottom-color:#64748B}
-.bt button{height:calc(32px*var(--u));min-width:calc(32px*var(--u));font-size:calc(13px*var(--u))}
-.bt button svg{width:calc(16px*var(--u));height:calc(16px*var(--u))}
-.insb{height:calc(34px*var(--u));font-size:calc(13px*var(--u))}
-.insb svg{width:calc(16px*var(--u));height:calc(16px*var(--u))}
-.bh{height:calc(12px/var(--z,1))}
-.selbox .rz{width:calc(12px/var(--z,1));height:calc(12px/var(--z,1))}
-.rl text{font-size:10.5px;fill:#475569}.rl line{stroke:#64748B}
-/* окна, тосты, палитра */
-.sheet h2{font-size:calc(20px*var(--u))}.sheet .txt{font-size:calc(14px*var(--u))}
-.toast{font-size:calc(14px*var(--u))}.toast button{height:calc(34px*var(--u))}
-.pal-list button{font-size:calc(14.5px*var(--u))}.pal-in input{font-size:calc(16px*var(--u))}
-.set-row p{font-size:calc(13.5px*var(--u));color:var(--hint)}
-.libn button{font-size:calc(14px*var(--u))}.libn small{color:#475569}
-/* компактная плотность не возвращает мелкий шрифт */
-html[data-density=compact] .row{min-height:calc(30px*var(--u))}
-html[data-density=compact] .sec{padding:10px 14px}
-@media(max-width:860px){.panel{width:auto}.tools button{width:42px;height:42px}}
+.tools button.on{background:var(--acc);color:#fff;box-shadow:0 3px 10px color-mix(in srgb,var(--acc) 38%,transparent)}
+.tools button[data-k]::after{content:attr(data-k);position:absolute;right:3px;bottom:2px;font:600 9.5px Inter,system-ui,sans-serif;opacity:0;transition:opacity var(--t);color:inherit}
+.tools:hover button[data-k]::after{opacity:.55}
+.tools .vr{height:calc(22px*var(--u));margin:0 6px}
+.tools button.zv{min-width:calc(54px*var(--u));font-size:calc(13px*var(--u));font-weight:700;color:var(--text)}
+.armhint{font-size:calc(13px*var(--u));padding:9px 16px;bottom:calc(76px*var(--u))}
+.ins-p{bottom:calc(76px*var(--u))}.vmenu{bottom:calc(76px*var(--u))}
+.vmi{height:calc(36px*var(--u));font-size:calc(13.5px*var(--u))}
+.ins-g .cell small{font-size:calc(11.5px*var(--u));color:var(--ink2)}
+.ins-f{font-size:calc(11.5px*var(--u))}
+/* холст */
+.cv-head{font-size:calc(13px*var(--u));font-weight:600;color:var(--ink2)}
+.band span{color:#64748B;font-weight:600}
+.band{border-bottom-color:#7C8BA1}
+.rl text{font-size:10px;fill:#52627A}.rl line{stroke:#7C8BA1}
+.selbox .rz{width:calc(11px/var(--z,1));height:calc(11px/var(--z,1))}
+/* окна */
+.sheet h2{font-size:calc(18px*var(--u))}.sheet .txt{font-size:calc(13.5px*var(--u))}
+.toast{font-size:calc(13.5px*var(--u))}
+.pal-list button{font-size:calc(14px*var(--u))}.pal-in input{font-size:calc(15px*var(--u))}
+.set-row p{font-size:calc(13px*var(--u));color:var(--hint)}
+.libn button{font-size:calc(13.5px*var(--u))}.libn small{color:var(--mute)}
+html[data-density=compact] .row{min-height:calc(28px*var(--u))}
+html[data-density=compact] .sec{padding:10px 12px}
+@media(max-width:860px){.panel{width:auto}.tools button{width:40px;height:40px}}
