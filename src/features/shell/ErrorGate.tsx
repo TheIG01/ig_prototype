@@ -11,7 +11,7 @@ static getDerivedStateFromError(err:Error):S{return{err}}
 async resetCache(){try{const r=await navigator.serviceWorker?.getRegistrations();await Promise.all((r??[]).map(x=>x.unregister()));const k=await caches?.keys();await Promise.all((k??[]).map(x=>caches.delete(x)))}catch{}location.reload()}
 render(){if(!this.state.err)return this.props.children;
 return<div style={box}><div style={card}>
-<div style={{font:'800 20px Manrope,Inter,sans-serif',marginBottom:8}}>Что-то пошло не так</div>
+<div style={{font:'700 20px Inter,system-ui,sans-serif',marginBottom:8}}>Что-то пошло не так</div>
 <div style={{color:'var(--mute)',fontSize:14,lineHeight:1.5,marginBottom:16}}>Данные на устройстве целы. Скачай копию, затем сбрось кэш приложения и открой сайт снова.</div>
 <pre style={{background:'var(--bg)',borderRadius:10,padding:10,fontSize:12,whiteSpace:'pre-wrap',margin:'0 0 16px',maxHeight:120,overflow:'auto'}}>{String(this.state.err.message)}</pre>
 <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>

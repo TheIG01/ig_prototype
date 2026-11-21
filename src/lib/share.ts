@@ -62,7 +62,7 @@ main{padding:24px 0}@media(max-width:700px){main{padding:0}}
 .ov{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;z-index:10;padding:16px;overflow:auto}
 .pp{position:relative;background:#fff;border-radius:16px;overflow:hidden}.pp .fw{box-shadow:none}
 .pp .x{position:absolute;right:10px;top:10px;width:32px;height:32px;border-radius:50%;border:0;background:#0F172A;color:#fff;font-size:18px;cursor:pointer;z-index:2}
-body[data-mode=report]{background:#fff;padding:0 4px}.cover{padding:36px 0 12px}.cover h1{margin:0 0 6px;font:800 30px Manrope,Inter,sans-serif}.cover p{margin:0;color:#64748B}
+body[data-mode=report]{background:#fff;padding:0 4px}.cover{padding:36px 0 12px}.cover h1{margin:0 0 6px;font:700 30px Inter,system-ui,sans-serif}.cover p{margin:0;color:#64748B}
 section h2{font:700 18px Inter,sans-serif;margin:28px 0 12px;break-after:avoid}figure{margin:0 0 20px;break-inside:avoid}figcaption{font:600 12px Inter,sans-serif;color:#64748B;margin-bottom:6px}
 body[data-mode=report] .fw{margin:0;box-shadow:none;border:1px solid #CBD5E1}.nt{white-space:pre-wrap;font-size:12px;color:#334155;margin:8px 0 0}
 @page{size:A4 landscape;margin:12mm}`;
@@ -71,7 +71,7 @@ const ex=(a:El[])=>a.map(e=>({...resolve(e,p.style),a:artHtml(e),k:styleCss(e,p.
 const data={name:p.name,sheets:p.sheets.map(s=>({id:s.id,name:s.name,kind:s.kind,blocks:s.blocks.map(b=>({id:b.id,title:b.title,text:mode==='report'&&o.notes?b.text:'',h:b.h,els:{desktop:ex(b.els.desktop),tablet:ex(b.els.tablet),mobile:ex(b.els.mobile)}}))}))};
 const json=JSON.stringify(data).replace(/</g,'\\u003c');
 const esc=p.name.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'} as Record<string,string>)[c]);
-return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc} · прототип</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;700;800&family=Montserrat:wght@500;700&family=Playfair+Display:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"><style>${CSS}</style></head><body data-mode="${mode}" data-start="${o.dev??''}" data-notes="${o.notes?'1':''}"><div id="app"></div><script id="d" type="application/json">${json}</script><script>(${runtime.toString()})()</script></body></html>`}
+return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc} · прототип</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;700&family=Montserrat:wght@500;700&family=Playfair+Display:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"><style>${CSS}</style></head><body data-mode="${mode}" data-start="${o.dev??''}" data-notes="${o.notes?'1':''}"><div id="app"></div><script id="d" type="application/json">${json}</script><script>(${runtime.toString()})()</script></body></html>`}
 export function printHtml(html:string){const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:1100px;height:800px;border:0;opacity:0;pointer-events:none';document.body.appendChild(f);
 const d=f.contentDocument!;d.open();d.write(html);d.close();
 setTimeout(()=>{f.contentWindow!.focus();f.contentWindow!.print();setTimeout(()=>f.remove(),3000)},800)}
