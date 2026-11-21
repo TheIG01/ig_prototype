@@ -31,6 +31,9 @@ export function ElPanel({dev,e,b,st}:{dev:Dev;e:El;b:Block;st:PStyle}){
 const s=useStore();const set=(p:Partial<El>)=>s.updEl(dev,e.id,p);const [q,setQ]=useState('');const t=e.t;const r=resolve(e,st);
 const icons=useMemo(()=>{const f=q.trim().toLowerCase();return ICON_LIST.filter(([id,ru,c])=>!f||id.includes(f)||ru.toLowerCase().includes(f)||c.toLowerCase().includes(f))},[q]);
 const num=(k:'x'|'y'|'w'|'h',l:string)=><label className="num"><span>{l}</span><input type="number" value={Math.round(e[k])} disabled={k==='h'&&t==='line'} onChange={ev=>set({[k]:+ev.target.value||0} as Partial<El>)}/></label>;
+const canHug=t==='text'||t==='btn'||t==='input';
+const HUGS:{k:'w'|'h'|undefined;l:string}[]=[{k:'w',l:'По ширине'},...(t==='text'?[{k:'h' as const,l:'По высоте'}]:[]),{k:undefined,l:'Фиксированный'}];
+const hugRow=canHug?<div className="seg hug" title="Двойной клик по ручке размера делает то же самое">{HUGS.map(o=><button key={o.l} className={e.hug===o.k?'on':''} onClick={()=>set({hug:o.k})}>{o.l}</button>)}</div>:null;
 const hasFill=t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock'||t==='img';
 const hasStroke=t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock';
 const hasR=t==='rect'||t==='btn'||t==='input'||t==='img'||(t==='shape'&&['rect','round','bubble'].includes(e.sh??'rect'));
@@ -42,7 +45,7 @@ const sizes=[...new Set([12,13,14,16,18,20,24,32,40,48,56,72,r.fs??16])].sort((a
 return<aside className="panel ep"><div className="ph"><b>{NM[t]}</b><span>Элемент</span><button className="btn ic" onClick={()=>s.setBlock(b.id)} aria-label="Снять выделение"><X size={14}/></button></div>
 <div className="sec"><button className="up" title="Выбрать весь блок (Esc)" onClick={()=>s.setBlock(b.id)}><LayoutTemplate size={14}/>Блок: {b.title}</button>
 <h4>Положение и размер</h4><div className="grid2">{num('x','X')}{num('y','Y')}{num('w','Ш')}{num('h','В')}</div>
-<div className="btnrow">{(['Влево','Центр','Вправо'] as const).map((l,i)=><button key={l} className="btn" title="Выровнять по фрейму" onClick={()=>set({x:Math.max(0,[0,Math.round((FW[dev]-e.w)/2),FW[dev]-e.w][i])})}>{l}</button>)}</div></div>
+<div className="btnrow">{(['Влево','Центр','Вправо'] as const).map((l,i)=><button key={l} className="btn" title="Выровнять по фрейму" onClick={()=>set({x:Math.max(0,[0,Math.round((FW[dev]-e.w)/2),FW[dev]-e.w][i])})}>{l}</button>)}</div>{hugRow}</div>
 
 <LayPanel dev={dev} ids={[e.id]} single/>
 {hasText&&<div className="sec"><h4>{t==='list'?'Пункты (каждый с новой строки)':'Текст'}</h4><textarea id="el-text" className="inp" placeholder="Текст элемента (Enter)" value={e.text} onChange={ev=>set({text:ev.target.value})} onKeyDown={ev=>{if(ev.key==='Escape')(ev.target as HTMLElement).blur()}}/>

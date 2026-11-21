@@ -5,7 +5,7 @@ import {FW,DEVS} from './lib/dev';import {defStyle} from './lib/art';import type
 export {FW,DEVS};export type {Dev};
 export type Kind='page'|'popup';
 export type ET='text'|'rect'|'btn'|'input'|'img'|'line'|'shape'|'icon'|'mock'|'list';
-export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role}
+export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h'}
 /** авто-лейаут группы: d направление, gap отступ, al выравнивание поперёк, x y начало, mx центр по ширине блока, fl одинаковый поперечный размер */
 export interface Lay{d:'h'|'v';gap:number;al:'s'|'c'|'e';x:number;y:number;mx?:boolean;fl?:boolean}
 export interface Block{id:string;title:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>}
@@ -46,6 +46,7 @@ const curSheet=(s:Ctx)=>s.data?.projects.find(p=>p.id===s.projectId)?.sheets.fin
 const findEl=(sh:Sheet,dev:Dev,id:string)=>{for(const b of sh.blocks){const e=b.els[dev].find(x=>x.id===id);if(e)return{b,e}}return null};
 const hasEl=(sh:Sheet|undefined,id:string|null)=>!!id&&!!sh&&sh.blocks.some(b=>DEVS.some(d=>b.els[d].some(e=>e.id===id)));
 /** a block grows so that its elements always fit */
+import {hugSize} from './lib/measure';
 const LDV:Dev[]=['desktop','tablet','mobile'];const lh=(e:El)=>e.t==='line'?0:e.h;
 /** пересчёт авто-лейаута: порядок по центрам, одинаковый отступ, выравнивание, блок растёт под содержимое */
 const reflow=(b:Block,dev:Dev)=>{const L=b.lay?.[dev];if(!L)return;const W=FW[dev];
@@ -59,6 +60,8 @@ ox=Math.max(0,ox);oy=Math.max(0,oy);let p=v?oy:ox;
 for(const e of ord){const off=c.al==='s'?0:c.al==='c'?(cross-cs(e))/2:cross-cs(e);
 if(v){e.x=Math.round(ox+off);e.y=Math.round(p);p+=lh(e)+c.gap}else{e.y=Math.round(oy+off);e.x=Math.round(p);p+=e.w+c.gap}}
 grow(b,dev)}};
+/** размер по содержимому: пересчёт текста, кнопок и полей с флагом hug */
+const hugAll=(sh?:Sheet,st?:Project['style'])=>{if(!sh)return;for(const b of sh.blocks)for(const d of LDV){let ch=false;for(const e of b.els[d]){if(!e.hug)continue;const z=hugSize(e,st);if(!z)continue;if(z.w!==undefined&&e.w!==z.w){e.w=z.w;ch=true}if(z.h!==undefined&&e.h!==z.h){e.h=z.h;ch=true}}if(ch)grow(b,d)}};
 const reflowAll=(sh?:Sheet)=>{if(!sh)return;for(const b of sh.blocks)if(b.lay)for(const d of LDV)reflow(b,d)};
 const grow=(b:Block,dev:Dev)=>{const bt=Math.max(0,...b.els[dev].map(e=>e.y+e.h));if(bt+24>b.h[dev])b.h[dev]=Math.ceil((bt+24)/8)*8};
 const blockAt=(bs:Block[],dev:Dev,y:number)=>{const t=blockTops(bs,dev);for(let k=0;k<bs.length;k++)if(y<t[k]+bs[k].h[dev])return k;return bs.length-1};
@@ -66,7 +69,7 @@ let t:ReturnType<typeof setTimeout>;let past:Data[]=[],fut:Data[]=[],lastK='',la
 export const useStore=create<S>()(immer((set,get)=>{
 const persist=()=>{clearTimeout(t);t=setTimeout(async()=>{await save(get().data);set({status:'saved'})},400)};
 const restore=(d:Data)=>{set(s=>{s.data=d;const p=d.projects.find(x=>x.id===s.projectId)??d.projects[0];s.projectId=p?.id??null;const h=p?.sheets.find(x=>x.id===s.sheetId)??p?.sheets[0];s.sheetId=h?.id??null;if(!h?.blocks.some(b=>b.id===s.blockId))s.blockId=null;if(!h?.blocks.some(b=>b.id===s.editId)){s.editId=null;s.snap=null}if(!hasEl(h,s.elId))s.elId=null;s.status='saving'});persist()};
-const mut=(f:(s:S,p?:Project)=>void,k='')=>{const now=Date.now();if(!(k&&k===lastK&&now-lastT<1200)){past.push(get().data!);if(past.length>60)past.shift();fut=[]}lastK=k;lastT=now;set(s=>{f(s,s.data?.projects.find(p=>p.id===s.projectId));reflowAll(curSheet(s));const p=s.data?.projects.find(p=>p.id===s.projectId);if(p)p.updatedAt=Date.now();s.status='saving'});persist()};
+const mut=(f:(s:S,p?:Project)=>void,k='')=>{const now=Date.now();if(!(k&&k===lastK&&now-lastT<1200)){past.push(get().data!);if(past.length>60)past.shift();fut=[]}lastK=k;lastT=now;set(s=>{f(s,s.data?.projects.find(p=>p.id===s.projectId));hugAll(curSheet(s),s.data?.projects.find(p=>p.id===s.projectId)?.style);reflowAll(curSheet(s));const p=s.data?.projects.find(p=>p.id===s.projectId);if(p)p.updatedAt=Date.now();s.status='saving'});persist()};
 return{data:null,projectId:null,sheetId:null,blockId:null,elId:null,status:'saved',clip:null,clipM:null,multi:[],editId:null,snap:null,
 load:d0=>{past=[];fut=[];const d=migrate(d0);set({data:d,editId:null,snap:null,blockId:null,elId:null,projectId:d.projects[0]?.id??null,sheetId:d.projects[0]?.sheets[0]?.id??null})},
 addProject:(name,typeId)=>mut(s=>{const ty=[...PRESETS,...s.data!.siteTypes].find(x=>x.id===typeId)!;const sheets:Sheet[]=ty.pages.map(p=>({id:uid(),name:p.name,kind:p.kind,blocks:p.blocks.map(b=>mkBlock(b))}));autoLink(sheets);const pr:Project={id:uid(),name,typeId,style:defStyle(),sheets,createdAt:Date.now(),updatedAt:Date.now()};s.data!.projects.unshift(pr);s.projectId=pr.id;s.sheetId=sheets[0]?.id??null;s.blockId=null;s.elId=null}),
@@ -91,7 +94,9 @@ delBlockTpl:id=>mut(s=>{s.data!.blockTpls=s.data!.blockTpls.filter(x=>x.id!==id)
 setStyle:(patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);if(p)Object.assign(p.style,patch)},'pstyle'),
 setRole:(r,patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);if(p)Object.assign(p.style.roles[r],patch)},'prole'+r),
 addEl:(dev,tp,x,y,bid,extra)=>mut(s=>{const sh=curSheet(s);if(!sh)return;if(!sh.blocks.length)sh.blocks.push(mkBlock('Блок'));let i:number,ry:number;if(bid){i=Math.max(0,sh.blocks.findIndex(q=>q.id===bid));ry=y}else{i=y<0?0:blockAt(sh.blocks,dev,y);ry=y-blockTops(sh.blocks,dev)[i]}const b=sh.blocks[i];const [w,h,text]=EL_DEF[tp];const e:El={id:uid(),t:tp,x:Math.max(0,x),y:Math.max(0,Math.round(ry)),w,h,text,...extra};b.els[dev].push(e);grow(b,dev);s.elId=e.id;s.blockId=b.id}),
-updEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(!f)return;Object.assign(f.e,patch);grow(f.b,dev)},'u'+id),
+updEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(!f)return;const e=f.e;
+if(e.hug&&!('hug' in patch)){const cw=patch.w!==undefined&&patch.w!==e.w,chh=patch.h!==undefined&&patch.h!==e.h;if((e.hug==='w'&&(cw||chh))||(e.hug==='h'&&chh))delete e.hug}
+Object.assign(e,patch);if(e.hug===undefined)delete e.hug;grow(f.b,dev)},'u'+id),
 dragEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(f)Object.assign(f.e,patch)},'u'+id),
 dropEl:(dev,id,stay)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(!sh||!f)return;const tops=blockTops(sh.blocks,dev);const i0=sh.blocks.findIndex(b=>b.id===f.b.id);const absTop=tops[i0]+f.e.y;const j=stay?i0:blockAt(sh.blocks,dev,absTop+f.e.h/2);let tb=f.b;
 if(j>=0&&j!==i0){tb=sh.blocks[j];f.b.els[dev]=f.b.els[dev].filter(x=>x.id!==id);f.e.y=Math.round(absTop-tops[j]);tb.els[dev].push(f.e);s.blockId=tb.id}

@@ -146,9 +146,10 @@ const up=()=>{const d=drag.current;drag.current=null;panRef.current=null;setGd(n
 if(d.m==='box'){if(!d.w&&!d.base?.length)s.setBlock(s.editId)}
 else if(d.m==='move'){if((d.items?.length??0)<2)s.dropEl(dev,d.id,editing)}
 else if(d.m==='draw'){const ln=d.t==='line';
-if(!d.id)s.addEl(dev,d.t!,d.x,d.y,s.editId??undefined,d.ex);
-else s.updEl(dev,d.id,{w:Math.max(16,d.w),h:ln?0:Math.max(d.t==='text'?24:16,d.h)});
+if(!d.id)s.addEl(dev,d.t!,d.x,d.y,s.editId??undefined,d.t==='text'?{...d.ex,hug:'w'}:d.ex);
+else s.updEl(dev,d.id,{w:Math.max(16,d.w),h:ln?0:Math.max(d.t==='text'?24:16,d.h),...(d.t==='text'?{hug:'h' as const}:{})});
 pick('sel');if(d.t==='text')setTimeout(()=>{const i=document.getElementById('el-text') as HTMLInputElement|null;i?.focus();i?.select?.()},80)}};
+const hugEl=(e:El,k:string)=>{if(!(e.t==='text'||e.t==='btn'||e.t==='input')){toast('Размер по содержимому: текст, кнопка и поле');return}s.updEl(dev,e.id,{hug:e.t==='text'&&(k==='n'||k==='s')?'h':'w'})};
 const dbl=()=>{if(editing)document.getElementById('el-text')?.focus();else if(s.blockId)s.enterEdit(s.blockId)};
 return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок ${all.indexOf(editB)+1} · ${editB.title}`:sh?.name} · {{desktop:'Desktop',tablet:'Tablet',mobile:'Mobile'}[dev]} · {W}</div>
 <div className="cv" ref={wrap} style={{width:W*z,height:H*z,cursor:pan?'grab':editing&&tool!=='sel'?'crosshair':'default'}} onPointerDown={press} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={dbl}>
@@ -163,7 +164,7 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 {mq&&<div className="mq" style={{left:mq.x,top:mq.y,width:mq.w,height:mq.h}}/>}
 {meas.map((m,i)=><div key={'ms'+i}><i className={'ds '+(m.vt?'v':'h')} style={{left:m.x,top:(sel?.top??sb?.top??0)+m.y,width:m.vt?undefined:m.w,height:m.vt?m.h:undefined}}/><span className="dsl" style={{left:m.vt?m.x:m.x+m.w/2,top:(sel?.top??sb?.top??0)+(m.vt?m.y+m.h/2:m.y)}}>{Math.round(m.v)}</span></div>)}
 {lbs.map(l=>{const tp=sel?.top??sb?.top??0;return<div key={'lb'+l.g}><div className="lbox" style={{left:l.x-6,top:tp+l.y-6,width:l.w+12,height:l.h+12}}><span>{l.c.d==='v'?'↓':'→'} {l.c.gap}</span></div>{l.gp.map((r,i)=><div key={i} className="lgap" style={{left:r.x,top:tp+r.y,width:r.w,height:r.h}}/>)}</div>})}
-{sel&&tool==='sel'&&<div className="selbox" style={{left:sel.e.x,top:sel.top+(sel.e.t==='line'?sel.e.y-6:sel.e.y),width:sel.e.w,height:sel.e.t==='line'?12:sel.e.h}}>{(sel.e.t==='line'?['w','e']:['nw','n','ne','e','se','s','sw','w']).map(k=><u key={k} className={'rz '+k} onPointerDown={ev=>downR(ev,sel.e,k)}/>)}</div>}
+{sel&&tool==='sel'&&<div className="selbox" style={{left:sel.e.x,top:sel.top+(sel.e.t==='line'?sel.e.y-6:sel.e.y),width:sel.e.w,height:sel.e.t==='line'?12:sel.e.h}}>{(sel.e.t==='line'?['w','e']:['nw','n','ne','e','se','s','sw','w']).map(k=><u key={k} className={'rz '+k} onPointerDown={ev=>downR(ev,sel.e,k)} onDoubleClick={ev=>{ev.stopPropagation();hugEl(sel.e,k)}}/>)}</div>}
 {selB&&<><div className="bhs" style={{top:tops[selBi]+selB.h[dev]}} onPointerDown={ev=>downB(ev,selB)} onDoubleClick={ev=>{ev.stopPropagation();s.setH(dev,selB.id,Math.max(96,Math.ceil(Math.max(0,...selB.els[dev].map(q=>q.y+q.h))/8)*8+48))}} title="Потяни, чтобы изменить высоту. Двойной клик: по содержимому"/><div className="bh" style={{left:W/2,top:tops[selBi]+selB.h[dev]}} onPointerDown={ev=>downB(ev,selB)} onDoubleClick={ev=>{ev.stopPropagation();s.setH(dev,selB.id,Math.max(96,Math.ceil(Math.max(0,...selB.els[dev].map(q=>q.y+q.h))/8)*8+48))}} title="Потяни, чтобы изменить высоту. Двойной клик: по содержимому"/><div className="dim" style={{left:W/2,top:tops[selBi]+selB.h[dev]+22}}>{W} × {selB.h[dev]}</div></>}
 {sel&&<div className="dim" style={{left:sel.e.x+sel.e.w/2,top:sel.top+sel.e.y+(sel.e.t==='line'?6:sel.e.h)+8}}>{Math.round(sel.e.w)}{sel.e.t==='line'?'':` × ${Math.round(sel.e.h)}`}</div>}
 {!vis.length&&<div className="cv-empty">Страница пустая. Нажми «Добавить блок»: с нуля или из библиотеки</div>}
@@ -182,9 +183,9 @@ return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>
 <div className="grid2"><label className="num"><span>В</span><input type="number" value={b.h[dev]} onChange={e=>s.setH(dev,b.id,+e.target.value||0)}/></label><label className="num"><span>Ш</span><input type="number" value={FW[dev]} disabled/></label></div>
 {dev==='mobile'&&b.h.mobile>844&&<p className="warn">Блок выше экрана телефона (844 px). Правило: один блок = один экран</p>}
 {!editing&&<button className="btn pri" onClick={()=>s.enterEdit(b.id)}><Pencil size={16}/>Редактировать блок</button>}</div>
-<div className="sec"><h4>Тексты и заметки</h4><textarea className="inp" placeholder="Тексты блока, пожелания дизайнеру, как работает: переходы, раскрытия, кнопки" value={b.text} onChange={e=>s.editBlock(b.id,{text:e.target.value})}/></div>
-{tips.length>0&&<div className="sec"><h4>Из твоих конспектов</h4><ul className="tipl">{tips.map(t=><li key={t}>{t}</li>)}</ul></div>}
-{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4>{[...els].reverse().map(x=><button key={x.id} className="row sm" onClick={()=>s.setEl(x.id)}><span>{NAME[x.t]}{x.text?` · ${x.text.slice(0,24)}`:''}</span></button>)}</div>}
+<details className="fold2" open={!!b.text}><summary>Тексты и заметки</summary><textarea className="inp" placeholder="Тексты блока, пожелания дизайнеру, как работает: переходы, раскрытия, кнопки" value={b.text} onChange={e=>s.editBlock(b.id,{text:e.target.value})}/></details>
+{tips.length>0&&<details className="fold2"><summary>Из твоих конспектов</summary><ul className="tipl">{tips.map(t=><li key={t}>{t}</li>)}</ul></details>}
+{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4>{[...els].reverse().map(x=><button key={x.id} className={'lyr'+(s.elId===x.id?' on':'')} onClick={()=>s.setEl(x.id)}><b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>)}</div>}
 {!editing&&<div className="sec"><h4>Положение</h4><div className="btnrow"><button className="btn" title="Блок выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1)}><ArrowUp size={16}/>Выше</button><button className="btn" title="Блок ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1)}><ArrowDown size={16}/>Ниже</button></div></div>}
 <div className="sec"><button className="btn" onClick={onTpl}><LayoutTemplate size={16}/>Сохранить как шаблон</button>
 {!editing&&<div className="btnrow"><button className="btn" title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={16}/>Дублировать</button><button className="btn danger" title="Удалить (Delete)" onClick={del}><Trash2 size={16}/>Удалить</button></div>}</div></aside>}
