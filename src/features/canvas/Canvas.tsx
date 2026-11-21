@@ -1,23 +1,25 @@
 import {useEffect,useRef,useState} from 'react';
-import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes} from 'lucide-react';
+import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import {useStore,FW,blockTops} from '../../store';
 import type {El,ET,Dev,Block} from '../../store';
 import {toast} from '../../lib/toast';
 import {TIPS} from '../../lib/tpl';
-import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {uid} from '../../lib/uid';
+import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
 const KEYS:Record<string,ET|'sel'>={KeyV:'sel',KeyT:'text',KeyR:'rect',KeyB:'btn',KeyF:'input',KeyI:'img',KeyL:'line'};
 const HK:Record<string,string>={sel:'V',text:'T',rect:'R',btn:'B',input:'F',img:'I',line:'L'};
-const G=8;const snap=(v:number,raw:boolean)=>raw?Math.round(v):Math.round(v/G)*G;
+const snap=(v:number,raw:boolean)=>{const u=getUi();return raw||!u.snap?Math.round(v):Math.round(v/u.gs)*u.gs};
+const LI:Record<string,LucideIcon>={text:Type,rect:Square,btn:RectangleHorizontal,input:TextCursorInput,img:Img,line:Minus};
+type Rg={x:[number,number];y:[number,number]};
 const clampZ=(v:number)=>Math.max(.1,Math.min(4,v));
 function useSheet(){const s=useStore();const pr=s.data?.projects.find(p=>p.id===s.projectId);const sh=pr?.sheets.find(x=>x.id===s.sheetId);return{s,sh,st:pr?.style}}
 type Drag={id:string;m:'move'|'bh'|'draw'|'rs'|'box';items?:{id:string;x:number;y:number}[];base?:string[];dir?:string;t?:ET;ex?:Partial<El>;sx:number;sy:number;x:number;y:number;w:number;h:number};
 const stop=(e:React.PointerEvent)=>e.stopPropagation();
 
 export function Canvas({dev,W,onAdd}:{dev:Dev;W:number;onAdd:(after?:string)=>void}){
-const {s,sh,st}=useSheet();const [ins,setIns]=useState(false);const [tool,setTool]=useState<ET|'sel'>('sel');const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);const [arm,setArm]=useState<Partial<El>>({});const [mq,setMq]=useState<{x:number;y:number;w:number;h:number}|null>(null);const [gd,setGd]=useState<{v:number[];h:number[]}|null>(null);
+const {s,sh,st}=useSheet();const ui=useUi();const [vm,setVm]=useState(false);const [ins,setIns]=useState(false);const [tool,setTool]=useState<ET|'sel'>('sel');const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);const [arm,setArm]=useState<Partial<El>>({});const [mq,setMq]=useState<{x:number;y:number;w:number;h:number}|null>(null);const [gd,setGd]=useState<{v:number[];h:number[]}|null>(null);
 const pick=(t:ET|'sel',ex:Partial<El>={})=>{setTool(t);setArm(ex)};
 const wrap=useRef<HTMLDivElement>(null);const space=useRef(false);const drag=useRef<Drag|null>(null);
 const panRef=useRef<{sx:number;sy:number;l:number;t:number}|null>(null);
@@ -30,9 +32,22 @@ const sel=selIds.length===1?flat.find(f=>f.e.id===selIds[0]):undefined;
 const sb=selIds.length>1?(()=>{const a=flat.filter(f=>selSet.has(f.e.id));const x=Math.min(...a.map(f=>f.e.x)),y=Math.min(...a.map(f=>f.e.y));return{x,y,w:Math.max(...a.map(f=>f.e.x+f.e.w))-x,h:Math.max(...a.map(f=>f.e.y+(f.e.t==='line'?0:f.e.h)))-y,top:a[0].top}})():undefined;
 const selBi=selIds.length?-1:vis.findIndex(b=>b.id===s.blockId);const selB=selBi>=0?vis[selBi]:undefined;
 const H=editing?Math.max(720,total+240):Math.max(900,total+280);
+const rr:Rg|undefined=(():Rg|undefined=>{if(sel)return{x:[sel.e.x,sel.e.x+sel.e.w],y:[sel.top+sel.e.y,sel.top+sel.e.y+(sel.e.t==='line'?0:sel.e.h)]};if(sb)return{x:[sb.x,sb.x+sb.w],y:[sb.top+sb.y,sb.top+sb.y+sb.h]};if(selB)return{x:[0,W],y:[tops[selBi],tops[selBi]+selB.h[dev]]};return undefined})();
 const stage=()=>wrap.current?.closest('.stage') as HTMLElement|null;
 const [alt,setAlt]=useState(false);const [ied,setIed]=useState<string|null>(null);
 const startIed=(e:El)=>{s.setMulti([e.id]);s.setEl(e.id);setIed(e.id)};
+const [gdr,setGdr]=useState<{ax:'x'|'y';pos:number;skip?:number}|null>(null);
+const gl=editB?.guides?.[dev]??{x:[] as number[],y:[] as number[]};
+const colInfo=()=>{const n=ui.colsN||({desktop:12,tablet:8,mobile:4} as Record<Dev,number>)[dev];const gut=ui.gut>=0?ui.gut:({desktop:24,tablet:16,mobile:16} as Record<Dev,number>)[dev];const mar=ui.mar>=0?ui.mar:({desktop:80,tablet:32,mobile:16} as Record<Dev,number>)[dev];const cw=Math.max(1,(W-2*mar-(n-1)*gut)/n);return{n,gut,mar,cw}};
+const colEdges=()=>{const c=colInfo();const o:number[]=[];for(let i=0;i<c.n;i++){const x=c.mar+i*(c.cw+c.gut);o.push(Math.round(x),Math.round(x+c.cw))}return o};
+/** направляющая: потянуть с линейки (новая) или за саму линию (двигать). Увести на линейку или за край: удалить */
+const startGuide=(e:React.PointerEvent,ax:'x'|'y',idx?:number)=>{if(!editing||!editB||e.button!==0)return;e.preventDefault();e.stopPropagation();if(!ui.guides)saveUi({guides:true});
+const b=editB,lim=ax==='x'?W:b.h[dev];const base={x:[...(b.guides?.[dev]?.x??[])],y:[...(b.guides?.[dev]?.y??[])]};if(idx!==undefined)base[ax].splice(idx,1);
+const calc=(ev:PointerEvent)=>{const r=wrap.current!.getBoundingClientRect();return Math.max(0,Math.min(lim,Math.round(ax==='x'?(ev.clientX-r.left)/z:(ev.clientY-r.top)/z)))};
+const mv=(ev:PointerEvent)=>setGdr({ax,pos:calc(ev),skip:idx});
+const upf=(ev:PointerEvent)=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',upf);setGdr(null);const r=wrap.current?.getBoundingClientRect();if(!r)return;const out=ax==='x'?(ev.clientX<r.left||ev.clientX>r.right):(ev.clientY<r.top||ev.clientY>r.bottom);if(out&&idx===undefined)return;if(!out)base[ax].push(calc(ev));s.setGuides(b.id,dev,base)};
+mv(e.nativeEvent);addEventListener('pointermove',mv);addEventListener('pointerup',upf)};
+const delGuide=(ax:'x'|'y',i:number)=>{if(!editB)return;const g={x:[...gl.x],y:[...gl.y]};g[ax].splice(i,1);s.setGuides(editB.id,dev,g)};
 const endIed=(id:string,t:string)=>{setIed(null);const q=els.find(x=>x.id===id);if(q&&q.t==='text'&&!t.trim())s.delEl(dev,id)};
 type LB={g:string;c:{d:'h'|'v';gap:number};x:number;y:number;w:number;h:number;gp:{x:number;y:number;w:number;h:number}[]};
 const lbs:LB[]=(()=>{if(!editing||!editB||!selIds.length)return[];const L=editB.lay?.[dev];if(!L)return[];const gs=[...new Set(els.filter(q=>selSet.has(q.id)&&q.g&&L[q.g]).map(q=>q.g as string))];
@@ -44,7 +59,7 @@ const meas:Ms[]=(()=>{if(!alt||!editing||!editB||!selIds.length)return[];const s
 let L=0,R=W,T=0,B=bh;for(const q of ot){const qb=q.y+(q.t==='line'?0:q.h);if(hv(q)||(q.t==='line'&&q.y>=y0&&q.y<=y1)){if(q.x+q.w<=x0)L=Math.max(L,q.x+q.w);if(q.x>=x1)R=Math.min(R,q.x)}if(vv(q)){if(qb<=y0)T=Math.max(T,qb);if(q.y>=y1)B=Math.min(B,q.y)}}
 const o:Ms[]=[];if(x0-L>0)o.push({x:L,y:cy,w:x0-L,h:0,v:x0-L,vt:false});if(R-x1>0)o.push({x:x1,y:cy,w:R-x1,h:0,v:R-x1,vt:false});if(y0-T>0)o.push({x:cx,y:T,w:0,h:y0-T,v:y0-T,vt:true});if(B-y1>0)o.push({x:cx,y:y1,w:0,h:B-y1,v:B-y1,vt:true});return o})();
 
-const fit=()=>{const w=stage()?.clientWidth??1000;setZ(clampZ(Math.min(1,(w-48)/W)))};
+const fit=()=>{const w=stage()?.clientWidth??1000;setZ(clampZ(Math.min(1,(w-48-(getUi().rulers?22:0))/W)))};
 useEffect(fit,[W]);
 useEffect(()=>{if(!editing){setTool('sel');setArm({});setIns(false);setIed(null)}},[editing]);
 const place=(t:ET,x:Partial<El>)=>{if(!editB)return;pick(t,x);setIns(false)};
@@ -60,6 +75,7 @@ const mod=e.ctrlKey||e.metaKey;
 if(e.code==='Space'&&!mod){e.preventDefault();if(!space.current){space.current=true;setPan(true)}return}
 const cur=editing?els.find(x=>x.id===s.elId):undefined;const curB=all.find(b=>b.id===s.blockId);
 if(mod){
+if(e.code==='Quote'&&!e.altKey){e.preventDefault();saveUi(e.shiftKey?{cols:!ui.cols}:{grid:!ui.grid});return}if(e.code==='Semicolon'){e.preventDefault();saveUi({guides:!ui.guides});return}
 if(e.code==='KeyA'&&editing){e.preventDefault();s.setMulti(els.map(x=>x.id));return}
 if(e.code==='KeyG'&&editing&&e.shiftKey&&selIds.length){e.preventDefault();s.groupEls(dev,selIds,false);return}
 if(e.code==='KeyG'&&editing&&selIds.length>1){e.preventDefault();s.groupEls(dev,selIds,true);return}
@@ -76,6 +92,7 @@ if(e.code==='KeyV'&&editing&&s.clip){e.preventDefault();s.clipPaste(dev);return}
 if((e.code==='BracketRight'||e.code==='BracketLeft')&&cur){e.preventDefault();s.moveEl(dev,cur.id,(e.code==='BracketRight'?1:-1)*(e.shiftKey?1e4:1))}
 return}
 if(e.altKey&&!editing&&curB&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();s.moveBlock(curB.id,e.key==='ArrowUp'?-1:1);return}
+if(e.shiftKey&&!e.altKey&&e.code==='KeyR'){e.preventDefault();saveUi({rulers:!ui.rulers});return}
 if(e.shiftKey&&!e.altKey&&e.code==='KeyA'&&editing){e.preventDefault();if(selIds.length<2){toast('Выдели два элемента и больше');return}const bb=editB?.lay?.[dev];const g0=cur?.g??els.find(q=>q.id===selIds[0])?.g;if(g0&&bb?.[g0]&&selIds.every(i=>els.find(q=>q.id===i)?.g===g0))s.delLay(dev,g0);else s.autoLay(dev,selIds);return}
 if(e.altKey&&editing&&!e.shiftKey&&selIds.length){const m=({KeyA:'l',KeyD:'r',KeyH:'c',KeyW:'t',KeyS:'b',KeyV:'m'} as Record<string,'l'|'r'|'c'|'t'|'b'|'m'>)[e.code];if(m){e.preventDefault();if(selIds.length>1)s.alignEls(dev,selIds,m);else if(cur&&editB){const bh=editB.h[dev];s.updEl(dev,cur.id,m==='l'?{x:0}:m==='r'?{x:Math.max(0,W-cur.w)}:m==='c'?{x:Math.max(0,Math.round((W-cur.w)/2))}:m==='t'?{y:0}:m==='b'?{y:Math.max(0,bh-cur.h)}:{y:Math.max(0,Math.round((bh-cur.h)/2))})}return}}
 if(e.altKey)return;
@@ -92,7 +109,7 @@ if(e.key==='Enter'){if(!editing&&curB){e.preventDefault();s.enterEdit(curB.id)}e
 if(editing&&selIds.length>1&&(e.key==='Delete'||e.key==='Backspace')){e.preventDefault();s.delEls(dev,selIds);return}
 if(!cur){if(!editing&&curB&&(e.key==='Delete'||e.key==='Backspace')){e.preventDefault();delBlock(curB)}return}
 if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();s.delEl(dev,cur.id);return}
-const st=e.shiftKey?G:1;const dd:Record<string,[number,number]>={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]};const v=dd[e.key];
+const st=e.shiftKey?getUi().nudge:1;const dd:Record<string,[number,number]>={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]};const v=dd[e.key];
 if(v){e.preventDefault();if(selIds.length>1){const a=els.filter(x=>selSet.has(x.id));const mx=Math.max(-Math.min(...a.map(x=>x.x)),Math.min(W-Math.max(...a.map(x=>x.x+x.w)),v[0])),my=Math.max(-Math.min(...a.map(x=>x.y)),v[1]);s.dragMany(dev,a.map(x=>({id:x.id,x:x.x+mx,y:x.y+my})))}else s.updEl(dev,cur.id,{x:Math.max(0,cur.x+v[0]),y:Math.max(0,cur.y+v[1])})}};
 const ku=(e:KeyboardEvent)=>{if(e.code!=='Space')return;if(space.current){space.current=false;setPan(false)}if(!typing(e))e.preventDefault()};
 const off=()=>{space.current=false;setPan(false)};
@@ -131,7 +148,7 @@ const all=new Set<string>(d.base);for(const o of els){const oy=o.t==='line'?o.y-
 const arr=[...all];if(arr.join()!==selIds.join())s.setMulti(arr)}
 else if(d.m==='move'){let nx=snap(d.x+dx,raw),ny=snap(d.y+dy,raw);const g={v:[] as number[],h:[] as number[]};
 if(!raw&&editB){const T=6/z,bh=editB.h[dev],o=editB.els[dev].filter(q=>!d.items?.some(i=>i.id===q.id));
-const xs=[0,W/2,W,...o.flatMap(q=>[q.x,q.x+q.w/2,q.x+q.w])],ys=[0,bh/2,bh,...o.flatMap(q=>[q.y,q.y+q.h/2,q.y+q.h])];
+const xs=[0,W/2,W,...gl.x,...(ui.cols?colEdges():[]),...(ui.smart?o.flatMap(q=>[q.x,q.x+q.w/2,q.x+q.w]):[])],ys=[0,bh/2,bh,...gl.y,...(ui.smart?o.flatMap(q=>[q.y,q.y+q.h/2,q.y+q.h]):[])];
 const mx=[0,d.w/2,d.w],my=[0,d.h/2,d.h];const px=d.x+dx,py=d.y+dy;let bx=T,by=T;
 for(const m of mx)for(const t of xs){const df=Math.abs(t-(px+m));if(df<bx){bx=df;nx=Math.round(t-m)}}
 for(const m of my)for(const t of ys){const df=Math.abs(t-(py+m));if(df<by){by=df;ny=Math.round(t-m)}}
@@ -154,14 +171,16 @@ pick('sel');if(d.t==='text'){const nid=d.id||useStore.getState().elId;if(nid)set
 const hugEl=(e:El,k:string)=>{if(!(e.t==='text'||e.t==='btn'||e.t==='input')){toast('Размер по содержимому: текст, кнопка и поле');return}s.updEl(dev,e.id,{hug:e.t==='text'&&(k==='n'||k==='s')?'h':'w'})};
 const dbl=()=>{if(!editing&&s.blockId)s.enterEdit(s.blockId)};
 return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок ${all.indexOf(editB)+1} · ${editB.title}`:sh?.name} · {{desktop:'Desktop',tablet:'Tablet',mobile:'Mobile'}[dev]} · {W}</div>
-<div className="cv" ref={wrap} style={{width:W*z,height:H*z,cursor:pan?'grab':editing&&tool!=='sel'?'crosshair':'default'}} onPointerDown={press} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={dbl}>
+{ui.rulers&&<div className="rl-top"><i className="rl-corner"/><Ruler z={z} len={W} range={rr?.x} onGuide={editing?e=>startGuide(e,'y'):undefined}/></div>}<div className="rl-body">{ui.rulers&&<Ruler vertical z={z} len={H} range={rr?.y} onGuide={editing?e=>startGuide(e,'x'):undefined}/>}<div className="cv" ref={wrap} style={{width:W*z,height:H*z,cursor:pan?'grab':editing&&tool!=='sel'?'crosshair':'default'}} onPointerDown={press} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={dbl}>
 <div className={'cv-in '+(editing?'ed':'pg')} style={{width:W,height:H,transform:`scale(${z})`,'--z':z} as React.CSSProperties}>
 {vis.map((b,i)=><div key={b.id} className={'band'+(i===selBi?' sel':'')} style={{top:tops[i],height:b.h[dev]}}><span>{all.indexOf(b)+1}. {b.title}</span>
 {!editing&&<div className="bt" onPointerDown={stop}><button title="Настройки блока" onClick={()=>s.setBlock(b.id)}><Settings size={14}/></button><button className="ed" title="Редактировать блок (Enter)" onClick={()=>s.enterEdit(b.id)}><Pencil size={14}/><span>Редактировать</span></button><i className="sep"/>
 <button title="Выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1)}><ArrowUp size={14}/></button><button title="Ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1)}><ArrowDown size={14}/></button><button title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={14}/></button><button className="dz" title="Удалить" onClick={()=>delBlock(b)}><Trash2 size={14}/></button></div>}</div>)}
+{editing&&editB&&ui.cols&&(()=>{const c=colInfo();return<div className="cols" style={{height:editB.h[dev],padding:`0 ${c.mar}px`,gap:c.gut,gridTemplateColumns:`repeat(${c.n},1fr)`}}>{Array.from({length:c.n},(_,i)=><i key={i}/>)}</div>})()}
 {flat.map(({e,top})=>{const on=selSet.has(e.id);return<div key={e.id} className={'el '+e.t+(on?' sel':'')+(e.acc?' acc':'')+(e.go?' lnk':'')+(ied===e.id?' ied-on':'')} style={elStyle(e,top,st)} onPointerDown={ev=>down(ev,e)} onDoubleClick={ev=>{if(!editing||tool!=='sel')return;ev.stopPropagation();if(INLINE.has(e.t))startIed(e);else document.getElementById('el-text')?.focus()}}>{ied===e.id?<InlineEdit text={e.text} single={e.t==='btn'||e.t==='input'} onText={t=>s.updEl(dev,e.id,{text:t})} onDone={t=>endIed(e.id,t)}/>:elInner(e)}</div>})}
 {!editing&&vis.slice(0,-1).map((b,i)=><div key={'i'+b.id} className="ins" style={{top:tops[i]+b.h[dev]}}><button className="insb" title="Добавить блок здесь" onPointerDown={stop} onClick={()=>onAdd(b.id)}><Plus size={16}/><span>Добавить блок</span></button></div>)}
 {gd&&editB&&<>{gd.v.map(x=><i key={'v'+x} className="gd" style={{left:x,top:0,height:editB.h[dev],width:'calc(1px/var(--z,1))'}}/>)}{gd.h.map(y=><i key={'h'+y} className="gd" style={{top:y,left:0,width:W,height:'calc(1px/var(--z,1))'}}/>)}</>}
+{editing&&editB&&ui.guides&&<>{(['x','y'] as const).flatMap(ax=>gl[ax].map((v,i)=>gdr&&gdr.ax===ax&&gdr.skip===i?null:<div key={ax+i} className={'guide '+(ax==='x'?'v':'h')} style={ax==='x'?{left:v,top:0,height:editB.h[dev]}:{top:v,left:0,width:W}} onPointerDown={ev=>startGuide(ev,ax,i)} onDoubleClick={ev=>{ev.stopPropagation();delGuide(ax,i)}} title="Потяни, чтобы двигать. Двойной клик или на линейку: удалить"><b>{v}</b></div>))}{gdr&&<div className={'guide live '+(gdr.ax==='x'?'v':'h')} style={gdr.ax==='x'?{left:gdr.pos,top:0,height:editB.h[dev]}:{top:gdr.pos,left:0,width:W}}><b>{gdr.pos}</b></div>}</>}
 {sb&&<><div className="msel" style={{left:sb.x,top:sb.top+sb.y,width:sb.w,height:sb.h}}/><div className="dim" style={{left:sb.x+sb.w/2,top:sb.top+sb.y+sb.h+8}}>{selIds.length} эл. · {Math.round(sb.w)} × {Math.round(sb.h)}</div></>}
 {mq&&<div className="mq" style={{left:mq.x,top:mq.y,width:mq.w,height:mq.h}}/>}
 {meas.map((m,i)=><div key={'ms'+i}><i className={'ds '+(m.vt?'v':'h')} style={{left:m.x,top:(sel?.top??sb?.top??0)+m.y,width:m.vt?undefined:m.w,height:m.vt?m.h:undefined}}/><span className="dsl" style={{left:m.vt?m.x:m.x+m.w/2,top:(sel?.top??sb?.top??0)+(m.vt?m.y+m.h/2:m.y)}}>{Math.round(m.v)}</span></div>)}
@@ -171,11 +190,12 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 {sel&&<div className="dim" style={{left:sel.e.x+sel.e.w/2,top:sel.top+sel.e.y+(sel.e.t==='line'?6:sel.e.h)+8}}>{Math.round(sel.e.w)}{sel.e.t==='line'?'':` × ${Math.round(sel.e.h)}`}</div>}
 {!vis.length&&<div className="cv-empty">Страница пустая. Нажми «Добавить блок»: с нуля или из библиотеки</div>}
 {!editing&&<button className="addblk" style={{left:W/2,top:vis.length?total+(selB&&selBi===vis.length-1?64:28):180}} onPointerDown={stop} onClick={()=>onAdd(vis.length?vis[vis.length-1].id:undefined)}><Plus size={16}/>Добавить блок (A)</button>}
-</div></div></div>
+</div></div></div></div>
+{vm&&<ViewMenu onClose={()=>setVm(false)}/>}
 {editing&&ins&&<InsertPanel onPick={place} onClose={()=>setIns(false)}/>}
 {editing&&tool!=='sel'&&<div className="armhint">{tool==='line'?'Потяни, чтобы провести линию':'Потяни на холсте, чтобы нарисовать'} · клик — размер по умолчанию · Shift — пропорции · Alt — без сетки · Esc — отмена</div>}
 <div className="tools">{editing&&<>{TOOLS.map(([k,l,I])=><button key={k} className={tool===k?'on':''} title={`${l} (${HK[k]})`} onClick={()=>pick(k)}><I size={18}/></button>)}<button className={ins||['shape','icon','mock','list'].includes(tool)?'on':''} title="Элементы: фигуры, иконки, мокапы (E)" onClick={()=>setIns(v=>!v)}><Shapes size={18}/></button><i className="vr"/></>}
-<button title="Уменьшить (−)" onClick={()=>setZ(clampZ(z-.1))}><Minus size={16}/></button><button className="zv" title="100% (Shift+0)" onClick={()=>setZ(1)}>{Math.round(z*100)}%</button><button title="Увеличить (+)" onClick={()=>setZ(clampZ(z+.1))}><Plus size={16}/></button><button title="Вписать (Shift+1)" onClick={fit}><Maximize size={16}/></button></div></>}
+<button title="Уменьшить (−)" onClick={()=>setZ(clampZ(z-.1))}><Minus size={16}/></button><button className="zv" title="100% (Shift+0)" onClick={()=>setZ(1)}>{Math.round(z*100)}%</button><button title="Увеличить (+)" onClick={()=>setZ(clampZ(z+.1))}><Plus size={16}/></button><button title="Вписать (Shift+1)" onClick={fit}><Maximize size={16}/></button><i className="vr"/><button className={vm?'on':''} title="Вид: линейки, сетка, направляющие, колонки" onClick={()=>setVm(v=>!v)}><Eye size={18}/></button></div></>}
 
 function BlockPanel({dev,b,idx,editing,onTpl}:{dev:Dev;b:Block;idx:number;editing:boolean;onTpl:()=>void}){
 const s=useStore();const tips=TIPS[b.title]??[];const els=b.els[dev];
@@ -187,7 +207,8 @@ return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>
 {!editing&&<button className="btn pri" onClick={()=>s.enterEdit(b.id)}><Pencil size={16}/>Редактировать блок</button>}</div>
 <details className="fold2" open={!!b.text}><summary>Тексты и заметки</summary><textarea className="inp" placeholder="Тексты блока, пожелания дизайнеру, как работает: переходы, раскрытия, кнопки" value={b.text} onChange={e=>s.editBlock(b.id,{text:e.target.value})}/></details>
 {tips.length>0&&<details className="fold2"><summary>Из твоих конспектов</summary><ul className="tipl">{tips.map(t=><li key={t}>{t}</li>)}</ul></details>}
-{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4>{[...els].reverse().map(x=><button key={x.id} className={'lyr'+(s.elId===x.id?' on':'')} onClick={()=>s.setEl(x.id)}><b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>)}</div>}
+{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4>{[...els].reverse().map(x=><button key={x.id} className={'lyr'+(s.elId===x.id?' on':'')} title={NAME[x.t]+(x.text?' · '+x.text:'')} onClick={()=>s.setEl(x.id)}>{(()=>{const I=LI[x.t]??Shapes;return<I size={14}/>})()}<b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>)}</div>}
+{editing&&((b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0))>0&&<div className="sec"><h4>Направляющие · {(b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0)}</h4><button className="btn" onClick={()=>s.setGuides(b.id,dev,{x:[],y:[]})}><X size={14}/>Очистить направляющие</button></div>}
 {!editing&&<div className="sec"><h4>Положение</h4><div className="btnrow"><button className="btn" title="Блок выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1)}><ArrowUp size={16}/>Выше</button><button className="btn" title="Блок ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1)}><ArrowDown size={16}/>Ниже</button></div></div>}
 <div className="sec"><button className="btn" onClick={onTpl}><LayoutTemplate size={16}/>Сохранить как шаблон</button>
 {!editing&&<div className="btnrow"><button className="btn" title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={16}/>Дублировать</button><button className="btn danger" title="Удалить (Delete)" onClick={del}><Trash2 size={16}/>Удалить</button></div>}</div></aside>}

@@ -380,3 +380,43 @@ html[data-density=compact] .btn{height:30px;padding:0 11px}html[data-density=com
 html[data-density=compact] .top{padding:6px 14px}html[data-density=compact] .row{padding:6px 8px}
 html[data-density=compact] .panel{padding:12px;gap:8px}html[data-density=compact] .side{padding:12px}
 html[data-motion=off] *,html[data-motion=off] *::before,html[data-motion=off] *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+
+/* ===== v1.9: линейки, направляющие, колонки, меню «Вид», слои и дерево ===== */
+.rl-top{position:sticky;top:0;z-index:8;display:flex;height:22px}
+.rl-corner{position:sticky;left:0;z-index:9;display:block;width:22px;height:22px;flex:none;background:#fff;border:1px solid var(--line);border-right:0;border-bottom:0;border-radius:8px 0 0 0}
+.rl{background:#fff;flex:none;user-select:none;overflow:hidden}
+.rl-h{height:22px;border-top:1px solid var(--line);border-right:1px solid var(--line);cursor:ns-resize}
+.rl-v{position:sticky;left:0;z-index:7;width:22px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);cursor:ew-resize}
+.rl svg{display:block}.rl line{stroke:#94A3B8;stroke-width:1}.rl text{font:500 9.5px Inter,system-ui,sans-serif;fill:#64748B}.rl .rl-band{fill:color-mix(in srgb,var(--acc) 20%,transparent)}
+.rl-body{display:flex;align-items:flex-start}.rl-body .cv{flex:none}
+.guide{position:absolute;z-index:4;--gc:#8B5CF6}
+.guide.v{width:calc(9px/var(--z,1));margin-left:calc(-4px/var(--z,1));cursor:ew-resize}
+.guide.h{height:calc(9px/var(--z,1));margin-top:calc(-4px/var(--z,1));cursor:ns-resize}
+.guide::before{content:'';position:absolute;background:var(--gc)}
+.guide.v::before{left:50%;top:0;bottom:0;width:calc(1px/var(--z,1));transform:translateX(-50%)}
+.guide.h::before{top:50%;left:0;right:0;height:calc(1px/var(--z,1));transform:translateY(-50%)}
+.guide b{display:none;position:absolute;background:var(--gc);color:#fff;font:600 calc(11px*var(--ls,1)/var(--z,1)) Inter,system-ui,sans-serif;padding:calc(1px/var(--z,1)) calc(6px/var(--z,1));border-radius:calc(5px/var(--z,1));white-space:nowrap;pointer-events:none}
+.guide.v b{left:calc(10px/var(--z,1));top:calc(8px/var(--z,1))}.guide.h b{top:calc(-22px/var(--z,1));left:calc(8px/var(--z,1))}
+.guide:hover b,.guide.live b{display:block}
+.cols{position:absolute;left:0;top:0;right:0;display:grid;pointer-events:none;z-index:0}
+.cols i{background:rgba(244,63,94,.08);box-shadow:inset 1px 0 0 rgba(244,63,94,.2),inset -1px 0 0 rgba(244,63,94,.2)}
+.vm-bg{position:fixed;inset:0;z-index:9}
+.vmenu{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);z-index:10;min-width:276px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-pop);padding:6px;animation:vmin .18s var(--ease)}
+@keyframes vmin{from{opacity:0;transform:translate(-50%,8px)}}
+.vmi{display:flex;align-items:center;gap:10px;width:100%;height:34px;padding:0 10px;border-radius:10px;text-align:left;transition:background var(--t)}.vmi:hover{background:var(--bg)}.vmi span{flex:1}
+.ck{width:16px;height:16px;border-radius:5px;border:1.5px solid #CBD5E1;display:grid;place-items:center;font:700 11px/1 Inter,system-ui,sans-serif;color:#fff;flex:none;font-style:normal;transition:all var(--t)}.ck.on{background:var(--acc);border-color:var(--acc)}
+.vm-sep{height:1px;background:var(--line);margin:6px 4px}.vm-row{display:flex;align-items:center;justify-content:space-between;padding:4px 10px}
+html[data-hover=on] .cv-in.ed .el:not(.sel):not(.ied-on):hover{outline:calc(1.5px/var(--z,1)) solid color-mix(in srgb,var(--acc) 55%,transparent);outline-offset:calc(1px/var(--z,1))}
+html[data-dims=off] .dim{display:none}
+.cv-in{background-size:var(--gs,16px) var(--gs,16px)}
+/* дерево: названия не обрезаются, действия появляются поверх при наведении */
+.row.sm{position:relative}
+.row .ra{position:absolute;right:6px;top:50%;transform:translateY(-50%);padding-left:20px;background:linear-gradient(90deg,transparent,var(--bg) 18px);display:none;opacity:1}
+.row.sm.on .ra{background:linear-gradient(90deg,transparent,var(--acc-s) 18px)}
+.row.sm:hover .ra{display:flex}
+@media(hover:none){.row .ra{display:flex}}
+/* слои блока */
+.lyr{align-items:center}.lyr svg{flex:none;color:#94A3B8}.lyr b{font-weight:500}.lyr.on svg{color:var(--acc)}
+.tc.layers .row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet{max-height:90vh;overflow:auto}
+.set-row .nm{width:84px;margin:0;text-align:center}

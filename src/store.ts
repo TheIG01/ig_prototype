@@ -8,7 +8,7 @@ export type ET='text'|'rect'|'btn'|'input'|'img'|'line'|'shape'|'icon'|'mock'|'l
 export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h'}
 /** авто-лейаут группы: d направление, gap отступ, al выравнивание поперёк, x y начало, mx центр по ширине блока, fl одинаковый поперечный размер */
 export interface Lay{d:'h'|'v';gap:number;al:'s'|'c'|'e';x:number;y:number;mx?:boolean;fl?:boolean}
-export interface Block{id:string;title:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>}
+export interface Block{id:string;title:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>;guides?:Partial<Record<Dev,{x:number[];y:number[]}>>}
 export interface BlockTpl{id:string;name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
 export interface Sheet{id:string;name:string;kind:Kind;blocks:Block[]}
 export interface Project{id:string;name:string;typeId:string;style:PStyle;sheets:Sheet[];createdAt:number;updatedAt:number}
@@ -35,7 +35,7 @@ enterEdit:(id:string)=>void;exitEdit:(save:boolean)=>void;
 load:(d:Data)=>void;addProject:(name:string,typeId:string)=>void;importOutline:(name:string,text:string)=>void;delProject:(id:string)=>void;openProject:(id:string)=>void;renameProject:(id:string,n:string)=>void;
 addSheet:(name:string,kind:Kind)=>void;renameSheet:(id:string,n:string)=>void;delSheet:(id:string)=>void;setSheet:(id:string)=>void;
 addBlock:(title:string,o?:{after?:string;tpl?:string})=>void;delBlock:(id:string)=>void;moveBlock:(id:string,dir:-1|1)=>void;dupBlock:(id:string)=>void;
-editBlock:(id:string,patch:Partial<Pick<Block,'title'|'text'>>)=>void;setH:(dev:Dev,id:string,h:number)=>void;saveBlockTpl:(id:string,name:string,cat?:string)=>void;delBlockTpl:(id:string)=>void;
+editBlock:(id:string,patch:Partial<Pick<Block,'title'|'text'>>)=>void;setH:(dev:Dev,id:string,h:number)=>void;setGuides:(id:string,dev:Dev,g:{x:number[];y:number[]})=>void;saveBlockTpl:(id:string,name:string,cat?:string)=>void;delBlockTpl:(id:string)=>void;
 addEl:(dev:Dev,t:ET,x:number,y:number,bid?:string,extra?:Partial<El>)=>void;setStyle:(patch:Partial<PStyle>)=>void;setRole:(r:Role,p:Partial<PStyle['roles'][Role]>)=>void;updEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dragEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dropEl:(dev:Dev,id:string,stay?:boolean)=>void;
 delEl:(dev:Dev,id:string)=>void;dupEl:(dev:Dev,id:string)=>void;moveEl:(dev:Dev,id:string,dir:number)=>void;copyEl:(dev:Dev,id:string)=>void;
 clipSet:(dev:Dev,id:string)=>void;clipPaste:(dev:Dev)=>void;setEl:(id:string|null)=>void;setMulti:(ids:string[])=>void;dragMany:(dev:Dev,ps:{id:string;x:number;y:number}[])=>void;delEls:(dev:Dev,ids:string[])=>void;dupEls:(dev:Dev,ids:string[],off:number,nid:string[],k?:string)=>void;alignEls:(dev:Dev,ids:string[],m:'l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv')=>void;groupEls:(dev:Dev,ids:string[],on:boolean)=>void;autoLay:(dev:Dev,ids:string[])=>void;setLay:(dev:Dev,gid:string,p:Partial<Lay>)=>void;delLay:(dev:Dev,gid:string)=>void;clipSetMany:(dev:Dev,ids:string[])=>void;clipPasteMany:(dev:Dev)=>void;setBlock:(id:string|null)=>void;
@@ -88,6 +88,7 @@ exitEdit:save=>{if(save){set(s=>{s.editId=null;s.snap=null;s.elId=null});return}
 moveBlock:(id,dir)=>mut(s=>{const a=curSheet(s)?.blocks;if(!a)return;const i=a.findIndex(b=>b.id===id),j=i+dir;if(i<0||j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]]}),
 dupBlock:id=>mut(s=>{const a=curSheet(s)?.blocks;const i=a?a.findIndex(b=>b.id===id):-1;if(!a||i<0)return;const o=JSON.parse(JSON.stringify(a[i])) as Block;o.id=uid();o.els=fresh(o.els);a.splice(i+1,0,o);s.blockId=o.id;s.elId=null}),
 editBlock:(id,patch)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(b)Object.assign(b,patch)},'e'+id),
+setGuides:(id,dev,g)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;const u=(a:number[])=>[...new Set(a.map(v=>Math.round(v)))].sort((p,q)=>p-q);const gs={...(b.guides??{})} as NonNullable<Block['guides']>;const x=u(g.x),y=u(g.y);if(!x.length&&!y.length)delete gs[dev];else gs[dev]={x,y};if(Object.keys(gs).length)b.guides=gs;else delete b.guides},'g'+id),
 setH:(dev,id,h)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;const bt=Math.max(0,...b.els[dev].map(e=>e.y+e.h));b.h[dev]=Math.max(80,bt,Math.round(h))},'h'+id),
 saveBlockTpl:(id,name,cat)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;const c=JSON.parse(JSON.stringify(b)) as Block;s.data!.blockTpls.push({id:uid(),name,cat:cat||undefined,text:c.text,h:c.h,els:fresh(c.els)})}),
 delBlockTpl:id=>mut(s=>{s.data!.blockTpls=s.data!.blockTpls.filter(x=>x.id!==id)}),
