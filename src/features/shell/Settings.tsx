@@ -11,6 +11,7 @@ const kill=async()=>{await wipe();location.reload()};
 return<div>
 <h4 className="set-h">Вид</h4>
 <div className="set-row"><div><b>Акцентный цвет</b><p>Кнопки, выделение, направляющие</p></div><div className="swatches">{ACCENTS.map(([c,n])=><button key={c} className={'swt'+(u.accent===c?' on':'')} style={{background:c}} title={n} aria-label={n} aria-pressed={u.accent===c} onClick={()=>up({accent:c})}/>)}</div></div>
+<div className="set-row"><div><b>Размер интерфейса</b><p>Крупнее подписи, кнопки и иконки в панелях, дереве и тулбаре</p></div><div className="seg">{([['m','Обычный'],['l','Крупный'],['xl','Очень крупный']] as const).map(([k,l])=><button key={k} className={u.size===k?'on':''} onClick={()=>up({size:k})}>{l}</button>)}</div></div>
 <div className="set-row"><div><b>Плотность интерфейса</b><p>Компактная вмещает больше на экран</p></div><div className="seg">{([['cozy','Обычная'],['compact','Компактная']] as const).map(([k,l])=><button key={k} className={u.density===k?'on':''} onClick={()=>up({density:k})}>{l}</button>)}</div></div>
 <div className="set-row"><div><b>Подписи на холсте</b><p>Названия блоков, размеры, расстояния</p></div><div className="seg">{([[1,'M'],[1.25,'L'],[1.5,'XL']] as const).map(([k,l])=><button key={k} className={u.labels===k?'on':''} onClick={()=>up({labels:k})}>{l}</button>)}</div></div>
 <div className="set-row"><div><b>Точечная сетка на холсте</b><p>Привязка к 8 px работает и без неё</p></div><input type="checkbox" className="sw" checked={u.grid} onChange={e=>up({grid:e.target.checked})}/></div>
