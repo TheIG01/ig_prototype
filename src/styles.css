@@ -272,3 +272,8 @@ body{font-size:13px}
 .armhint{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);background:var(--text);color:#fff;font:500 12.5px/1.4 Inter,system-ui,sans-serif;padding:8px 14px;border-radius:999px;z-index:5;pointer-events:none;max-width:94%;text-align:center;animation:fadeup .18s cubic-bezier(.22,.8,.3,1)}
 @keyframes fadeup{from{opacity:0;transform:translate(-50%,6px)}}
 @media (prefers-reduced-motion:reduce){.armhint{animation:none}}
+
+/* v1.2 multi-select */
+.msel{position:absolute;pointer-events:none;z-index:3;border:calc(1px/var(--z,1)) dashed var(--acc)}
+.mq{position:absolute;pointer-events:none;z-index:4;background:rgba(47,107,255,.08);border:calc(1px/var(--z,1)) solid var(--acc)}
+.algrid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:8px}.algrid .btn.ic{width:100%;padding:0;justify-content:center;height:34px}

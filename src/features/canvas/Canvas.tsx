@@ -5,7 +5,7 @@ import {useStore,FW,blockTops} from '../../store';
 import type {El,ET,Dev,Block} from '../../store';
 import {toast} from '../../lib/toast';
 import {TIPS} from '../../lib/tpl';
-import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';
+import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {uid} from '../../lib/uid';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
 const KEYS:Record<string,ET|'sel'>={KeyV:'sel',KeyT:'text',KeyR:'rect',KeyB:'btn',KeyF:'input',KeyI:'img',KeyL:'line'};
@@ -13,11 +13,11 @@ const HK:Record<string,string>={sel:'V',text:'T',rect:'R',btn:'B',input:'F',img:
 const G=8;const snap=(v:number,raw:boolean)=>raw?Math.round(v):Math.round(v/G)*G;
 const clampZ=(v:number)=>Math.max(.1,Math.min(4,v));
 function useSheet(){const s=useStore();const pr=s.data?.projects.find(p=>p.id===s.projectId);const sh=pr?.sheets.find(x=>x.id===s.sheetId);return{s,sh,st:pr?.style}}
-type Drag={id:string;m:'move'|'bh'|'draw'|'rs';dir?:string;t?:ET;ex?:Partial<El>;sx:number;sy:number;x:number;y:number;w:number;h:number};
+type Drag={id:string;m:'move'|'bh'|'draw'|'rs'|'box';items?:{id:string;x:number;y:number}[];base?:string[];dir?:string;t?:ET;ex?:Partial<El>;sx:number;sy:number;x:number;y:number;w:number;h:number};
 const stop=(e:React.PointerEvent)=>e.stopPropagation();
 
 export function Canvas({dev,W,onAdd}:{dev:Dev;W:number;onAdd:(after?:string)=>void}){
-const {s,sh,st}=useSheet();const [ins,setIns]=useState(false);const [tool,setTool]=useState<ET|'sel'>('sel');const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);const [arm,setArm]=useState<Partial<El>>({});const [gd,setGd]=useState<{v:number[];h:number[]}|null>(null);
+const {s,sh,st}=useSheet();const [ins,setIns]=useState(false);const [tool,setTool]=useState<ET|'sel'>('sel');const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);const [arm,setArm]=useState<Partial<El>>({});const [mq,setMq]=useState<{x:number;y:number;w:number;h:number}|null>(null);const [gd,setGd]=useState<{v:number[];h:number[]}|null>(null);
 const pick=(t:ET|'sel',ex:Partial<El>={})=>{setTool(t);setArm(ex)};
 const wrap=useRef<HTMLDivElement>(null);const space=useRef(false);const drag=useRef<Drag|null>(null);
 const panRef=useRef<{sx:number;sy:number;l:number;t:number}|null>(null);
@@ -25,8 +25,10 @@ const all=sh?.blocks??[];const editB=all.find(b=>b.id===s.editId);const editing=
 const vis=editB?[editB]:all;const tops=blockTops(vis,dev);
 const total=vis.length?tops[tops.length-1]+vis[vis.length-1].h[dev]:0;
 const flat=vis.flatMap((b,i)=>(b.els?.[dev]??[]).map(e=>({e,b,top:tops[i]})));const els=flat.map(f=>f.e);
-const sel=editing?flat.find(f=>f.e.id===s.elId):undefined;
-const selBi=sel?-1:vis.findIndex(b=>b.id===s.blockId);const selB=selBi>=0?vis[selBi]:undefined;
+const selIds=editing?(s.multi.includes(s.elId??'')?s.multi:s.elId?[s.elId]:[]).filter(id=>els.some(x=>x.id===id)):[];const selSet=new Set(selIds);
+const sel=selIds.length===1?flat.find(f=>f.e.id===selIds[0]):undefined;
+const sb=selIds.length>1?(()=>{const a=flat.filter(f=>selSet.has(f.e.id));const x=Math.min(...a.map(f=>f.e.x)),y=Math.min(...a.map(f=>f.e.y));return{x,y,w:Math.max(...a.map(f=>f.e.x+f.e.w))-x,h:Math.max(...a.map(f=>f.e.y+(f.e.t==='line'?0:f.e.h)))-y,top:a[0].top}})():undefined;
+const selBi=selIds.length?-1:vis.findIndex(b=>b.id===s.blockId);const selB=selBi>=0?vis[selBi]:undefined;
 const H=editing?Math.max(720,total+240):Math.max(900,total+280);
 const stage=()=>wrap.current?.closest('.stage') as HTMLElement|null;
 const fit=()=>{const w=stage()?.clientWidth??1000;setZ(clampZ(Math.min(1,(w-48)/W)))};
@@ -45,6 +47,13 @@ const mod=e.ctrlKey||e.metaKey;
 if(e.code==='Space'&&!mod){e.preventDefault();if(!space.current){space.current=true;setPan(true)}return}
 const cur=editing?els.find(x=>x.id===s.elId):undefined;const curB=all.find(b=>b.id===s.blockId);
 if(mod){
+if(e.code==='KeyA'&&editing){e.preventDefault();s.setMulti(els.map(x=>x.id));return}
+if(e.code==='KeyG'&&editing&&e.shiftKey&&selIds.length){e.preventDefault();s.groupEls(dev,selIds,false);return}
+if(e.code==='KeyG'&&editing&&selIds.length>1){e.preventDefault();s.groupEls(dev,selIds,true);return}
+if(e.altKey&&editing&&selIds.length>2&&(e.code==='KeyH'||e.code==='KeyV')){e.preventDefault();s.alignEls(dev,selIds,e.code==='KeyH'?'dh':'dv');return}
+if(e.code==='KeyD'&&editing&&selIds.length>1){e.preventDefault();s.dupEls(dev,selIds,16,selIds.map(()=>uid()));return}
+if((e.code==='KeyC'||e.code==='KeyX')&&editing&&selIds.length>1){e.preventDefault();s.clipSetMany(dev,selIds);if(e.code==='KeyX')s.delEls(dev,selIds);return}
+if(e.code==='KeyV'&&editing&&s.clipM){e.preventDefault();s.clipPasteMany(dev);return}
 if(e.code==='Enter'&&editing){e.preventDefault();s.exitEdit(true);return}
 if(e.code==='KeyD'){e.preventDefault();if(cur)s.dupEl(dev,cur.id);else if(curB&&!editing)s.dupBlock(curB.id);return}
 if(e.code==='KeyB'&&cur){e.preventDefault();s.updEl(dev,cur.id,{b:!cur.b});return}
@@ -54,6 +63,7 @@ if(e.code==='KeyV'&&editing&&s.clip){e.preventDefault();s.clipPaste(dev);return}
 if((e.code==='BracketRight'||e.code==='BracketLeft')&&cur){e.preventDefault();s.moveEl(dev,cur.id,(e.code==='BracketRight'?1:-1)*(e.shiftKey?1e4:1))}
 return}
 if(e.altKey&&!editing&&curB&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();s.moveBlock(curB.id,e.key==='ArrowUp'?-1:1);return}
+if(e.altKey&&editing&&!e.shiftKey&&selIds.length){const m=({KeyA:'l',KeyD:'r',KeyH:'c',KeyW:'t',KeyS:'b',KeyV:'m'} as Record<string,'l'|'r'|'c'|'t'|'b'|'m'>)[e.code];if(m){e.preventDefault();if(selIds.length>1)s.alignEls(dev,selIds,m);else if(cur&&editB){const bh=editB.h[dev];s.updEl(dev,cur.id,m==='l'?{x:0}:m==='r'?{x:Math.max(0,W-cur.w)}:m==='c'?{x:Math.max(0,Math.round((W-cur.w)/2))}:m==='t'?{y:0}:m==='b'?{y:Math.max(0,bh-cur.h)}:{y:Math.max(0,Math.round((bh-cur.h)/2))})}return}}
 if(e.altKey)return;
 if(e.shiftKey&&e.code==='Digit0'){e.preventDefault();setZ(1);return}
 if(e.shiftKey&&e.code==='Digit1'){e.preventDefault();fit();return}
@@ -65,16 +75,25 @@ if(e.code==='Minus'||e.code==='NumpadSubtract'){setZ(v=>clampZ(v-.1));return}
 if(e.key==='Escape'){if(ins){setIns(false);return}if(tool!=='sel'){pick('sel');return}if(cur){s.setBlock(s.editId);return}if(editing){s.exitEdit(true);return}if(s.blockId)s.setBlock(null);return}
 if(e.key==='Tab'&&editing&&els.length&&(e.target as HTMLElement).tagName==='BODY'){e.preventDefault();const i=els.findIndex(x=>x.id===s.elId);const n=i<0?(e.shiftKey?els.length-1:0):(i+(e.shiftKey?-1:1)+els.length)%els.length;s.setEl(els[n].id);return}
 if(e.key==='Enter'){if(!editing&&curB){e.preventDefault();s.enterEdit(curB.id)}else if(cur){e.preventDefault();document.getElementById('el-text')?.focus()}return}
+if(editing&&selIds.length>1&&(e.key==='Delete'||e.key==='Backspace')){e.preventDefault();s.delEls(dev,selIds);return}
 if(!cur){if(!editing&&curB&&(e.key==='Delete'||e.key==='Backspace')){e.preventDefault();delBlock(curB)}return}
 if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();s.delEl(dev,cur.id);return}
 const st=e.shiftKey?G:1;const dd:Record<string,[number,number]>={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]};const v=dd[e.key];
-if(v){e.preventDefault();s.updEl(dev,cur.id,{x:Math.max(0,cur.x+v[0]),y:Math.max(0,cur.y+v[1])})}};
+if(v){e.preventDefault();if(selIds.length>1){const a=els.filter(x=>selSet.has(x.id));const mx=Math.max(-Math.min(...a.map(x=>x.x)),Math.min(W-Math.max(...a.map(x=>x.x+x.w)),v[0])),my=Math.max(-Math.min(...a.map(x=>x.y)),v[1]);s.dragMany(dev,a.map(x=>({id:x.id,x:x.x+mx,y:x.y+my})))}else s.updEl(dev,cur.id,{x:Math.max(0,cur.x+v[0]),y:Math.max(0,cur.y+v[1])})}};
 const ku=(e:KeyboardEvent)=>{if(e.code!=='Space')return;if(space.current){space.current=false;setPan(false)}if(!typing(e))e.preventDefault()};
 const off=()=>{space.current=false;setPan(false)};
 addEventListener('keydown',kd);addEventListener('keyup',ku);addEventListener('blur',off);
 return()=>{removeEventListener('keydown',kd);removeEventListener('keyup',ku);removeEventListener('blur',off)}});
 const pt=(e:{clientX:number;clientY:number})=>{const r=wrap.current!.getBoundingClientRect();return{x:(e.clientX-r.left)/z,y:(e.clientY-r.top)/z}};
-const down=(e:React.PointerEvent,el:El)=>{if(!editing||tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();s.setEl(el.id);drag.current={id:el.id,m:'move',t:el.t,sx:e.clientX,sy:e.clientY,x:el.x,y:el.y,w:el.w,h:el.h};wrap.current!.setPointerCapture(e.pointerId)};
+const grp=(id:string,mod:boolean)=>{const x=els.find(q=>q.id===id);return!mod&&x?.g?els.filter(q=>q.g===x.g).map(q=>q.id):[id]};
+const down=(e:React.PointerEvent,el:El)=>{if(!editing||tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();const mod=e.ctrlKey||e.metaKey;let ids=selIds;
+if(e.shiftKey){const g=grp(el.id,mod);ids=ids.includes(el.id)?ids.filter(i=>!g.includes(i)):[...ids,...g.filter(i=>!ids.includes(i))];s.setMulti(ids);return}
+if(!ids.includes(el.id)){ids=grp(el.id,mod);s.setMulti(ids)}
+const src=ids.map(i=>els.find(q=>q.id===i)).filter(Boolean) as El[];let tid=src.map(q=>q.id);
+if(e.altKey){tid=src.map(()=>uid());s.dupEls(dev,src.map(q=>q.id),0,tid)}
+const bx=Math.min(...src.map(q=>q.x)),by=Math.min(...src.map(q=>q.y));
+drag.current={id:tid[tid.length-1],m:'move',t:el.t,sx:e.clientX,sy:e.clientY,x:bx,y:by,w:Math.max(...src.map(q=>q.x+q.w))-bx,h:Math.max(...src.map(q=>q.y+q.h))-by,items:src.map((q,i)=>({id:tid[i],x:q.x,y:q.y}))};
+wrap.current!.setPointerCapture(e.pointerId)};
 const downR=(e:React.PointerEvent,el:El,dir:string)=>{if(!editing||tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();drag.current={id:el.id,m:'rs',dir,t:el.t,sx:e.clientX,sy:e.clientY,x:el.x,y:el.y,w:el.w,h:el.h};wrap.current!.setPointerCapture(e.pointerId)};
 const downB=(e:React.PointerEvent,b:Block)=>{if(tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();drag.current={id:b.id,m:'bh',sx:e.clientX,sy:e.clientY,x:0,y:0,w:0,h:b.h[dev]};wrap.current!.setPointerCapture(e.pointerId)};
 /** draw a new element by dragging a rectangle (Shift = proportions, Alt = no grid) */
@@ -93,8 +112,11 @@ L=Math.max(0,L);R=Math.min(W,R);T=Math.max(0,T);
 if(R-L<16){if(D.includes('w'))L=R-16;else R=L+16}if(!ln&&B-T<16){if(D.includes('n'))T=B-16;else B=T+16}
 if(e.shiftKey&&!ln&&D.length===2&&d.h){const nh=Math.round((R-L)/(d.w/d.h));if(D.includes('n'))T=B-nh;else B=T+nh}
 s.updEl(dev,d.id,{x:L,y:Math.max(0,T),w:R-L,h:ln?0:B-T})}
+else if(d.m==='box'){if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<3&&!d.w)return;d.w=1;const q=pt(e);const L=Math.min(d.x,q.x),T=Math.min(d.y,q.y),R=Math.max(d.x,q.x),B=Math.max(d.y,q.y);setMq({x:L,y:T,w:R-L,h:B-T});
+const all=new Set<string>(d.base);for(const o of els){const oy=o.t==='line'?o.y-6:o.y,oh=o.t==='line'?12:o.h;if(o.x<R&&o.x+o.w>L&&oy<B&&oy+oh>T)grp(o.id,false).forEach(i=>all.add(i))}
+const arr=[...all];if(arr.join()!==selIds.join())s.setMulti(arr)}
 else if(d.m==='move'){let nx=snap(d.x+dx,raw),ny=snap(d.y+dy,raw);const g={v:[] as number[],h:[] as number[]};
-if(!raw&&editB){const T=6/z,bh=editB.h[dev],o=editB.els[dev].filter(q=>q.id!==d.id);
+if(!raw&&editB){const T=6/z,bh=editB.h[dev],o=editB.els[dev].filter(q=>!d.items?.some(i=>i.id===q.id));
 const xs=[0,W/2,W,...o.flatMap(q=>[q.x,q.x+q.w/2,q.x+q.w])],ys=[0,bh/2,bh,...o.flatMap(q=>[q.y,q.y+q.h/2,q.y+q.h])];
 const mx=[0,d.w/2,d.w],my=[0,d.h/2,d.h];const px=d.x+dx,py=d.y+dy;let bx=T,by=T;
 for(const m of mx)for(const t of xs){const df=Math.abs(t-(px+m));if(df<bx){bx=df;nx=Math.round(t-m)}}
@@ -103,13 +125,14 @@ nx=Math.max(0,Math.min(W-d.w,nx));ny=Math.max(0,ny);
 for(const m of mx)for(const t of xs)if(Math.abs(t-(nx+m))<.5&&!g.v.includes(t))g.v.push(t);
 for(const m of my)for(const t of ys)if(Math.abs(t-(ny+m))<.5&&!g.h.includes(t))g.h.push(t)}
 else{nx=Math.max(0,Math.min(W-d.w,nx));ny=Math.max(0,ny)}
-setGd(g.v.length||g.h.length?g:null);s.dragEl(dev,d.id,{x:nx,y:ny})}};
+setGd(g.v.length||g.h.length?g:null);const ddx=nx-d.x,ddy=ny-d.y;s.dragMany(dev,(d.items??[]).map(i=>({id:i.id,x:i.x+ddx,y:i.y+ddy})))}};
 const create=(e:React.PointerEvent)=>{const p=pt(e),x=p.x,y=p.y;
 if(editing&&tool!=='sel'){drag.current={id:'',m:'draw',t:tool,ex:arm,sx:e.clientX,sy:e.clientY,x:Math.max(0,snap(x,e.altKey)),y:Math.max(0,snap(y,e.altKey)),w:0,h:0};wrap.current!.setPointerCapture(e.pointerId);return}
-if(editing){s.setBlock(s.editId);return}const i=y>=0&&y<total?vis.findIndex((_,k)=>y>=tops[k]&&y<tops[k]+vis[k].h[dev]):-1;s.setBlock(i>=0?vis[i].id:null)};
+if(editing){drag.current={id:'',m:'box',sx:e.clientX,sy:e.clientY,x,y,w:0,h:0,base:e.shiftKey?selIds:[]};wrap.current!.setPointerCapture(e.pointerId);return}const i=y>=0&&y<total?vis.findIndex((_,k)=>y>=tops[k]&&y<tops[k]+vis[k].h[dev]):-1;s.setBlock(i>=0?vis[i].id:null)};
 const press=(e:React.PointerEvent)=>{if(space.current||e.button===1){e.preventDefault();const st=stage();if(!st)return;panRef.current={sx:e.clientX,sy:e.clientY,l:st.scrollLeft,t:st.scrollTop};wrap.current!.setPointerCapture(e.pointerId);return}if(e.button!==0)return;create(e)};
-const up=()=>{const d=drag.current;drag.current=null;panRef.current=null;setGd(null);if(!d)return;
-if(d.m==='move')s.dropEl(dev,d.id,editing);
+const up=()=>{const d=drag.current;drag.current=null;panRef.current=null;setGd(null);setMq(null);if(!d)return;
+if(d.m==='box'){if(!d.w&&!d.base?.length)s.setBlock(s.editId)}
+else if(d.m==='move'){if((d.items?.length??0)<2)s.dropEl(dev,d.id,editing)}
 else if(d.m==='draw'){const ln=d.t==='line';
 if(!d.id)s.addEl(dev,d.t!,d.x,d.y,s.editId??undefined,d.ex);
 else s.updEl(dev,d.id,{w:Math.max(16,d.w),h:ln?0:Math.max(d.t==='text'?24:16,d.h)});
@@ -121,9 +144,11 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 {vis.map((b,i)=><div key={b.id} className={'band'+(i===selBi?' sel':'')} style={{top:tops[i],height:b.h[dev]}}><span>{all.indexOf(b)+1}. {b.title}</span>
 {!editing&&<div className="bt" onPointerDown={stop}><button title="Настройки блока" onClick={()=>s.setBlock(b.id)}><Settings size={14}/></button><button className="ed" title="Редактировать блок (Enter)" onClick={()=>s.enterEdit(b.id)}><Pencil size={14}/>Редактировать</button><i className="sep"/>
 <button title="Выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1)}><ArrowUp size={14}/></button><button title="Ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1)}><ArrowDown size={14}/></button><button title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={14}/></button><button className="dz" title="Удалить" onClick={()=>delBlock(b)}><Trash2 size={14}/></button></div>}</div>)}
-{flat.map(({e,top})=>{const on=e.id===s.elId&&editing;return<div key={e.id} className={'el '+e.t+(on?' sel':'')+(e.acc?' acc':'')+(e.go?' lnk':'')} style={elStyle(e,top,st)} onPointerDown={ev=>down(ev,e)}>{elInner(e)}</div>})}
+{flat.map(({e,top})=>{const on=selSet.has(e.id);return<div key={e.id} className={'el '+e.t+(on?' sel':'')+(e.acc?' acc':'')+(e.go?' lnk':'')} style={elStyle(e,top,st)} onPointerDown={ev=>down(ev,e)}>{elInner(e)}</div>})}
 {!editing&&vis.slice(0,-1).map((b,i)=><div key={'i'+b.id} className="ins" style={{top:tops[i]+b.h[dev]}}><button className="insb" title="Добавить блок здесь" onPointerDown={stop} onClick={()=>onAdd(b.id)}><Plus size={16}/><span>Добавить блок</span></button></div>)}
 {gd&&editB&&<>{gd.v.map(x=><i key={'v'+x} className="gd" style={{left:x,top:0,height:editB.h[dev],width:'calc(1px/var(--z,1))'}}/>)}{gd.h.map(y=><i key={'h'+y} className="gd" style={{top:y,left:0,width:W,height:'calc(1px/var(--z,1))'}}/>)}</>}
+{sb&&<><div className="msel" style={{left:sb.x,top:sb.top+sb.y,width:sb.w,height:sb.h}}/><div className="dim" style={{left:sb.x+sb.w/2,top:sb.top+sb.y+sb.h+8}}>{selIds.length} эл. · {Math.round(sb.w)} × {Math.round(sb.h)}</div></>}
+{mq&&<div className="mq" style={{left:mq.x,top:mq.y,width:mq.w,height:mq.h}}/>}
 {sel&&tool==='sel'&&<div className="selbox" style={{left:sel.e.x,top:sel.top+(sel.e.t==='line'?sel.e.y-6:sel.e.y),width:sel.e.w,height:sel.e.t==='line'?12:sel.e.h}}>{(sel.e.t==='line'?['w','e']:['nw','n','ne','e','se','s','sw','w']).map(k=><u key={k} className={'rz '+k} onPointerDown={ev=>downR(ev,sel.e,k)}/>)}</div>}
 {selB&&<><div className="bh" style={{left:W/2,top:tops[selBi]+selB.h[dev]}} onPointerDown={ev=>downB(ev,selB)}/><div className="dim" style={{left:W/2,top:tops[selBi]+selB.h[dev]+22}}>{W} × {selB.h[dev]}</div></>}
 {sel&&<div className="dim" style={{left:sel.e.x+sel.e.w/2,top:sel.top+sel.e.y+(sel.e.t==='line'?6:sel.e.h)+8}}>{Math.round(sel.e.w)}{sel.e.t==='line'?'':` × ${Math.round(sel.e.h)}`}</div>}
@@ -152,6 +177,8 @@ return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>
 
 export function RightPanel({dev,onTpl}:{dev:Dev;onTpl:()=>void}){
 const {s,sh,st}=useSheet();const blocks=sh?.blocks??[];const editing=!!s.editId;
+const ms=editing&&s.multi.includes(s.elId??'')?s.multi.filter(id=>blocks.some(b=>(b.els?.[dev]??[]).some(e=>e.id===id))):[];
+if(ms.length>1)return<MultiPanel dev={dev} ids={ms}/>;
 const f=editing?blocks.flatMap(b=>(b.els?.[dev]??[]).map(e=>({e,b}))).find(x=>x.e.id===s.elId):undefined;
 if(f&&st)return<ElPanel dev={dev} e={f.e} b={f.b} st={st}/>;
 const bi=blocks.findIndex(x=>x.id===s.blockId);
