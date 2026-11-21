@@ -1,4 +1,4 @@
-import type {Project,Block,El} from '../store';import type {Dev} from './dev';
+import type {Project,Block,BlockTpl,El} from '../store';import type {Dev} from './dev';
 import {FW,DEVS,onDev} from './dev';import {resolve,SHAPES,MOCKS,BULLETS} from './art';import type {PStyle} from './art';
 export function download(name:string,text:string,type='text/plain'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
 const EN:Record<string,string>={text:'Текст',rect:'Рамка / карточка',btn:'Кнопка',input:'Поле ввода',img:'Изображение (заглушка)',line:'Линия',shape:'Фигура',icon:'Иконка',mock:'Мокап устройства',list:'Список с маркерами'};
@@ -27,3 +27,21 @@ const layNote=(b:Block,d:Dev)=>{const L=b.lay?.[d];if(!L)return'';const o=Object
 const layout=(b:Block,nm:Record<string,string>,p?:PStyle)=>DEVS.filter(d=>b.els[d].length&&onDev(b,d)).map(d=>{const a=[...b.els[d]].sort((p,q)=>p.y-q.y||p.x-q.x);const top=Math.min(...a.map(e=>e.y)),bot=b.h[d]-Math.max(...a.map(e=>e.y+e.h));return`#### ${d} (${FW[d]} px) · высота блока ${b.h[d]} px · отступ сверху ≈${top}, снизу ≈${bot}\n`+a.map(e=>fl(p)(e,nm)).join('\n')+layNote(b,d)+'\n'}).join('\n');
 const styleMd=(st?:PStyle)=>st?`## Стиль проекта (если дизайн ещё не задан, опирайся на него)\n- Палитра прототипа: ${st.palette.join(', ')} (это рабочие цвета, нейросеть вправе предложить фирменные)\n- Шрифт заголовков: ${st.head}, основной текст: ${st.body}\n- Базовые размеры текста: ${(['h1','h2','h3','p','sm'] as const).map(k=>`${k} ${st.roles[k].fs}px${st.roles[k].b?' жирный':''}`).join(', ')}\n`:'';
 export const briefMd=(p:Project,typeName:string)=>{const nm:Record<string,string>={};for(const s of p.sheets)nm[s.id]=(s.kind==='popup'?'попап ':'страница ')+s.name;return`# ${p.name}\n\nТип сайта: ${typeName}\n\nСделай по этому прототипу дизайн и рабочий код (HTML/CSS/JS). Полная структура с координатами лежит в project.json.\n\n${RULES}\n${styleMd(p.style)}\n`+p.sheets.map(s=>`## ${s.kind==='popup'?'Попап':'Страница'}: ${s.name}\n\n`+(s.blocks.map((b,i)=>`### ${i+1}. ${b.title}${b.dv?` (только: ${b.dv.join(', ')})`:''}\n${b.text.trim()||'_заметок нет_'}\n\n${layout(b,nm,p.style)}`).join('\n')||'_блоков нет_\n')).join('\n')};
+
+/** один блок для вставки в чат с нейросетью: тексты, заметки и элементы с координатами для каждого устройства */
+export const blockMd=(p:Project,b:Block)=>{const nm:Record<string,string>={};for(const s of p.sheets)nm[s.id]=(s.kind==='popup'?'попап ':'страница ')+s.name;return`### ${b.title}${b.dv?` (только: ${b.dv.join(', ')})`:''}\n${b.text.trim()||'_заметок нет_'}\n\n${layout(b,nm,p.style)}`};
+/** файл блока: его можно загрузить в Настройках как шаблон */
+export const blockFile=(b:Block)=>JSON.stringify({kind:'ig-block',v:1,name:b.title,text:b.text,h:b.h,els:b.els},null,1);
+export const tplsFile=(l:BlockTpl[])=>JSON.stringify({kind:'ig-tpls',v:1,list:l.map(({name,cat,text,h,els})=>({name,cat,text,h,els}))},null,1);
+export interface TplIn{name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
+const okEl=(e:unknown):e is El=>!!e&&typeof e==='object'&&typeof (e as El).t==='string'&&['x','y','w','h'].every(k=>typeof (e as unknown as Record<string,unknown>)[k]==='number');
+/** разбор файла шаблонов: один блок, набор шаблонов или массив. Бросает ошибку с понятным текстом */
+export const parseTpls=(txt:string):TplIn[]=>{
+let o:unknown;try{o=JSON.parse(txt)}catch{throw new Error('файл не похож на JSON')}
+const raw:unknown[]=Array.isArray(o)?o:(o as {kind?:string;list?:unknown[]})?.kind==='ig-tpls'&&Array.isArray((o as {list:unknown[]}).list)?(o as {list:unknown[]}).list:(o as {kind?:string})?.kind==='ig-block'?[o]:[];
+const out:TplIn[]=[];
+for(const r of raw){const t=r as Partial<TplIn>;if(!t||typeof t.name!=='string'||!t.els||typeof t.els!=='object')continue;
+const els={} as Record<Dev,El[]>;const h={} as Record<Dev,number>;
+for(const d of DEVS){const a=(t.els as Record<string,unknown>)[d];els[d]=Array.isArray(a)?a.filter(okEl):[];const hv=t.h?.[d];h[d]=typeof hv==='number'&&isFinite(hv)?Math.max(80,Math.round(hv)):400}
+out.push({name:t.name.slice(0,80),cat:typeof t.cat==='string'?t.cat.slice(0,60):undefined,text:typeof t.text==='string'?t.text:'',h,els})}
+if(!out.length)throw new Error('в файле нет блоков или шаблонов');return out};

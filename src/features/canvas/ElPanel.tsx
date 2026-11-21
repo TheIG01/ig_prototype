@@ -32,7 +32,7 @@ const s=useStore();const set=(p:Partial<El>)=>s.updEl(dev,e.id,p);const [q,setQ]
 const icons=useMemo(()=>{const f=q.trim().toLowerCase();return ICON_LIST.filter(([id,ru,c])=>!f||id.includes(f)||ru.toLowerCase().includes(f)||c.toLowerCase().includes(f))},[q]);
 const num=(k:'x'|'y'|'w'|'h',l:string)=><label className="num"><span>{l}</span><input type="number" value={Math.round(e[k])} disabled={k==='h'&&t==='line'} onChange={ev=>set({[k]:+ev.target.value||0} as Partial<El>)}/></label>;
 const canHug=t==='text'||t==='btn'||t==='input';
-const HUGS:{k:'w'|'h'|undefined;l:string}[]=[{k:'w',l:'По ширине'},...(t==='text'?[{k:'h' as const,l:'По высоте'}]:[]),{k:undefined,l:'Фиксированный'}];
+const HUGS:{k:'w'|'h'|undefined;l:string}[]=[{k:'w',l:'По ширине'},...(t==='text'?[{k:'h' as const,l:'По высоте'}]:[]),{k:undefined,l:'Фиксир.'}];
 const hugRow=canHug?<div className="seg hug" title="Двойной клик по ручке размера делает то же самое">{HUGS.map(o=><button key={o.l} className={e.hug===o.k?'on':''} onClick={()=>set({hug:o.k})}>{o.l}</button>)}</div>:null;
 const hasFill=t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock'||t==='img';
 const hasStroke=t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock';

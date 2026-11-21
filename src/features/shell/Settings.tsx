@@ -1,7 +1,11 @@
-import {useState} from 'react';
-import {LogOut,Trash2,Download} from 'lucide-react';import {ACCENTS,useUi,saveUi} from '../../lib/ui';import type {Ui} from '../../lib/ui';
+import {useState,useRef} from 'react';
+import {useStore} from '../../store';import {tplsFile,parseTpls,download} from '../../lib/export';import {toast} from '../../lib/toast';
+import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,useUi,saveUi} from '../../lib/ui';import type {Ui} from '../../lib/ui';
 import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';
 export function SettingsBody({onBackup}:{onBackup:()=>void}){
+const s=useStore();const tf=useRef<HTMLInputElement>(null);const nTpl=s.data?.blockTpls.length??0;
+const dlTpls=()=>{download('ig_templates.json',tplsFile(s.data?.blockTpls??[]),'application/json');toast('Шаблоны скачаны')};
+const ulTpls=async(fl:FileList|null)=>{if(!fl)return;let n=0;const bad:string[]=[];for(const f of Array.from(fl)){try{const l=parseTpls(await f.text());s.importTpls(l);n+=l.length}catch(e){bad.push(f.name+': '+(e instanceof Error?e.message:'ошибка'))}}if(tf.current)tf.current.value='';toast(n?`Загружено шаблонов: ${n}`+(bad.length?`. Не подошли: ${bad.length}`:''):bad.join('; ')||'Нечего загружать',undefined,5000)};
 const u=useUi();const up=(p:Partial<Ui>)=>{saveUi(p)};
 const tg=(k:'grid'|'rulers'|'guides'|'smart'|'snap'|'hover'|'dims'|'cols',t:string,d:string)=><div className="set-row"><div><b>{t}</b><p>{d}</p></div><input type="checkbox" className="sw" checked={u[k]} onChange={e=>up({[k]:e.target.checked} as unknown as Partial<Ui>)}/></div>;
 const nm=(k:'nudge'|'gut'|'mar',v:number|'',ph:string)=><input type="number" className="inp nm" min={0} placeholder={ph} value={v} onChange={e=>up({[k]:e.target.value===''?-1:+e.target.value} as unknown as Partial<Ui>)}/>;const [rem,setRem]=useState(!!localStorage.getItem('igp.rem'));const [word,setWord]=useState('');const [del,setDel]=useState(false);
@@ -30,6 +34,8 @@ return<div>
 <div className="set-row"><div><b>Число колонок</b><p>Авто: 12 на Desktop, 8 на Tablet, 4 на Mobile</p></div><div className="seg">{([[0,'Авто'],[4,'4'],[6,'6'],[8,'8'],[12,'12']] as const).map(([k,l])=><button key={k} className={u.colsN===k?'on':''} onClick={()=>up({colsN:k})}>{l}</button>)}</div></div>
 <div className="set-row"><div><b>Промежуток между колонками</b><p>px, пусто: авто</p></div>{nm('gut',u.gut<0?'':u.gut,'авто')}</div>
 <div className="set-row"><div><b>Поля по краям</b><p>px, пусто: авто</p></div>{nm('mar',u.mar<0?'':u.mar,'авто')}</div>
+<h4 className="set-h">Шаблоны блоков</h4>
+<div className="set-row"><div><b>Мои шаблоны</b><p>{nTpl} шт. Скачай файл, чтобы передать блоки нейросети или перенести на другое устройство. Подходит и файл одного блока</p></div><div className="stack"><button className="btn" disabled={!nTpl} onClick={dlTpls}><Download size={16}/>Скачать</button><button className="btn" onClick={()=>tf.current?.click()}><Upload size={16}/>Загрузить</button></div><input ref={tf} type="file" accept=".json,application/json" multiple hidden onChange={e=>ulTpls(e.target.files)}/></div>
 <h4 className="set-h">Безопасность</h4>
 <div className="set-row"><div><b>Запоминать это устройство</b><p>Вход без ПИН. Любой, кто откроет этот браузер, увидит данные</p></div><input type="checkbox" className="sw" checked={rem} onChange={e=>toggle(e.target.checked)}/></div>
 <div className="set-row"><div><b>Выйти</b><p>Устройство забудется, при входе потребуется ПИН</p></div><button className="btn" onClick={out}><LogOut size={16}/>Выйти</button></div>
