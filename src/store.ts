@@ -6,7 +6,9 @@ export {FW,DEVS};export type {Dev};
 export type Kind='page'|'popup';
 export type ET='text'|'rect'|'btn'|'input'|'img'|'line'|'shape'|'icon'|'mock'|'list';
 export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role}
-export interface Block{id:string;title:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
+/** авто-лейаут группы: d направление, gap отступ, al выравнивание поперёк, x y начало, mx центр по ширине блока, fl одинаковый поперечный размер */
+export interface Lay{d:'h'|'v';gap:number;al:'s'|'c'|'e';x:number;y:number;mx?:boolean;fl?:boolean}
+export interface Block{id:string;title:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>}
 export interface BlockTpl{id:string;name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
 export interface Sheet{id:string;name:string;kind:Kind;blocks:Block[]}
 export interface Project{id:string;name:string;typeId:string;style:PStyle;sheets:Sheet[];createdAt:number;updatedAt:number}
@@ -36,7 +38,7 @@ addBlock:(title:string,o?:{after?:string;tpl?:string})=>void;delBlock:(id:string
 editBlock:(id:string,patch:Partial<Pick<Block,'title'|'text'>>)=>void;setH:(dev:Dev,id:string,h:number)=>void;saveBlockTpl:(id:string,name:string,cat?:string)=>void;delBlockTpl:(id:string)=>void;
 addEl:(dev:Dev,t:ET,x:number,y:number,bid?:string,extra?:Partial<El>)=>void;setStyle:(patch:Partial<PStyle>)=>void;setRole:(r:Role,p:Partial<PStyle['roles'][Role]>)=>void;updEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dragEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dropEl:(dev:Dev,id:string,stay?:boolean)=>void;
 delEl:(dev:Dev,id:string)=>void;dupEl:(dev:Dev,id:string)=>void;moveEl:(dev:Dev,id:string,dir:number)=>void;copyEl:(dev:Dev,id:string)=>void;
-clipSet:(dev:Dev,id:string)=>void;clipPaste:(dev:Dev)=>void;setEl:(id:string|null)=>void;setMulti:(ids:string[])=>void;dragMany:(dev:Dev,ps:{id:string;x:number;y:number}[])=>void;delEls:(dev:Dev,ids:string[])=>void;dupEls:(dev:Dev,ids:string[],off:number,nid:string[])=>void;alignEls:(dev:Dev,ids:string[],m:'l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv')=>void;groupEls:(dev:Dev,ids:string[],on:boolean)=>void;clipSetMany:(dev:Dev,ids:string[])=>void;clipPasteMany:(dev:Dev)=>void;setBlock:(id:string|null)=>void;
+clipSet:(dev:Dev,id:string)=>void;clipPaste:(dev:Dev)=>void;setEl:(id:string|null)=>void;setMulti:(ids:string[])=>void;dragMany:(dev:Dev,ps:{id:string;x:number;y:number}[])=>void;delEls:(dev:Dev,ids:string[])=>void;dupEls:(dev:Dev,ids:string[],off:number,nid:string[],k?:string)=>void;alignEls:(dev:Dev,ids:string[],m:'l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv')=>void;groupEls:(dev:Dev,ids:string[],on:boolean)=>void;autoLay:(dev:Dev,ids:string[])=>void;setLay:(dev:Dev,gid:string,p:Partial<Lay>)=>void;delLay:(dev:Dev,gid:string)=>void;clipSetMany:(dev:Dev,ids:string[])=>void;clipPasteMany:(dev:Dev)=>void;setBlock:(id:string|null)=>void;
 undo:()=>void;redo:()=>void;saveType:(name:string)=>void}
 const EL_DEF:Record<ET,[number,number,string]>={text:[240,40,'Заголовок'],rect:[320,200,''],btn:[180,48,'Кнопка'],input:[280,44,'Поле ввода'],img:[320,220,'Изображение'],line:[300,0,''],shape:[200,140,''],icon:[48,48,''],mock:[260,420,''],list:[320,120,'Первый пункт\nВторой пункт\nТретий пункт']};
 type Ctx={data:Data|null;projectId:string|null;sheetId:string|null};
@@ -44,13 +46,27 @@ const curSheet=(s:Ctx)=>s.data?.projects.find(p=>p.id===s.projectId)?.sheets.fin
 const findEl=(sh:Sheet,dev:Dev,id:string)=>{for(const b of sh.blocks){const e=b.els[dev].find(x=>x.id===id);if(e)return{b,e}}return null};
 const hasEl=(sh:Sheet|undefined,id:string|null)=>!!id&&!!sh&&sh.blocks.some(b=>DEVS.some(d=>b.els[d].some(e=>e.id===id)));
 /** a block grows so that its elements always fit */
+const LDV:Dev[]=['desktop','tablet','mobile'];const lh=(e:El)=>e.t==='line'?0:e.h;
+/** пересчёт авто-лейаута: порядок по центрам, одинаковый отступ, выравнивание, блок растёт под содержимое */
+const reflow=(b:Block,dev:Dev)=>{const L=b.lay?.[dev];if(!L)return;const W=FW[dev];
+for(const gid of Object.keys(L)){const c=L[gid];const m=b.els[dev].filter(e=>e.g===gid);if(m.length<2){delete L[gid];continue}
+const v=c.d==='v';const ord=[...m].sort((a,q)=>v?a.y+lh(a)/2-(q.y+lh(q)/2):a.x+a.w/2-(q.x+q.w/2));
+const cs=(e:El)=>v?e.w:lh(e);const cross=Math.max(...m.map(cs));
+if(c.fl)for(const e of m){if(v)e.w=cross;else if(e.t!=='line')e.h=cross}
+const main=ord.reduce((a,e)=>a+(v?lh(e):e.w),0)+c.gap*(ord.length-1);
+let ox=c.x,oy=c.y;if(c.mx){if(v)ox=Math.round((W-cross)/2);else ox=Math.round((W-main)/2)}
+ox=Math.max(0,ox);oy=Math.max(0,oy);let p=v?oy:ox;
+for(const e of ord){const off=c.al==='s'?0:c.al==='c'?(cross-cs(e))/2:cross-cs(e);
+if(v){e.x=Math.round(ox+off);e.y=Math.round(p);p+=lh(e)+c.gap}else{e.y=Math.round(oy+off);e.x=Math.round(p);p+=e.w+c.gap}}
+grow(b,dev)}};
+const reflowAll=(sh?:Sheet)=>{if(!sh)return;for(const b of sh.blocks)if(b.lay)for(const d of LDV)reflow(b,d)};
 const grow=(b:Block,dev:Dev)=>{const bt=Math.max(0,...b.els[dev].map(e=>e.y+e.h));if(bt+24>b.h[dev])b.h[dev]=Math.ceil((bt+24)/8)*8};
 const blockAt=(bs:Block[],dev:Dev,y:number)=>{const t=blockTops(bs,dev);for(let k=0;k<bs.length;k++)if(y<t[k]+bs[k].h[dev])return k;return bs.length-1};
 let t:ReturnType<typeof setTimeout>;let past:Data[]=[],fut:Data[]=[],lastK='',lastT=0;
 export const useStore=create<S>()(immer((set,get)=>{
 const persist=()=>{clearTimeout(t);t=setTimeout(async()=>{await save(get().data);set({status:'saved'})},400)};
 const restore=(d:Data)=>{set(s=>{s.data=d;const p=d.projects.find(x=>x.id===s.projectId)??d.projects[0];s.projectId=p?.id??null;const h=p?.sheets.find(x=>x.id===s.sheetId)??p?.sheets[0];s.sheetId=h?.id??null;if(!h?.blocks.some(b=>b.id===s.blockId))s.blockId=null;if(!h?.blocks.some(b=>b.id===s.editId)){s.editId=null;s.snap=null}if(!hasEl(h,s.elId))s.elId=null;s.status='saving'});persist()};
-const mut=(f:(s:S,p?:Project)=>void,k='')=>{const now=Date.now();if(!(k&&k===lastK&&now-lastT<1200)){past.push(get().data!);if(past.length>60)past.shift();fut=[]}lastK=k;lastT=now;set(s=>{f(s,s.data?.projects.find(p=>p.id===s.projectId));const p=s.data?.projects.find(p=>p.id===s.projectId);if(p)p.updatedAt=Date.now();s.status='saving'});persist()};
+const mut=(f:(s:S,p?:Project)=>void,k='')=>{const now=Date.now();if(!(k&&k===lastK&&now-lastT<1200)){past.push(get().data!);if(past.length>60)past.shift();fut=[]}lastK=k;lastT=now;set(s=>{f(s,s.data?.projects.find(p=>p.id===s.projectId));reflowAll(curSheet(s));const p=s.data?.projects.find(p=>p.id===s.projectId);if(p)p.updatedAt=Date.now();s.status='saving'});persist()};
 return{data:null,projectId:null,sheetId:null,blockId:null,elId:null,status:'saved',clip:null,clipM:null,multi:[],editId:null,snap:null,
 load:d0=>{past=[];fut=[];const d=migrate(d0);set({data:d,editId:null,snap:null,blockId:null,elId:null,projectId:d.projects[0]?.id??null,sheetId:d.projects[0]?.sheets[0]?.id??null})},
 addProject:(name,typeId)=>mut(s=>{const ty=[...PRESETS,...s.data!.siteTypes].find(x=>x.id===typeId)!;const sheets:Sheet[]=ty.pages.map(p=>({id:uid(),name:p.name,kind:p.kind,blocks:p.blocks.map(b=>mkBlock(b))}));autoLink(sheets);const pr:Project={id:uid(),name,typeId,style:defStyle(),sheets,createdAt:Date.now(),updatedAt:Date.now()};s.data!.projects.unshift(pr);s.projectId=pr.id;s.sheetId=sheets[0]?.id??null;s.blockId=null;s.elId=null}),
@@ -88,14 +104,26 @@ clipSet:(dev,id)=>{const g=get();const sh=curSheet(g);const f=sh&&findEl(sh,dev,
 clipPaste:dev=>mut(s=>{const c=s.clip;const sh=curSheet(s);if(!c||!sh||!sh.blocks.length)return;const b=sh.blocks.find(x=>x.els[dev].some(e=>e.id===s.elId))??sh.blocks.find(x=>x.id===s.blockId)??sh.blocks[sh.blocks.length-1];const k=FW[dev]/FW[c.dev];c.n+=1;const o=16*c.n;const w=Math.max(16,Math.round(c.e.w*k));const e:El={...c.e,id:uid(),w,x:Math.max(0,Math.min(FW[dev]-w,Math.round(c.e.x*k)+o)),y:c.e.y+o};b.els[dev].push(e);grow(b,dev);s.elId=e.id;s.blockId=b.id}),
 setEl:id=>set(s=>{s.elId=id;if(id){const sh=curSheet(s);const b=sh?.blocks.find(x=>DEVS.some(d=>x.els[d].some(e=>e.id===id)));if(b)s.blockId=b.id}}),
 setMulti:ids=>set(s=>{s.multi=ids;s.elId=ids[ids.length-1]??null;if(s.elId){const sh=curSheet(s);const b=sh?.blocks.find(x=>DEVS.some(d=>x.els[d].some(e=>e.id===s.elId)));if(b)s.blockId=b.id}}),
-dragMany:(dev,ps)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const bs=new Set<Block>();for(const p of ps){const f=findEl(sh,dev,p.id);if(f){f.e.x=p.x;f.e.y=p.y;bs.add(f.b)}}bs.forEach(b=>grow(b,dev))},'um'+(ps[0]?.id??'')),
+dragMany:(dev,ps)=>mut(s=>{const sh=curSheet(s);if(!sh)return;for(const b of sh.blocks){const L=b.lay?.[dev];if(!L)continue;for(const gid of Object.keys(L)){const m=b.els[dev].filter(e=>e.g===gid);if(m.length&&m.every(e=>ps.some(p=>p.id===e.id))){const p0=ps.find(p=>p.id===m[0].id)!;L[gid].x+=p0.x-m[0].x;L[gid].y+=p0.y-m[0].y}}}const bs=new Set<Block>();for(const p of ps){const f=findEl(sh,dev,p.id);if(f){f.e.x=p.x;f.e.y=p.y;bs.add(f.b)}}bs.forEach(b=>grow(b,dev))},'um'+(ps[0]?.id??'')),
 delEls:(dev,ids)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const q=new Set(ids);for(const b of sh.blocks)b.els[dev]=b.els[dev].filter(e=>!q.has(e.id));s.elId=null;s.multi=[]}),
-dupEls:(dev,ids,off,nid)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const out:string[]=[];const gm:Record<string,string>={};ids.forEach((id,i)=>{const f=findEl(sh,dev,id);if(!f)return;const c:El={...f.e,id:nid[i]??uid(),x:f.e.x+off,y:f.e.y+off};if(c.g)c.g=gm[c.g]??=uid();f.b.els[dev].push(c);grow(f.b,dev);out.push(c.id)});s.multi=out;s.elId=out[out.length-1]??null}),
+dupEls:(dev,ids,off,nid,k)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const out:string[]=[];const gm:Record<string,string>={};ids.forEach((id,i)=>{const f=findEl(sh,dev,id);if(!f)return;const c:El={...f.e,id:nid[i]??uid(),x:f.e.x+off,y:f.e.y+off};if(c.g)c.g=gm[c.g]??=uid();f.b.els[dev].push(c);grow(f.b,dev);out.push(c.id)});s.multi=out;s.elId=out[out.length-1]??null},k??''),
 alignEls:(dev,ids,m)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const fs=ids.map(i=>findEl(sh,dev,i)).filter(Boolean) as {b:Block;e:El}[];if(fs.length<2)return;const es=fs.map(f=>f.e);
 const L=Math.min(...es.map(e=>e.x)),R=Math.max(...es.map(e=>e.x+e.w)),T=Math.min(...es.map(e=>e.y)),B=Math.max(...es.map(e=>e.y+e.h));
 if(m==='dh'||m==='dv'){const h=m==='dh';const a=[...es].sort((p,q)=>h?p.x-q.x:p.y-q.y);const tot=a.reduce((n,e)=>n+(h?e.w:e.h),0);const gap=((h?R-L:B-T)-tot)/(a.length-1);let pos=h?L:T;for(const e of a){if(h)e.x=Math.round(pos);else e.y=Math.round(pos);pos+=(h?e.w:e.h)+gap}}
 else for(const e of es){if(m==='l')e.x=L;else if(m==='r')e.x=R-e.w;else if(m==='c')e.x=Math.round((L+R)/2-e.w/2);else if(m==='t')e.y=T;else if(m==='b')e.y=B-e.h;else e.y=Math.round((T+B)/2-e.h/2)}
 new Set(fs.map(f=>f.b)).forEach(b=>grow(b,dev))}),
+autoLay:(dev,ids)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const fs=ids.map(i=>findEl(sh,dev,i)).filter(Boolean) as {b:Block;e:El}[];if(fs.length<2)return;const b=fs[0].b;if(fs.some(f=>f.b!==b))return;
+const m=fs.map(f=>f.e);const g0=m[0].g;const gid=g0&&m.every(e=>e.g===g0)?g0:uid();m.forEach(e=>{e.g=gid});
+const x0=Math.min(...m.map(e=>e.x)),y0=Math.min(...m.map(e=>e.y));const cx=m.map(e=>e.x+e.w/2),cy=m.map(e=>e.y+lh(e)/2);
+const d:'h'|'v'=Math.max(...cy)-Math.min(...cy)>=Math.max(...cx)-Math.min(...cx)?'v':'h';const v=d==='v';
+const ord=[...m].sort((a,q)=>v?a.y-q.y:a.x-q.x);const gs:number[]=[];for(let i=0;i<ord.length-1;i++)gs.push(v?ord[i+1].y-(ord[i].y+lh(ord[i])):ord[i+1].x-(ord[i].x+ord[i].w));gs.sort((a,q)=>a-q);const med=gs[Math.floor(gs.length/2)]??16;
+const gap=med>0?Math.min(64,Math.max(4,Math.round(med/4)*4)):16;
+const left=Math.max(...m.map(e=>e.x))-Math.min(...m.map(e=>e.x))<=4,mid=Math.max(...cx)-Math.min(...cx)<=4,rt=Math.max(...m.map(e=>e.x+e.w))-Math.min(...m.map(e=>e.x+e.w))<=4;
+const top=Math.max(...m.map(e=>e.y))-Math.min(...m.map(e=>e.y))<=4,vm=Math.max(...cy)-Math.min(...cy)<=4,bt=Math.max(...m.map(e=>e.y+lh(e)))-Math.min(...m.map(e=>e.y+lh(e)))<=4;
+const al:'s'|'c'|'e'=v?(left?'s':mid?'c':rt?'e':'s'):(top?'s':vm?'c':bt?'e':'s');
+const dl=((b.lay??={})[dev]??={});dl[gid]={d,gap,al,x:x0,y:y0};s.multi=ids}),
+setLay:(dev,gid,p)=>mut(s=>{const sh=curSheet(s);if(!sh)return;for(const b of sh.blocks){const c=b.lay?.[dev]?.[gid];if(c)Object.assign(c,p)}},'lay'+gid),
+delLay:(dev,gid)=>mut(s=>{const sh=curSheet(s);if(!sh)return;for(const b of sh.blocks){const L=b.lay?.[dev];if(L)delete L[gid]}}),
 groupEls:(dev,ids,on)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const g=on?uid():undefined;for(const id of ids){const f=findEl(sh,dev,id);if(!f)continue;if(g)f.e.g=g;else delete f.e.g}}),
 clipSetMany:(dev,ids)=>{const sh=curSheet(get());if(!sh)return;const es=ids.map(i=>findEl(sh,dev,i)?.e).filter(Boolean).map(e=>({...e!}));set({clipM:{es,dev,n:0},clip:null})},
 clipPasteMany:dev=>mut(s=>{const c=s.clipM;const sh=curSheet(s);if(!c||!sh||!sh.blocks.length)return;const b=sh.blocks.find(x=>x.id===s.editId)??sh.blocks.find(x=>x.id===s.blockId)??sh.blocks[sh.blocks.length-1];const k=FW[dev]/FW[c.dev];c.n+=1;const o=16*c.n;const gm:Record<string,string>={};const out:string[]=[];

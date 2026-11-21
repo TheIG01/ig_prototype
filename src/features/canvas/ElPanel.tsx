@@ -5,7 +5,7 @@ import type {El,Dev,Block} from '../../store';
 import {SHAPES,MOCKS,BULLETS,ROLES,FONTS,NAME_NEW,resolve} from '../../lib/art';
 import type {PStyle,Role} from '../../lib/art';
 import {ICON_LIST} from '../../lib/icons';
-import {Prev} from './Insert';
+import {Prev} from './Insert';import {LayPanel} from './LayPanel';
 
 const NM:Record<string,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW};
 const HEX=/^#[0-9a-f]{6}$/i;
@@ -44,6 +44,7 @@ return<aside className="panel ep"><div className="ph"><b>{NM[t]}</b><span>Эле
 <h4>Положение и размер</h4><div className="grid2">{num('x','X')}{num('y','Y')}{num('w','Ш')}{num('h','В')}</div>
 <div className="btnrow">{(['Влево','Центр','Вправо'] as const).map((l,i)=><button key={l} className="btn" title="Выровнять по фрейму" onClick={()=>set({x:Math.max(0,[0,Math.round((FW[dev]-e.w)/2),FW[dev]-e.w][i])})}>{l}</button>)}</div></div>
 
+<LayPanel dev={dev} ids={[e.id]} single/>
 {hasText&&<div className="sec"><h4>{t==='list'?'Пункты (каждый с новой строки)':'Текст'}</h4><textarea id="el-text" className="inp" placeholder="Текст элемента (Enter)" value={e.text} onChange={ev=>set({text:ev.target.value})} onKeyDown={ev=>{if(ev.key==='Escape')(ev.target as HTMLElement).blur()}}/>
 <label className="clr"><span>Стиль текста</span><select className="inp sl" value={e.role??''} title="Размер и жирность берутся из стиля проекта" onChange={ev=>{const v=ev.target.value as Role|'';set(v?{role:v,fs:undefined,b:undefined}:{role:undefined})}}><option value="">Свой</option>{ROLES.map(([k,l])=><option key={k} value={k}>{l} · {st.roles[k].fs} px</option>)}</select></label>
 <div className="btnrow fmt"><select className="inp" value={r.fs??16} onChange={ev=>set({fs:+ev.target.value})}>{sizes.map(n=><option key={n} value={n}>{n} px</option>)}</select>
