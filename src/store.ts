@@ -26,7 +26,7 @@ for(const sh of sheets)for(const b of sh.blocks)for(const d of DEVS)for(const e 
 if(sh.kind==='popup')to=thx?.id;else if(sh===thx)to=undefined;
 else if(/^форма/i.test(b.title))to=thx?.id;
 else if(/начать/i.test(e.text))to=q?.id;
-else if(/(звонок|заявк|расч[её]т|подробн|выбрать|предложени)/i.test(e.text))to=pop?.id??thx?.id;
+else if(/(звонок|перезвон|заявк|расч[её]т|подробн|выбрать|предложени)/i.test(e.text))to=pop?.id??thx?.id;
 if(to)e.go=to}};
 /** top (y) of every block for a device */
 export const blockTops=(bs:Block[],dev:Dev)=>{let y=0;return bs.map(b=>{const t=y;if(onDev(b,dev))y+=b.h[dev];return t})};
