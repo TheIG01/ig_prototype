@@ -218,3 +218,5 @@ export const TEAM_TIPS:Record<string,string[]>=Object.fromEntries(VARS.map(v=>[v
 /** сборка варианта с нужным числом сотрудников (3–8): для проверки и будущего счётчика */
 export const teamBuild=(name:string,n:number,dev:Dev):Out|null=>{const v=VARS.find(x=>x.name===name);return v?v.f(nn(n))(dev):null};
 export const TEAM_NAMES=VARS.map(v=>v.name);
+/** типовое число сотрудников варианта по имени блока, null если имя не из «Команды» */
+export const teamN=(name:string):number|null=>VARS.find(x=>x.name===name)?.n??null;

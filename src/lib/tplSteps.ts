@@ -268,3 +268,30 @@ if(d!=='mobile'){const right=Math.max(...tabs.map(e=>e.x+e.w));const card=p.els[
 if(card&&card.h<nb-top)card.h=nb-top;p.h[d]=Math.max(p.h[d],r4(nb+48));continue}}
 if(delta)for(const e of p.els[d])if(!e.tg&&e.y>=oldB-1)e.y+=delta;
 p.h[d]=Math.max(120,p.h[d]+delta)}}}}
+
+const renum=(t:string,k:number)=>/^\d+\.\s/.test(t)?t.replace(/^\d+\./,`${k+1}.`):/^\d+$/.test(t)?String(k+1):t;
+const setTxt=(x:Block,n:number)=>{const s=x.sv!;x.text=x.text.replace(/Вкладка \d+ из \d+/,`Вкладка ${s.i+1} из ${n}`)};
+/** сдвиг вкладок в ряду: от номера from все вкладки получают номер на step больше, тексты вкладок сдвигаются вместе с ними */
+function moveNav(x:Block,g:string,from:number,step:number){for(const d of DEVS)for(const e of x.els[d])if(e.tg){const k=tkOf(e);if(k>=from){e.tg=g+':'+(k+step);e.sk='t'+(k+step);e.text=renum(e.text,k+step)}}}
+/** дубль этапа: копия `o` встаёт новым этапом сразу после этапа `b`, остальные сдвигаются. false, если этапов уже 7 или блок не главный блок вкладки */
+export function dupStage(bl:Block[],b:Block,o:Block):boolean{const sv=b.sv;if(!sv||!sv.tab||sv.x||sv.n>=7)return false;
+const v=VARS.find(x=>x.name===sv.v);if(!v)return false;const g=sv.g,p=sv.i+1,old=sv.n,n=old+1;
+const cp={} as Record<Dev,string|undefined>;for(const d of DEVS)cp[d]=b.els[d].find(e=>e.tg&&tkOf(e)===sv.i)?.text;
+for(const x of bl)if(x.sv?.g===g){if(x.sv.i>=p)x.sv.i++;x.sv.n=n;if(!x.sv.x)setTxt(x,n)}
+o.sv={v:sv.v,g,i:p,n,tab:true};setTxt(o,n);
+let at=bl.indexOf(b);bl.forEach((x,k)=>{if(x.sv?.g===g&&x.sv.i===sv.i)at=k});bl.splice(at+1,0,o);
+for(const x of bl)if(x.sv?.g===g&&!x.sv.x){moveNav(x,g,p,1);navRebuild(x,v,n,old);
+for(const d of DEVS){const t=x.els[d].find(e=>e.tg&&tkOf(e)===p);if(t&&cp[d])t.text=renum(cp[d]!,p)}}
+return true}
+/** удаляет этап вместе с его блоками, остальные сдвигаются. false, если этапов 3 или меньше */
+export function delStage(bl:Block[],b:Block):boolean{const sv=b.sv;if(!sv||!sv.tab||sv.x||sv.n<=3)return false;
+const v=VARS.find(x=>x.name===sv.v);if(!v)return false;const g=sv.g,p=sv.i,old=sv.n,n=old-1;
+for(let k=bl.length-1;k>=0;k--)if(bl[k].sv?.g===g&&bl[k].sv!.i===p)bl.splice(k,1);
+for(const x of bl)if(x.sv?.g===g){if(x.sv.i>p)x.sv.i--;x.sv.n=n;if(!x.sv.x)setTxt(x,n)}
+for(const x of bl)if(x.sv?.g===g&&!x.sv.x){for(const d of DEVS)x.els[d]=x.els[d].filter(e=>!(e.tg&&tkOf(e)===p));moveNav(x,g,p+1,-1);navRebuild(x,v,n,old)}
+return true}
+/** шаблон блока этапа вставляется в группу вкладок выше (того же варианта): дополнительным блоком нужного этапа. Иначе блок обычный, вкладки в нём превращаются в простые кнопки */
+export function bindTplStage(bl:Block[],at:number,b:Block,st:{v:string;i:number}):boolean{
+let grp:SV|null=null;for(let k=Math.min(at,bl.length-1);k>=0;k--){const s=bl[k].sv;if(s?.tab&&s.v===st.v){grp=s;break}}
+for(const d of DEVS)b.els[d]=grp?b.els[d].filter(e=>!e.tg):b.els[d].map(e=>{if(e.tg){const c={...e};delete c.tg;delete c.sk;return c}return e});
+if(!grp)return false;b.sv={v:grp.v,g:grp.g,i:Math.min(st.i,grp.n-1),n:grp.n,tab:true,x:1};return true}

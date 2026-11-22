@@ -41,8 +41,8 @@ export const briefMd=(p:Project,typeName:string)=>{const nm:Record<string,string
 export const blockMd=(p:Project,b:Block)=>{const nm:Record<string,string>={};for(const s of p.sheets)nm[s.id]=(s.kind==='popup'?'попап ':'страница ')+s.name;return`### ${b.title}${b.sv?.tab?` · вкладка ${b.sv.i+1} из ${b.sv.n}${b.sv.x?' (доп. блок)':''}`:''}${b.dv?` (только: ${b.dv.join(', ')})`:''}\n${b.text.trim()||'_заметок нет_'}\n\n${layout(b,nm,p.style)}`};
 /** файл блока: его можно загрузить в Настройках как шаблон */
 export const blockFile=(b:Block)=>JSON.stringify({kind:'ig-block',v:1,name:b.title,text:b.text,quiz:b.quiz,h:b.h,els:b.els},null,1);
-export const tplsFile=(l:BlockTpl[])=>JSON.stringify({kind:'ig-tpls',v:1,list:l.map(({name,cat,text,h,els,quiz})=>({name,cat,text,quiz,h,els}))},null,1);
-export interface TplIn{quiz?:QuizCfg;name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
+export const tplsFile=(l:BlockTpl[])=>JSON.stringify({kind:'ig-tpls',v:1,list:l.map(({name,cat,text,h,els,quiz,st})=>({name,cat,st,text,quiz,h,els}))},null,1);
+export interface TplIn{st?:{v:string;i:number};quiz?:QuizCfg;name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
 const okEl=(e:unknown):e is El=>!!e&&typeof e==='object'&&typeof (e as El).t==='string'&&['x','y','w','h'].every(k=>typeof (e as unknown as Record<string,unknown>)[k]==='number');
 /** разбор файла шаблонов: один блок, набор шаблонов или массив. Бросает ошибку с понятным текстом */
 export const parseTpls=(txt:string):TplIn[]=>{
@@ -52,5 +52,5 @@ const out:TplIn[]=[];
 for(const r of raw){const t=r as Partial<TplIn>;if(!t||typeof t.name!=='string'||!t.els||typeof t.els!=='object')continue;
 const els={} as Record<Dev,El[]>;const h={} as Record<Dev,number>;
 for(const d of DEVS){const a=(t.els as Record<string,unknown>)[d];els[d]=Array.isArray(a)?a.filter(okEl):[];const hv=t.h?.[d];h[d]=typeof hv==='number'&&isFinite(hv)?Math.max(80,Math.round(hv)):400}
-out.push({quiz:t.quiz&&typeof t.quiz==='object'?normalizeQuiz(t.quiz):undefined,name:t.name.slice(0,80),cat:typeof t.cat==='string'?t.cat.slice(0,60):undefined,text:typeof t.text==='string'?t.text:'',h,els})}
+const st=(t as TplIn).st;out.push({...(st&&typeof st.v==='string'&&typeof st.i==='number'?{st:{v:st.v,i:st.i}}:{}),quiz:t.quiz&&typeof t.quiz==='object'?normalizeQuiz(t.quiz):undefined,name:t.name.slice(0,80),cat:typeof t.cat==='string'?t.cat.slice(0,60):undefined,text:typeof t.text==='string'?t.text:'',h,els})}
 if(!out.length)throw new Error('в файле нет блоков или шаблонов');return out};

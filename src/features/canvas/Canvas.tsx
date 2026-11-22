@@ -8,7 +8,7 @@ import {download,blockMd,blockFile} from '../../lib/export';
 import type {El,ET,Dev,Block} from '../../store';
 import {toast} from '../../lib/toast';
 import {TIPS} from '../../lib/tpl';
-import {QuizEditor} from '../quiz/QuizEditor';import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
+import {QuizEditor} from '../quiz/QuizEditor';import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
 const STY=['fs','b','al','acc','fill','stroke','sw','r','op','c'] as const;let styClip:Partial<El>|null=null;
@@ -211,12 +211,17 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 function StepsSec({b}:{b:Block}){const s=useStore();const sv=b.sv!;
 return<div className="sec dvsec"><h4>Этапов: {sv.n}</h4><div className="dvs">{[3,4,5,6,7].map(k=><button key={k} className={'dvc'+(sv.n===k?' on':'')} aria-pressed={sv.n===k} onClick={()=>s.setSteps(b.id,k)}>{k}</button>)}</div>
 {sv.tab&&<button className="btn" onClick={()=>s.addStepBlock(b.id)}><Plus size={16}/>Добавить блок в этот этап</button>}
+{sv.tab&&<div className="dvs"><button className="btn" disabled={sv.n>=7} onClick={()=>s.dupBlock(b.id)}><Copy size={16}/>Копия этапа</button><button className="btn" disabled={sv.n<=3} onClick={()=>s.delStage(b.id)}><Trash2 size={16}/>Удалить этап</button></div>}
 <p className="hint">{sv.tab?'Названия вкладок правь в любом этапе, остальные подтянутся. Вкладка растёт по тексту. Лишние вкладки удаляются вместе с содержимым (Ctrl+Z вернёт)':'Блок пересоберётся: тексты сохранятся, положение элементов вернётся к шаблону (Ctrl+Z вернёт)'}</p></div>}
 /** привязка любого блока к вкладке: виден только когда выбран этап */
 function StageSec({b}:{b:Block}){const s=useStore();const sh=s.data?.projects.find(p=>p.id===s.projectId)?.sheets.find(x=>x.id===s.sheetId);
 const g=sh?stageGroup(sh.blocks,b):null;if(!g)return null;const cur=b.sv?b.sv.i:-1;
 return<div className="sec dvsec"><h4>Показывать в этапе</h4><div className="dvs"><button className={'dvc'+(cur<0?' on':'')} onClick={()=>s.setStage(b.id,null)}>Всегда</button>{Array.from({length:g.n},(_,k)=><button key={k} className={'dvc'+(cur===k?' on':'')} aria-pressed={cur===k} onClick={()=>s.setStage(b.id,k)}>{k+1}</button>)}</div>
 <p className="hint">Блок виден только когда в просмотре выбран этот этап</p></div>}
+/** счётчик сотрудников 3–8 в блоках «Команда» */
+function TeamSec({b}:{b:Block}){const s=useStore();const n=b.tm??teamN(b.title)??5;
+return<div className="sec dvsec"><h4>Сотрудников: {n}</h4><div className="dvs">{[3,4,5,6,7,8].map(k=><button key={k} className={'dvc'+(n===k?' on':'')} aria-pressed={n===k} onClick={()=>s.setTeam(b.id,k)}>{k}</button>)}</div>
+<p className="hint">Блок пересоберётся под нужное число, цифра в заголовке изменится вместе с ним. Правки внутри блока сбросятся (Ctrl+Z вернёт)</p></div>}
 function BlockPanel({dev,b,idx,editing,onTpl}:{dev:Dev;b:Block;idx:number;editing:boolean;onTpl:()=>void}){
 const s=useStore();const [qz,setQz]=useState(false);const tips=TIPS[b.title]??[];const els=b.els[dev];
 const del=()=>requestDelBlock(b,dev);
@@ -229,7 +234,7 @@ const copy=!b.els[d].length&&b.els[dev].length>0;s.setDevs(b.id,[...devs,d],dev)
 return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>{editing?'Редактирование':'Настройки'}</span>{!editing&&<button className="btn ic" onClick={()=>s.setBlock(null)} aria-label="Закрыть"><X size={14}/></button>}</div>
 <div className="sec"><label className="fld"><span>Название</span><input className="inp" value={b.title} placeholder="Название блока" onChange={e=>s.editBlock(b.id,{title:e.target.value})}/></label>
 <div className="grid2"><label className="num"><span>В</span><input type="number" value={b.h[dev]} onChange={e=>s.setH(dev,b.id,+e.target.value||0)}/></label><label className="num"><span>Ш</span><input type="number" value={FW[dev]} disabled/></label></div>
-{b.sv&&!b.sv.x&&<StepsSec b={b}/>}{(!b.sv||b.sv.x)&&<StageSec b={b}/>}
+{b.sv&&!b.sv.x&&<StepsSec b={b}/>}{teamN(b.title)!==null&&!b.sv&&<TeamSec b={b}/>}{(!b.sv||b.sv.x)&&<StageSec b={b}/>}
 {dev==='mobile'&&b.h.mobile>844&&<p className="warn">Блок выше экрана телефона (844 px). Правило: один блок = один экран</p>}
 {!editing&&<button className="btn pri" onClick={()=>s.enterEdit(b.id)}><Pencil size={16}/>Редактировать блок</button>}</div>
 <div className="sec dvsec"><h4>Показывать на</h4><div className="dvs">{DEVS.map(d=><button key={d} className={'dvc'+(onDev(b,d)?' on':'')+(d===dev?' cur':'')} aria-pressed={onDev(b,d)} title={onDev(b,d)?`Скрыть на устройстве: ${DEVN[d]}`:`Добавить на устройство: ${DEVN[d]}`} onClick={()=>toggleDev(d)}><DevIcon d={d} size={15}/>{DEVN[d]}</button>)}</div></div>
