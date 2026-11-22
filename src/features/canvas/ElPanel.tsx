@@ -17,7 +17,7 @@ const [o,setO]=useState(!SHUT.has(t));
 const tg=()=>{if(o)SHUT.add(t);else SHUT.delete(t);setO(!o);try{localStorage.setItem('igp.shut',JSON.stringify([...SHUT]))}catch{/* память недоступна */}};
 return<div className={'sec fold'+(o?'':' shut')}><button className="sh" aria-expanded={o} onClick={tg}><ChevronDown size={13}/>{t}</button>{o&&<div className="sb">{children}</div>}</div>}
 
-function Color({label,value,def,pal,none,onChange}:{label:string;value?:string;def:string;pal:string[];none?:boolean;onChange:(v:string|undefined)=>void}){
+export function Color({label,value,def,pal,none,onChange}:{label:string;value?:string;def:string;pal:string[];none?:boolean;onChange:(v:string|undefined)=>void}){
 const cur=value??def;
 return<div className="clr"><span>{label}</span><div className="cs-row">
 {pal.map(c=><button key={c} className={'cs'+(value?.toLowerCase()===c.toLowerCase()?' on':'')} style={{background:c}} title={c} onClick={()=>onChange(c)}/>)}

@@ -612,3 +612,6 @@ select.inp{text-overflow:ellipsis}
 
 .libset{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:12px}.libset span{font:600 12px Inter;color:var(--mute);margin:0 4px 0 8px}.libset span:first-child{margin-left:0}
 .libset button{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;font:500 13px Inter;transition:all .15s}.libset button:hover{border-color:var(--acc)}.libset button.on{background:var(--acc-s);border-color:var(--acc);color:var(--acc);font-weight:600}
+
+.pcs{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);color:var(--mute);transition:all .15s}.pcs:hover{color:var(--acc);border-color:var(--acc)}.pcs.on{color:var(--acc);border-color:var(--acc);background:var(--acc-s)}
+@media (pointer:coarse){.pcs,.pcx{width:32px;height:32px}}

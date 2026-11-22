@@ -8,7 +8,7 @@ import {download,blockMd,blockFile} from '../../lib/export';
 import type {El,ET,Dev,Block} from '../../store';
 import {toast} from '../../lib/toast';
 import {TIPS} from '../../lib/tpl';import {checkBlock} from '../../lib/textcheck';
-import {QuizEditor} from '../quiz/QuizEditor';import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
+import {QuizEditor} from '../quiz/QuizEditor';import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel,Color} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
 const STY=['fs','b','al','acc','fill','stroke','sw','r','op','c'] as const;let styClip:Partial<El>|null=null;
@@ -182,7 +182,7 @@ const dbl=()=>{if(!editing&&s.blockId)s.enterEdit(s.blockId)};
 return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок ${all.indexOf(editB)+1} · ${editB.title}`:sh?.name} · {{desktop:'Desktop',tablet:'Tablet',mobile:'Mobile'}[dev]} · {W}</div>
 {ui.rulers&&<div className="rl-top"><i className="rl-corner"/><Ruler z={z} len={W} range={rr?.x} onGuide={editing?e=>startGuide(e,'y'):undefined}/></div>}<div className="rl-body">{ui.rulers&&<Ruler vertical z={z} len={H} range={rr?.y} onGuide={editing?e=>startGuide(e,'x'):undefined}/>}<div className="cv" ref={wrap} style={{width:W*z,height:H*z,cursor:pan?'grab':editing&&tool!=='sel'?'crosshair':'default'}} onPointerDown={press} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={dbl}>
 <div className={'cv-in '+(editing?'ed':'pg')} style={{width:W,height:H,transform:`scale(${z})`,'--z':z} as React.CSSProperties}>
-{vis.map((b,i)=><div key={b.id} className={'band'+(i===selBi?' sel':'')} style={{top:tops[i],height:b.h[dev]}}><span>{all.indexOf(b)+1}. {b.title}{b.sv?.tab&&` · этап ${b.sv.i+1} из ${b.sv.n}`}</span>
+{vis.map((b,i)=><div key={b.id} className={'band'+(i===selBi?' sel':'')} style={{top:tops[i],height:b.h[dev],...(b.bg?{background:b.bg}:{})}}><span>{all.indexOf(b)+1}. {b.title}{b.sv?.tab&&` · этап ${b.sv.i+1} из ${b.sv.n}`}</span>
 {!editing&&<div className="bt" onPointerDown={stop}><button title="Настройки блока" onClick={()=>s.setBlock(b.id)}><Settings size={14}/></button><button className="ed" title="Редактировать блок (Enter)" onClick={()=>s.enterEdit(b.id)}><Pencil size={14}/><span>Редактировать</span></button><i className="sep"/>
 <button title="Выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1,dev)}><ArrowUp size={14}/></button><button title="Ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1,dev)}><ArrowDown size={14}/></button><button title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={14}/></button><button className="dz" title="Удалить" onClick={()=>delBlock(b)}><Trash2 size={14}/></button></div>}</div>)}
 {editing&&editB&&ui.cols&&(()=>{const c=colInfo();return<div className="cols" style={{height:editB.h[dev],padding:`0 ${c.mar}px`,gap:c.gut,gridTemplateColumns:`repeat(${c.n},1fr)`}}>{Array.from({length:c.n},(_,i)=><i key={i}/>)}</div>})()}
@@ -222,6 +222,17 @@ return<div className="sec dvsec"><h4>Показывать в этапе</h4><div
 function TeamSec({b}:{b:Block}){const s=useStore();const n=b.tm??teamN(b.title)??5;
 return<div className="sec dvsec"><h4>Сотрудников: {n}</h4><div className="dvs">{[3,4,5,6,7,8].map(k=><button key={k} className={'dvc'+(n===k?' on':'')} aria-pressed={n===k} onClick={()=>s.setTeam(b.id,k)}>{k}</button>)}</div>
 <p className="hint">Блок пересоберётся под нужное число, цифра в заголовке изменится вместе с ним. Правки внутри блока сбросятся (Ctrl+Z вернёт)</p></div>}
+/** оформление блока: фон, отступы сверху и снизу, выравнивание содержимого (для выбранного устройства) */
+function BlockLook({b,dev,st}:{b:Block;dev:Dev;st?:{palette:string[]}}){const s=useStore();const es=b.els[dev];if(!es.length)return null;
+const top=Math.round(Math.min(...es.map(e=>e.y))),bot=Math.round(b.h[dev]-Math.max(...es.map(e=>e.y+(e.t==='line'?0:e.h))));
+const pad=(v:number)=>s.padBlock(b.id,dev,v,v);
+const AL=[['l','Слева',AlignLeft],['c','Центр',AlignCenter],['r','Справа',AlignRight]] as const;
+return<div className="sec"><h4>Оформление блока · {DEVN[dev]}</h4>
+<Color label="Фон блока" value={b.bg} def="#FFFFFF" pal={['#F8FAFC','#F1F5F9','#E2E8F0','#EAF0FF',...(st?.palette??[]).filter(c=>/^#[0-9a-f]{6}$/i.test(c)).slice(0,2)]} none onChange={v=>s.editBlock(b.id,{bg:!v||v==='none'?undefined:v})}/>
+<div className="grid2"><label className="num"><span>Сверху</span><input type="number" min={0} value={top} onChange={ev=>s.padBlock(b.id,dev,+ev.target.value||0,undefined)}/></label><label className="num"><span>Снизу</span><input type="number" min={24} value={bot} onChange={ev=>s.padBlock(b.id,dev,undefined,+ev.target.value||0)}/></label></div>
+<div className="btnrow">{[24,48,64].map(v=><button key={v} className="btn" title={`Отступ ${v} px сверху и снизу`} onClick={()=>pad(v)}>{v} px</button>)}</div>
+<div className="btnrow">{AL.map(([k,l,I])=><button key={k} className="btn" title={`Сдвинуть всё содержимое: ${l.toLowerCase()}, с полем по сетке`} onClick={()=>s.alignBlock(b.id,dev,k)}><I size={15}/>{l}</button>)}</div>
+<p className="hint">Отступы и выравнивание двигают всё содержимое блока целиком, расстояния между элементами не меняются. Фон виден в просмотре и в брифе для нейросети</p></div>}
 function BlockPanel({dev,b,idx,editing,onTpl}:{dev:Dev;b:Block;idx:number;editing:boolean;onTpl:()=>void}){
 const s=useStore();const [qz,setQz]=useState(false);const tips=TIPS[b.title]??[];const els=b.els[dev];
 const del=()=>requestDelBlock(b,dev);
@@ -237,6 +248,7 @@ return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>
 {b.sv&&!b.sv.x&&<StepsSec b={b}/>}{teamN(b.title)!==null&&!b.sv&&<TeamSec b={b}/>}{(!b.sv||b.sv.x)&&<StageSec b={b}/>}
 {dev==='mobile'&&b.h.mobile>844&&<p className="warn">Блок выше экрана телефона (844 px). Правило: один блок = один экран</p>}
 {!editing&&<button className="btn pri" onClick={()=>s.enterEdit(b.id)}><Pencil size={16}/>Редактировать блок</button>}</div>
+<BlockLook b={b} dev={dev} st={pr?.style}/>
 <div className="sec dvsec"><h4>Показывать на</h4><div className="dvs">{DEVS.map(d=><button key={d} className={'dvc'+(onDev(b,d)?' on':'')+(d===dev?' cur':'')} aria-pressed={onDev(b,d)} title={onDev(b,d)?`Скрыть на устройстве: ${DEVN[d]}`:`Добавить на устройство: ${DEVN[d]}`} onClick={()=>toggleDev(d)}><DevIcon d={d} size={15}/>{DEVN[d]}</button>)}</div></div>
 {b.quiz&&<div className="sec"><button className="btn pri" onClick={()=>setQz(true)}><Settings size={16}/>Настроить квиз</button><p className="hint">Вопросы, ответы, шкала, консультант, подарки, телефон и финал. Макет пересобирается сам. В просмотре (P) квиз проходится по кнопкам</p><button className="btn" title="Блок станет обычным: элементы правятся руками, настройки квиза пропадут" onClick={()=>{s.unlinkQuiz(b.id);toast('Блок отвязан от настроек квиза',{label:'Отменить',run:()=>s.undo()},5000)}}>Отвязать от настроек</button></div>}
 {qz&&b.quiz&&<QuizEditor b={b} onClose={()=>setQz(false)}/>}
