@@ -8,6 +8,8 @@ import {REVIEWS,REVIEWS_TIPS} from './tplReviews';
 import {GUAR,GUAR_TIPS} from './tplGuar';
 import {TEAM,TEAM_TIPS} from './tplTeam';
 import {MGR,MGR_TIPS} from './tplManager';
+import {QUIZ,QUIZ_TIPS} from './tplQuiz';
+import type {QuizCfg} from './quiz';
 type Al='l'|'c'|'r';
 export type Node=
 |{k:'h1'|'h2'|'h3'|'p'|'sm';t:string;al?:Al}
@@ -20,8 +22,8 @@ export type Node=
 |{k:'split';a:Node[];b:Node[]}
 |{k:'card';item:Node[]}
 |{k:'narrow';w:number;item:Node[]};
-export interface Built{h:Record<Dev,number>;els:Record<Dev,El[]>}
-export interface Tpl{name:string;cat:string;spec:Node[]|((d:Dev)=>{h:number;els:El[]})}
+export interface Built{h:Record<Dev,number>;els:Record<Dev,El[]>;quiz?:QuizCfg}
+export interface Tpl{name:string;cat:string;spec:Node[]|((d:Dev)=>{h:number;els:El[]});quiz?:()=>QuizCfg}
 const PAD:Record<Dev,number>={desktop:120,tablet:48,mobile:20};
 const PV:Record<Dev,number>={desktop:64,tablet:48,mobile:32};
 const DI:Record<Dev,0|1|2>={desktop:0,tablet:1,mobile:2};
@@ -84,6 +86,7 @@ export const TPLS:Tpl[]=[
 ...GUAR,
 ...TEAM,
 ...MGR,
+...QUIZ,
 {name:'Услуги',cat:'Продажа',spec:[H2('Услуги','c'),cols(3,3,card({k:'img',h:160,t:'Фото'},{k:'h3',t:'Услуга {i}'},{k:'p',t:'Результат для клиента'},{k:'btn',t:'Подробнее'}))]},
 {name:'Список услуг',cat:'Продажа',spec:[H2('Услуги и цены'),{k:'li',t:'Услуга 1',r:'от 10 000 ₽'},{k:'li',t:'Услуга 2',r:'от 10 000 ₽'},{k:'li',t:'Услуга 3',r:'от 10 000 ₽'},{k:'li',t:'Услуга 4',r:'от 10 000 ₽'}]},
 {name:'Тарифы',cat:'Продажа',spec:[H2('Тарифы','c'),cols(3,3,card({k:'h3',t:'Тариф {i}'},{k:'h2',t:'Цена ₽'},{k:'p',t:'• Что входит\n• Что входит\n• Что входит'},{k:'btn',t:'Выбрать',full:true}))]},
@@ -110,7 +113,7 @@ export const TPLS:Tpl[]=[
 {name:'Список',cat:'Прочее',spec:[{k:'li',t:'Товар 1',r:'0 ₽'},{k:'li',t:'Товар 2',r:'0 ₽'},{k:'li',t:'Товар 3',r:'0 ₽'}]},
 {name:'Итого',cat:'Прочее',spec:[card({k:'p',t:'Товары: 0 ₽'},{k:'p',t:'Доставка: 0 ₽'},{k:'h2',t:'Итого: 0 ₽'},{k:'btn',t:'Оформить заказ',full:true})]}];
 export const CATS=[...new Set(TPLS.map(t=>t.cat))];
-export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...GUAR_TIPS,...TEAM_TIPS,...MGR_TIPS,'Отзывы':REVIEWS_TIPS['Отзывы: результат'],
+export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...GUAR_TIPS,...TEAM_TIPS,...MGR_TIPS,...QUIZ_TIPS,'Отзывы':REVIEWS_TIPS['Отзывы: результат'],
 'Шапка':['Шапка занимает до 10% первого экрана','Логотип, дескриптор, телефон и «Заказать звонок»'],
 'Преимущества':['Формула: «Вы получите … за счёт …»','Иконка и заголовок 3 уровня работают лучше сплошного текста'],
 'Форма заявки':['Только телефон, остальное выяснит менеджер','Подсказка над полем, маска номера не нужна','Если есть поле, нужна галочка согласия','Форма каждые 2–3 блока, но не одинаковая','Текст кнопки совпадает с заголовком формы'],
@@ -122,7 +125,7 @@ export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...GUAR
 'FAQ':['Раскрывающиеся блоки вместо слайдеров'],
 'Тарифы':['Чем больше блок влияет на конверсию, тем крупнее элемент']};
 export function buildTpl(t:Tpl):Built{const h={} as Record<Dev,number>,els={} as Record<Dev,El[]>;
-for(const d of ['desktop','tablet','mobile'] as Dev[]){const r=typeof t.spec==='function'?t.spec(d):render(t.spec,d);h[d]=r.h;els[d]=r.els}return{h,els}}
+for(const d of ['desktop','tablet','mobile'] as Dev[]){const r=typeof t.spec==='function'?t.spec(d):render(t.spec,d);h[d]=r.h;els[d]=r.els}return{h,els,quiz:t.quiz?.()}}
 export const buildByName=(name:string):Built|null=>{if(name==='Оффер')name='1 экран';if(name==='Отзывы')name='Отзывы: результат';const t=TPLS.find(x=>x.name===name);return t?buildTpl(t):null};
 export const emptyBuild=():Built=>({h:{desktop:400,tablet:400,mobile:480},els:{desktop:[],tablet:[],mobile:[]}});
 export const fresh=(e:Record<Dev,El[]>):Record<Dev,El[]>=>({desktop:e.desktop.map(x=>({...x,id:uid()})),tablet:e.tablet.map(x=>({...x,id:uid()})),mobile:e.mobile.map(x=>({...x,id:uid()}))});

@@ -6,9 +6,9 @@ import {requestDelBlock,DevIcon} from '../blocks/DelBlock';
 import {DEVN} from '../../lib/dev';
 import {download,blockMd,blockFile} from '../../lib/export';
 import type {El,ET,Dev,Block} from '../../store';
-import {toast} from '../../lib/toast';import {stageGroup} from '../../lib/tplSteps';
+import {toast} from '../../lib/toast';
 import {TIPS} from '../../lib/tpl';
-import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
+import {QuizEditor} from '../quiz/QuizEditor';import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
 const KEYS:Record<string,ET|'sel'>={KeyV:'sel',KeyT:'text',KeyR:'rect',KeyB:'btn',KeyF:'input',KeyI:'img',KeyL:'line'};
@@ -176,7 +176,7 @@ const dbl=()=>{if(!editing&&s.blockId)s.enterEdit(s.blockId)};
 return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок ${all.indexOf(editB)+1} · ${editB.title}`:sh?.name} · {{desktop:'Desktop',tablet:'Tablet',mobile:'Mobile'}[dev]} · {W}</div>
 {ui.rulers&&<div className="rl-top"><i className="rl-corner"/><Ruler z={z} len={W} range={rr?.x} onGuide={editing?e=>startGuide(e,'y'):undefined}/></div>}<div className="rl-body">{ui.rulers&&<Ruler vertical z={z} len={H} range={rr?.y} onGuide={editing?e=>startGuide(e,'x'):undefined}/>}<div className="cv" ref={wrap} style={{width:W*z,height:H*z,cursor:pan?'grab':editing&&tool!=='sel'?'crosshair':'default'}} onPointerDown={press} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={dbl}>
 <div className={'cv-in '+(editing?'ed':'pg')} style={{width:W,height:H,transform:`scale(${z})`,'--z':z} as React.CSSProperties}>
-{vis.map((b,i)=><div key={b.id} className={'band'+(i===selBi?' sel':'')} style={{top:tops[i],height:b.h[dev]}}><span>{all.indexOf(b)+1}. {b.title}{b.sv?.tab&&` · этап ${b.sv.i+1} из ${b.sv.n}`}</span>
+{vis.map((b,i)=><div key={b.id} className={'band'+(i===selBi?' sel':'')} style={{top:tops[i],height:b.h[dev]}}><span>{all.indexOf(b)+1}. {b.title}</span>
 {!editing&&<div className="bt" onPointerDown={stop}><button title="Настройки блока" onClick={()=>s.setBlock(b.id)}><Settings size={14}/></button><button className="ed" title="Редактировать блок (Enter)" onClick={()=>s.enterEdit(b.id)}><Pencil size={14}/><span>Редактировать</span></button><i className="sep"/>
 <button title="Выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1,dev)}><ArrowUp size={14}/></button><button title="Ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1,dev)}><ArrowDown size={14}/></button><button title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={14}/></button><button className="dz" title="Удалить" onClick={()=>delBlock(b)}><Trash2 size={14}/></button></div>}</div>)}
 {editing&&editB&&ui.cols&&(()=>{const c=colInfo();return<div className="cols" style={{height:editB.h[dev],padding:`0 ${c.mar}px`,gap:c.gut,gridTemplateColumns:`repeat(${c.n},1fr)`}}>{Array.from({length:c.n},(_,i)=><i key={i}/>)}</div>})()}
@@ -201,18 +201,8 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 <div className="tools">{editing&&<>{TOOLS.map(([k,l,I])=><button key={k} data-k={HK[k]} className={tool===k?'on':''} title={`${l} (${HK[k]})`} onClick={()=>pick(k)}><I size={18}/></button>)}<button data-k="E" className={ins||['shape','icon','mock','list'].includes(tool)?'on':''} title="Элементы: фигуры, иконки, мокапы (E)" onClick={()=>setIns(v=>!v)}><Shapes size={18}/></button><i className="vr"/></>}
 <button title="Уменьшить (−)" onClick={()=>setZ(clampZ(z-.1))}><Minus size={16}/></button><button className="zv" title="100% (Shift+0)" onClick={()=>setZ(1)}>{Math.round(z*100)}%</button><button title="Увеличить (+)" onClick={()=>setZ(clampZ(z+.1))}><Plus size={16}/></button><button title="Вписать (Shift+1)" onClick={fit}><Maximize size={16}/></button><i className="vr"/><button className={vm?'on':''} title="Вид: линейки, сетка, направляющие, колонки" onClick={()=>setVm(v=>!v)}><Eye size={18}/></button></div></>}
 
-/** этапы: число 3–7 и доп. блок в этап */
-function StepsSec({b}:{b:Block}){const s=useStore();const sv=b.sv!;
-return<div className="sec dvsec"><h4>Этапов: {sv.n}</h4><div className="dvs">{[3,4,5,6,7].map(k=><button key={k} className={'dvc'+(sv.n===k?' on':'')} aria-pressed={sv.n===k} onClick={()=>s.setSteps(b.id,k)}>{k}</button>)}</div>
-{sv.tab&&<button className="btn" onClick={()=>s.addStepBlock(b.id)}><Plus size={16}/>Добавить блок в этот этап</button>}
-<p className="hint">{sv.tab?'Вкладки добавляются и убираются блоками. Тексты вкладок, которые ты правил, сохраняются. Лишние вкладки удаляются вместе с содержимым (можно отменить Ctrl+Z)':'Блок пересоберётся: тексты сохранятся, положение элементов вернётся к шаблону (можно отменить Ctrl+Z)'}</p></div>}
-/** привязка любого блока к вкладке: виден только когда выбран этап */
-function StageSec({b}:{b:Block}){const s=useStore();const sh=s.data?.projects.find(p=>p.id===s.projectId)?.sheets.find(x=>x.id===s.sheetId);
-const g=sh?stageGroup(sh.blocks,b):null;if(!g)return null;const cur=b.sv?b.sv.i:-1;
-return<div className="sec dvsec"><h4>Показывать в этапе</h4><div className="dvs"><button className={'dvc'+(cur<0?' on':'')} onClick={()=>s.setStage(b.id,null)}>Всегда</button>{Array.from({length:g.n},(_,k)=><button key={k} className={'dvc'+(cur===k?' on':'')} aria-pressed={cur===k} onClick={()=>s.setStage(b.id,k)}>{k+1}</button>)}</div>
-<p className="hint">Блок виден только когда в просмотре выбран этот этап</p></div>}
 function BlockPanel({dev,b,idx,editing,onTpl}:{dev:Dev;b:Block;idx:number;editing:boolean;onTpl:()=>void}){
-const s=useStore();const tips=TIPS[b.title]??[];const els=b.els[dev];
+const s=useStore();const [qz,setQz]=useState(false);const tips=TIPS[b.title]??[];const els=b.els[dev];
 const del=()=>requestDelBlock(b,dev);
 const pr=s.data?.projects.find(p=>p.id===s.projectId);
 const copyAi=async()=>{if(!pr)return;const txt=blockMd(pr,b);try{await navigator.clipboard.writeText(txt);toast('Описание блока скопировано. Вставь его в чат с нейросетью')}catch{download('block.md',txt,'text/markdown');toast('Буфер недоступен, описание скачано файлом')}};
@@ -223,10 +213,11 @@ const copy=!b.els[d].length&&b.els[dev].length>0;s.setDevs(b.id,[...devs,d],dev)
 return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>{editing?'Редактирование':'Настройки'}</span>{!editing&&<button className="btn ic" onClick={()=>s.setBlock(null)} aria-label="Закрыть"><X size={14}/></button>}</div>
 <div className="sec"><label className="fld"><span>Название</span><input className="inp" value={b.title} placeholder="Название блока" onChange={e=>s.editBlock(b.id,{title:e.target.value})}/></label>
 <div className="grid2"><label className="num"><span>В</span><input type="number" value={b.h[dev]} onChange={e=>s.setH(dev,b.id,+e.target.value||0)}/></label><label className="num"><span>Ш</span><input type="number" value={FW[dev]} disabled/></label></div>
-{b.sv&&!b.sv.x&&<StepsSec b={b}/>}{!b.sv?.x&&!b.sv&&<StageSec b={b}/>}{b.sv?.x&&<StageSec b={b}/>}
 {dev==='mobile'&&b.h.mobile>844&&<p className="warn">Блок выше экрана телефона (844 px). Правило: один блок = один экран</p>}
 {!editing&&<button className="btn pri" onClick={()=>s.enterEdit(b.id)}><Pencil size={16}/>Редактировать блок</button>}</div>
 <div className="sec dvsec"><h4>Показывать на</h4><div className="dvs">{DEVS.map(d=><button key={d} className={'dvc'+(onDev(b,d)?' on':'')+(d===dev?' cur':'')} aria-pressed={onDev(b,d)} title={onDev(b,d)?`Скрыть на устройстве: ${DEVN[d]}`:`Добавить на устройство: ${DEVN[d]}`} onClick={()=>toggleDev(d)}><DevIcon d={d} size={15}/>{DEVN[d]}</button>)}</div></div>
+{b.quiz&&<div className="sec"><button className="btn pri" onClick={()=>setQz(true)}><Settings size={16}/>Настроить квиз</button><p className="hint">Вопросы, ответы, шкала, консультант, подарки, телефон и финал. Макет пересобирается сам. В просмотре (P) квиз проходится по кнопкам</p><button className="btn" title="Блок станет обычным: элементы правятся руками, настройки квиза пропадут" onClick={()=>{s.unlinkQuiz(b.id);toast('Блок отвязан от настроек квиза',{label:'Отменить',run:()=>s.undo()},5000)}}>Отвязать от настроек</button></div>}
+{qz&&b.quiz&&<QuizEditor b={b} onClose={()=>setQz(false)}/>}
 <details className="fold2" open={!!b.text}><summary>Тексты и заметки</summary><textarea className="inp" placeholder="Тексты блока, пожелания дизайнеру, как работает: переходы, раскрытия, кнопки" value={b.text} onChange={e=>s.editBlock(b.id,{text:e.target.value})}/></details>
 <details className="fold2"><summary>Передать нейросети</summary><div className="stack"><button className="btn" onClick={copyAi}><Copy size={15}/>Скопировать описание</button><button className="btn" onClick={dlBlock}><Download size={15}/>Скачать блок (JSON)</button></div><p className="hint">Описание: тексты, заметки и элементы с координатами для каждого устройства. JSON загружается в Настройках как шаблон</p></details>
 {tips.length>0&&<details className="fold2"><summary>Из твоих конспектов</summary><ul className="tipl">{tips.map(t=><li key={t}>{t}</li>)}</ul></details>}

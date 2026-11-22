@@ -1,9 +1,9 @@
-import {uid} from './uid';import {buildByName,emptyBuild,fresh} from './tpl';import {defStyle} from './art';
+import {uid} from './uid';import {buildByName,emptyBuild,fresh} from './tpl';import {normalizeQuiz} from './quiz';import {defStyle} from './art';
 import type {Data,Block,BlockTpl,El} from '../store';import type {Dev} from './dev';
 export {uid};
 export const noEls=():Record<Dev,El[]>=>({desktop:[],tablet:[],mobile:[]});
-export const mkBlock=(title:string,text=''):Block=>{const b=buildByName(title)??emptyBuild();return{id:uid(),title,text,h:b.h,els:b.els}};
-export const mkFromTpl=(t:BlockTpl):Block=>({id:uid(),title:t.name,text:t.text,h:{...t.h},els:fresh(t.els)});
+export const mkBlock=(title:string,text=''):Block=>{const b=buildByName(title)??emptyBuild();return{id:uid(),title,text,h:b.h,els:b.els,...(b.quiz?{quiz:b.quiz}:{})}};
+export const mkFromTpl=(t:BlockTpl):Block=>({id:uid(),title:t.name,text:t.text,h:{...t.h},els:fresh(t.els),...(t.quiz?{quiz:normalizeQuiz(t.quiz)}:{})});
 /** v1 string blocks -> v2 objects -> v3 sheet.els -> v4 blocks own wireframes. Idempotent. */
 export function migrate(d:any):Data{
 if(d.schemaVersion===1){for(const p of d.projects)for(const s of p.sheets)s.blocks=s.blocks.map((b:unknown)=>typeof b==='string'?{id:uid(),title:b,text:''}:b);d.schemaVersion=2}
@@ -22,6 +22,6 @@ for(const t of d.blockTpls){const n=emptyBuild();t.h={...n.h,...(t.h??{})};t.els
 return d as Data}
 const DV:Dev[]=['desktop','tablet','mobile'];
 /** Any block, any schema version: guarantee id, text, h and els for all three sizes. */
-function fixBlock(b:any){const n=emptyBuild();b.id??=uid();b.title??='Блок';if(b.title==='Оффер')b.title='1 экран';b.text??='';
+function fixBlock(b:any){const n=emptyBuild();b.id??=uid();b.title??='Блок';if(b.title==='Оффер')b.title='1 экран';b.text??='';if(b.quiz)b.quiz=normalizeQuiz(b.quiz);
 b.h={...n.h,...(b.h??{})};b.els={...n.els,...(b.els??{})};
 for(const dv of DV){if(!Array.isArray(b.els[dv]))b.els[dv]=[];if(typeof b.h[dv]!=='number')b.h[dv]=n.h[dv]}}

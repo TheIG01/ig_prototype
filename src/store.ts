@@ -1,17 +1,16 @@
 import {create} from 'zustand';import {immer} from 'zustand/middleware/immer';
 import {save} from './lib/vault';import {migrate,mkBlock,mkFromTpl} from './lib/migrate';import {uid} from './lib/uid';
-import {fresh} from './lib/tpl';import {stepsBlocks,resizeSteps,stageGroup} from './lib/tplSteps';import {sheetsFromOutline} from './lib/outline';
+import {fresh} from './lib/tpl';import {sheetsFromOutline} from './lib/outline';
+import {applyQuiz,normalizeQuiz} from './lib/quiz';import type {QuizCfg} from './lib/quiz';
 import {FW,DEVS,onDev} from './lib/dev';import {defStyle} from './lib/art';import type {PStyle,Role} from './lib/art';import type {Dev} from './lib/dev';
 export {FW,DEVS,onDev};export type {Dev};
 export type Kind='page'|'popup';
 export type ET='text'|'rect'|'btn'|'input'|'img'|'line'|'shape'|'icon'|'mock'|'list';
-export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h';tg?:string;sk?:string}
+export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h';qa?:string}
 /** авто-лейаут группы: d направление, gap отступ, al выравнивание поперёк, x y начало, mx центр по ширине блока, fl одинаковый поперечный размер */
 export interface Lay{d:'h'|'v';gap:number;al:'s'|'c'|'e';x:number;y:number;mx?:boolean;fl?:boolean}
-/** этапы: v вариант, g группа, i номер вкладки, n число этапов, tab вкладки переключаются в просмотре, x доп. блок этапа */
-export interface SV{v:string;g:string;i:number;n:number;tab:boolean;x?:1}
-export interface Block{id:string;title:string;text:string;sv?:SV;dv?:Dev[];h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>;guides?:Partial<Record<Dev,{x:number[];y:number[]}>>}
-export interface BlockTpl{id:string;name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
+export interface Block{id:string;title:string;text:string;quiz?:QuizCfg;dv?:Dev[];h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>;guides?:Partial<Record<Dev,{x:number[];y:number[]}>>}
+export interface BlockTpl{id:string;name:string;cat?:string;quiz?:QuizCfg;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
 export interface Sheet{id:string;name:string;kind:Kind;blocks:Block[]}
 export interface Project{id:string;name:string;typeId:string;style:PStyle;sheets:Sheet[];createdAt:number;updatedAt:number}
 export interface SiteType{id:string;name:string;builtin?:boolean;pages:{name:string;kind:Kind;blocks:string[]}[]}
@@ -21,6 +20,7 @@ export const PRESETS:SiteType[]=[
 {id:'landing',name:'Лендинг',builtin:true,pages:[P('Главная',['Шапка','1 экран','Проблемы','Преимущества','Как работаем','Кейсы','Отзывы: результат','Тарифы','FAQ','Форма заявки','Подвал']),P('Заявка',['Форма'],'popup'),P('Спасибо',['Подтверждение'])]},
 {id:'multi',name:'Многостраничный',builtin:true,pages:[P('Главная',['Шапка','1 экран','Услуги','О компании','Отзывы: результат','Подвал']),P('Услуги',['Шапка','Список услуг','Форма заявки','Подвал']),P('О нас',['Шапка','История','Команда','Подвал']),P('Контакты',['Шапка','Контакты','Карта','Подвал'])]},
 {id:'shop',name:'Интернет-магазин',builtin:true,pages:[P('Главная',['Шапка','Баннер','Категории','Хиты','Преимущества','Подвал']),P('Каталог',['Шапка','Фильтры','Сетка товаров','Подвал']),P('Товар',['Шапка','Галерея','Описание','Похожие','Подвал']),P('Корзина',['Шапка','Список','Итого','Подвал'])]},
+{id:'quiz4',name:'Квиз 4 поколения',builtin:true,pages:[P('Старт',['1 экран']),P('Квиз',['Квиз 4 поколения: подбор решений'])]},
 {id:'quiz',name:'Квиз',builtin:true,pages:[P('Старт',['1 экран','Кнопка старта']),P('Вопрос',['Прогресс','Вопрос','Варианты','Далее']),P('Контакты',['Бонус','Форма заявки']),P('Спасибо',['Подтверждение'])]}];
 /** wires typical buttons: header/CTA -> popup, forms -> thanks page, quiz start -> first question */
 const autoLink=(sheets:Sheet[])=>{const pop=sheets.find(x=>x.kind==='popup');const thx=sheets.find(x=>x.kind!=='popup'&&/спасибо/i.test(x.name));const q=sheets.find(x=>x.kind!=='popup'&&/вопрос/i.test(x.name));
@@ -36,8 +36,8 @@ interface S{data:Data|null;projectId:string|null;sheetId:string|null;blockId:str
 enterEdit:(id:string)=>void;exitEdit:(save:boolean)=>void;
 load:(d:Data)=>void;addProject:(name:string,typeId:string)=>void;importOutline:(name:string,text:string)=>void;delProject:(id:string)=>void;openProject:(id:string)=>void;renameProject:(id:string,n:string)=>void;
 addSheet:(name:string,kind:Kind)=>void;renameSheet:(id:string,n:string)=>void;delSheet:(id:string)=>void;setSheet:(id:string)=>void;
-addBlock:(title:string,o?:{after?:string;tpl?:string;dev?:Dev})=>void;delBlock:(id:string,dev?:Dev)=>void;moveBlock:(id:string,dir:-1|1,dev?:Dev)=>void;setDevs:(id:string,devs:Dev[],from?:Dev)=>void;adaptSheet:(dev:Dev,from:Dev)=>void;delAsk:{id:string;dev:Dev}|null;setDelAsk:(v:{id:string;dev:Dev}|null)=>void;dupBlock:(id:string)=>void;setSteps:(id:string,n:number)=>void;addStepBlock:(id:string)=>void;setStage:(id:string,i:number|null)=>void;
-editBlock:(id:string,patch:Partial<Pick<Block,'title'|'text'>>)=>void;setH:(dev:Dev,id:string,h:number)=>void;setGuides:(id:string,dev:Dev,g:{x:number[];y:number[]})=>void;saveBlockTpl:(id:string,name:string,cat?:string)=>void;delBlockTpl:(id:string)=>void;importTpls:(l:{name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}[])=>void;
+addBlock:(title:string,o?:{after?:string;tpl?:string;dev?:Dev})=>void;delBlock:(id:string,dev?:Dev)=>void;moveBlock:(id:string,dir:-1|1,dev?:Dev)=>void;setDevs:(id:string,devs:Dev[],from?:Dev)=>void;adaptSheet:(dev:Dev,from:Dev)=>void;delAsk:{id:string;dev:Dev}|null;setDelAsk:(v:{id:string;dev:Dev}|null)=>void;dupBlock:(id:string)=>void;
+setQuiz:(id:string,f:(c:QuizCfg)=>void)=>void;unlinkQuiz:(id:string)=>void;editBlock:(id:string,patch:Partial<Pick<Block,'title'|'text'>>)=>void;setH:(dev:Dev,id:string,h:number)=>void;setGuides:(id:string,dev:Dev,g:{x:number[];y:number[]})=>void;saveBlockTpl:(id:string,name:string,cat?:string)=>void;delBlockTpl:(id:string)=>void;importTpls:(l:{name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}[])=>void;
 addEl:(dev:Dev,t:ET,x:number,y:number,bid?:string,extra?:Partial<El>)=>void;setStyle:(patch:Partial<PStyle>)=>void;setRole:(r:Role,p:Partial<PStyle['roles'][Role]>)=>void;updEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dragEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dropEl:(dev:Dev,id:string,stay?:boolean)=>void;
 delEl:(dev:Dev,id:string)=>void;dupEl:(dev:Dev,id:string)=>void;moveEl:(dev:Dev,id:string,dir:number)=>void;copyEl:(dev:Dev,id:string)=>void;
 clipSet:(dev:Dev,id:string)=>void;clipPaste:(dev:Dev)=>void;setEl:(id:string|null)=>void;setMulti:(ids:string[])=>void;dragMany:(dev:Dev,ps:{id:string;x:number;y:number}[])=>void;delEls:(dev:Dev,ids:string[])=>void;dupEls:(dev:Dev,ids:string[],off:number,nid:string[],k?:string)=>void;alignEls:(dev:Dev,ids:string[],m:'l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv')=>void;groupEls:(dev:Dev,ids:string[],on:boolean)=>void;autoLay:(dev:Dev,ids:string[])=>void;setLay:(dev:Dev,gid:string,p:Partial<Lay>)=>void;delLay:(dev:Dev,gid:string)=>void;clipSetMany:(dev:Dev,ids:string[])=>void;clipPasteMany:(dev:Dev)=>void;setBlock:(id:string|null)=>void;
@@ -85,11 +85,7 @@ addSheet:(name,kind)=>mut((s,p)=>{if(!p)return;const sh:Sheet={id:uid(),name,kin
 renameSheet:(id,n)=>mut((_,p)=>{const x=p?.sheets.find(q=>q.id===id);if(x)x.name=n}),
 delSheet:id=>mut((s,p)=>{if(!p)return;p.sheets=p.sheets.filter(q=>q.id!==id);if(s.sheetId===id){s.sheetId=p.sheets[0]?.id??null;s.blockId=null;s.elId=null}}),
 setSheet:id=>set({sheetId:id,blockId:null,elId:null,editId:null,snap:null}),
-addBlock:(title,o)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const tp=o?.tpl?s.data!.blockTpls.find(x=>x.id===o.tpl):undefined;const sg=tp?null:stepsBlocks(title);const bs=sg??[tp?mkFromTpl(tp):mkBlock(title)];const b=bs[0];if(o?.dev)for(const x of bs)x.dv=[o.dev];const i=o?.after?sh.blocks.findIndex(x=>x.id===o.after):-1;if(i>=0)sh.blocks.splice(i+1,0,...bs);else sh.blocks.push(...bs);s.blockId=b.id;s.elId=null}),
-setSteps:(id,n)=>mut(s=>{const sh=curSheet(s);const b=sh?.blocks.find(x=>x.id===id);if(!sh||!b)return;resizeSteps(sh.blocks,b,n);if(!sh.blocks.some(x=>x.id===id)){s.blockId=null;s.elId=null}}),
-addStepBlock:id=>mut(s=>{const sh=curSheet(s);const b=sh?.blocks.find(x=>x.id===id);if(!sh||!b?.sv)return;const sv=b.sv;let at=-1;sh.blocks.forEach((x,k)=>{if(x.sv?.g===sv.g&&x.sv.i===sv.i)at=k});
-const nb:Block={id:uid(),title:'Блок этапа '+(sv.i+1),text:'',h:{desktop:400,tablet:400,mobile:480},els:{desktop:[],tablet:[],mobile:[]},sv:{...sv,x:1}};sh.blocks.splice(at+1,0,nb);s.blockId=nb.id;s.elId=null}),
-setStage:(id,i)=>mut(s=>{const sh=curSheet(s);const b=sh?.blocks.find(x=>x.id===id);if(!sh||!b)return;const g=stageGroup(sh.blocks,b);if(!g)return;if(i===null)delete b.sv;else b.sv={v:g.v,g:g.g,i,n:g.n,tab:true,x:1}}),
+addBlock:(title,o)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const tp=o?.tpl?s.data!.blockTpls.find(x=>x.id===o.tpl):undefined;const b=tp?mkFromTpl(tp):mkBlock(title);if(o?.dev)b.dv=[o.dev];const i=o?.after?sh.blocks.findIndex(x=>x.id===o.after):-1;if(i>=0)sh.blocks.splice(i+1,0,b);else sh.blocks.push(b);s.blockId=b.id;s.elId=null}),
 delBlock:(id,dev)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const b=sh.blocks.find(x=>x.id===id);if(!b)return;const rest=dev?(b.dv??[...DEVS]).filter(d=>d!==dev):[];if(dev&&rest.length){b.dv=DEVS.filter(d=>rest.includes(d))}else sh.blocks=sh.blocks.filter(x=>x.id!==id);if(s.blockId===id){s.blockId=null;s.elId=null}if(s.editId===id){s.editId=null;s.snap=null}}),
 enterEdit:id=>set(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;s.editId=id;s.blockId=id;s.elId=null;s.snap=JSON.parse(JSON.stringify(b))}),
 exitEdit:save=>{if(save){set(s=>{s.editId=null;s.snap=null;s.elId=null});return}mut(s=>{if(s.snap&&s.editId){const sh=curSheet(s);const i=sh?sh.blocks.findIndex(b=>b.id===s.editId):-1;if(sh&&i>=0)sh.blocks[i]=s.snap}s.editId=null;s.snap=null;s.elId=null})},
@@ -98,11 +94,13 @@ setDevs:(id,devs,from)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);i
 adaptSheet:(dev,from)=>mut(s=>{const sh=curSheet(s);if(!sh)return;for(const b of sh.blocks)if(onDev(b,from)&&!onDev(b,dev))addDevTo(b,dev,from)}),
 setDelAsk:v=>set(s=>{s.delAsk=v}),
 dupBlock:id=>mut(s=>{const a=curSheet(s)?.blocks;const i=a?a.findIndex(b=>b.id===id):-1;if(!a||i<0)return;const o=JSON.parse(JSON.stringify(a[i])) as Block;o.id=uid();o.els=fresh(o.els);a.splice(i+1,0,o);s.blockId=o.id;s.elId=null}),
+setQuiz:(id,f)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b||!b.quiz)return;const c=JSON.parse(JSON.stringify(b.quiz)) as QuizCfg;f(c);b.quiz=normalizeQuiz(c);const a=applyQuiz(b.quiz);for(const d of DEVS){b.els[d]=a.els[d].map(e=>({...e,id:uid()}));b.h[d]=a.h[d]}s.elId=null},'qz'+id),
+unlinkQuiz:id=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(b)delete b.quiz}),
 editBlock:(id,patch)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(b)Object.assign(b,patch)},'e'+id),
 setGuides:(id,dev,g)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;const u=(a:number[])=>[...new Set(a.map(v=>Math.round(v)))].sort((p,q)=>p-q);const gs={...(b.guides??{})} as NonNullable<Block['guides']>;const x=u(g.x),y=u(g.y);if(!x.length&&!y.length)delete gs[dev];else gs[dev]={x,y};if(Object.keys(gs).length)b.guides=gs;else delete b.guides},'g'+id),
 setH:(dev,id,h)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;const bt=Math.max(0,...b.els[dev].map(e=>e.y+e.h));b.h[dev]=Math.max(80,bt,Math.round(h))},'h'+id),
-saveBlockTpl:(id,name,cat)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;const c=JSON.parse(JSON.stringify(b)) as Block;s.data!.blockTpls.push({id:uid(),name,cat:cat||undefined,text:c.text,h:c.h,els:fresh(c.els)})}),
-importTpls:l=>mut(s=>{for(const t of l)s.data!.blockTpls.push({id:uid(),name:t.name,cat:t.cat||undefined,text:t.text,h:t.h,els:fresh(t.els)})}),
+saveBlockTpl:(id,name,cat)=>mut(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;const c=JSON.parse(JSON.stringify(b)) as Block;s.data!.blockTpls.push({id:uid(),name,cat:cat||undefined,quiz:c.quiz,text:c.text,h:c.h,els:fresh(c.els)})}),
+importTpls:l=>mut(s=>{for(const t of l)s.data!.blockTpls.push({id:uid(),name:t.name,cat:t.cat||undefined,quiz:t.quiz?normalizeQuiz(t.quiz):undefined,text:t.text,h:t.h,els:fresh(t.els)})}),
 delBlockTpl:id=>mut(s=>{s.data!.blockTpls=s.data!.blockTpls.filter(x=>x.id!==id)}),
 setStyle:(patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);if(p)Object.assign(p.style,patch)},'pstyle'),
 setRole:(r,patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);if(p)Object.assign(p.style.roles[r],patch)},'prole'+r),

@@ -1,0 +1,24 @@
+// Квизы: 5 вариантов (4 поколение, 3, 2, диалог с менеджером, мини-квиз). Каждый блок хранит настройки (block.quiz) и пересобирает макет из них.
+// Разбор референсов и % конверсии: docs/refs/quiz.md. Пример-ниша: септики, автор заменяет своим текстом в окне «Настроить квиз».
+import {uid} from './uid';
+import type {Dev} from './dev';
+import {baseCfg,normalizeQuiz,quizFrame} from './quiz';
+import type {QuizCfg,QStep} from './quiz';
+const O=(t:string,res?:string,img?:string)=>({t,...(res?{res}:{}),...(img?{img}:{})});
+const U='Не знаю / нужна консультация';
+const SEPTIC_STEPS=():QStep[]=>[
+{q:'Для чего нужен септик?',msg:'Выбери, где будет стоять септик: подберём подходящие модели',lay:'cards',cols:3,left:60,opts:[O('Для дачи','Септик для дачи | от 38 000 ₽ · монтаж за 1 день','Дача'),O('Для загородного дома','Септик для дома | от 62 000 ₽ · монтаж за 2 дня','Дом'),O('Для коттеджного посёлка','Станция биоочистки | от 120 000 ₽ · монтаж за 3 дня','Посёлок'),O(U)]},
+{q:'Сколько человек живёт в доме?',msg:'От числа жильцов зависит объём, остальное посчитает менеджер',lay:'cards',cols:4,left:32,opts:[O('1–3 человека','Септик на 3 человека | от 42 000 ₽','1–3'),O('4–6 человек','Септик на 6 человек | от 64 000 ₽','4–6'),O('Больше 6','Станция на 10 человек | от 98 000 ₽','6+'),O(U)]},
+{q:'Нужен монтаж под ключ?',msg:'Работаем сами: привозим, копаем, подключаем и сдаём',lay:'list',cols:2,left:14,opts:[O('Да, под ключ','Септик под ключ | монтаж и пусконаладка включены'),O('Только септик, монтаж сделаем сами'),O(U)]},
+{q:'Когда планируешь начать?',msg:'Заберём ближайшую дату монтажа под твой срок',lay:'list',cols:2,left:6,opts:[O('В ближайший месяц'),O('Через 1–3 месяца'),O('Пока присматриваюсь'),O('Нужна консультация')]}];
+const mk=(f:(c:QuizCfg)=>void)=>()=>{const c=baseCfg();c.steps=SEPTIC_STEPS();c.total=100;c.noun=['септик','септика','септиков'];c.cons.role='Старший мастер компании «Септик-Про»';c.title='Подбери септик за 1 минуту: ответь на {qw} и получи скидку до {dmax}';c.sub='Выбираем из 100 моделей под твой участок';c.phone.title='Подобрали {left} {noun} под твои ответы';f(c);return normalizeQuiz(c)};
+export const QUIZ_CFG:Record<string,()=>QuizCfg>={
+'Квиз 4 поколения: подбор решений':mk(c=>{c.gen='g4'}),
+'Квиз 3 поколения: скидка за ответы':mk(c=>{c.gen='g3';c.progress='bar';c.counter=false;c.card=false;c.chips=false;c.giftsSide=false;c.giftsTop=true;c.bonus={kind:'discount',per:3,unit:'%',text:'За каждый ответ скидка 3%: сейчас {d}',done:'Подарок открыт'};c.phone.stock='';c.phone.proof='';c.title='Подбери септик за 1 минуту и получи скидку до {dmax}';c.sub='Ответь на {qw}: за каждый ответ скидка растёт'}),
+'Квиз 2 поколения: классика с подарками':mk(c=>{c.gen='g2';c.progress='bar';c.cons.on=false;c.counter=false;c.card=false;c.chips=false;c.giftsSide=true;c.giftsTop=false;c.giftsTitle='По окончании теста получишь:';c.bonus={kind:'steps',per:0,unit:'₽',text:'Шаг {n} из {all}',done:''};c.steps.forEach(s=>{s.skip=true;s.lay='list';s.cols=2});c.phone.timer=false;c.phone.stock='';c.phone.proof='';c.sticker='';c.title='Получи расчёт септика за 1 минуту + подарок';c.sub='Ответь на {qw} и получи расчёт стоимости'}),
+'Квиз-диалог: вкладки и менеджер':mk(c=>{c.gen='mgr';c.progress='tabs';c.counter=false;c.card=false;c.chips=false;c.giftsSide=true;c.giftsTitle='В конце получишь:';c.cons.phone='+7 (999) 999-99-99';c.bonus={kind:'percent',per:0,unit:'₽',text:'',done:''};c.steps.forEach(s=>{s.skip=true});c.title='Рассчитай стоимость септика под ключ + бонус';c.sub='Ответь на {qw}: менеджер подготовит персональное предложение'}),
+'Мини-квиз в одну колонку':mk(c=>{c.gen='one';c.progress='bar';c.cons.on=false;c.counter=false;c.card=false;c.chips=false;c.giftsSide=false;c.giftsTop=false;c.sticker='';c.bonus={kind:'percent',per:0,unit:'₽',text:'Расчёт пройден на {p}%',done:''};c.phone.stock='';c.phone.proof='';c.phone.msgr=false;c.load.on=false;c.title='Подбери септик за 1 минуту';c.sub='Ответь на {qw}'})};
+const spec=(name:string)=>(d:Dev)=>{const r=quizFrame(QUIZ_CFG[name](),{pos:0,ans:[],demo:true},d);return{h:r.h,els:r.els.map(e=>({...e,id:uid()}))}};
+export const QUIZ:{name:string;cat:string;spec:(d:Dev)=>{h:number;els:import('../store').El[]};quiz:()=>QuizCfg}[]=Object.keys(QUIZ_CFG).map(name=>({name,cat:'Квизы',spec:spec(name),quiz:QUIZ_CFG[name]}));
+export const QUIZ_TIPS:Record<string,string[]>=Object.fromEntries(QUIZ.map(q=>[q.name,[
+'Вопросы для вовлечения, а не для точного расчёта: покупатель не эксперт','4–6 вопросов, от простого к сложному, в каждом вариант «Не знаю / нужна консультация»','Руками вводят только телефон. Маски в поле нет','Перед телефоном вопрос «Куда отправить результат»','На шаге телефона напомни: скидка и подарок закреплены за номером','Окно «Настроить квиз»: вкладка «Проверка» сверяет блок с этими правилами']]));
