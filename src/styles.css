@@ -615,3 +615,10 @@ select.inp{text-overflow:ellipsis}
 
 .pcs{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);color:var(--mute);transition:all .15s}.pcs:hover{color:var(--acc);border-color:var(--acc)}.pcs.on{color:var(--acc);border-color:var(--acc);background:var(--acc-s)}
 @media (pointer:coarse){.pcs,.pcx{width:32px;height:32px}}
+
+/* 1.39: заголовок и «Показывать на» закреплены в правой панели */
+.panel .stk{position:sticky;top:0;z-index:4;background:#fff;border-bottom:1px solid var(--line)}
+.panel .stk .ph{position:static;border-bottom:0}
+.panel .stk .dvsec{border:0;padding:0 12px 10px;gap:6px}
+.panel .stk .dvsec h4{margin:0;font-size:calc(11.5px*var(--u));color:var(--mute)}
+.panel .stk .dvc{flex-direction:row;justify-content:center;gap:6px;padding:6px 4px}

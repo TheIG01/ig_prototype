@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {pickIds,modsOf,curSel} from '../../lib/select';
 import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye,Download,FlipHorizontal,FlipVertical} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import {useStore,FW,blockTops,onDev,DEVS} from '../../store';
@@ -127,7 +128,7 @@ return()=>{removeEventListener('keydown',kd);removeEventListener('keyup',ku);rem
 const pt=(e:{clientX:number;clientY:number})=>{const r=wrap.current!.getBoundingClientRect();return{x:(e.clientX-r.left)/z,y:(e.clientY-r.top)/z}};
 const grp=(id:string,mod:boolean)=>{const x=els.find(q=>q.id===id);return!mod&&x?.g?els.filter(q=>q.g===x.g).map(q=>q.id):[id]};
 const down=(e:React.PointerEvent,el:El)=>{if(!editing||tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();if(ied===el.id)return;const mod=e.ctrlKey||e.metaKey;let ids=selIds;
-if(e.shiftKey){const g=grp(el.id,mod);ids=ids.includes(el.id)?ids.filter(i=>!g.includes(i)):[...ids,...g.filter(i=>!ids.includes(i))];s.setMulti(ids);return}
+if(e.shiftKey||mod){s.setMulti(pickIds(els,selIds,s.elId,el.id,modsOf(e)));return}
 if(!ids.includes(el.id)){ids=grp(el.id,mod);s.setMulti(ids)}
 const src=ids.map(i=>els.find(q=>q.id===i)).filter(Boolean) as El[];let tid=src.map(q=>q.id);
 if(e.altKey){tid=src.map(()=>uid());s.dupEls(dev,src.map(q=>q.id),0,tid,'um'+tid[0])}
@@ -234,7 +235,7 @@ return<div className="sec"><h4>Оформление блока · {DEVN[dev]}</h
 <div className="btnrow">{AL.map(([k,l,I])=><button key={k} className="btn" title={`Сдвинуть всё содержимое: ${l.toLowerCase()}, с полем по сетке`} onClick={()=>s.alignBlock(b.id,dev,k)}><I size={15}/>{l}</button>)}</div>
 <p className="hint">Отступы и выравнивание двигают всё содержимое блока целиком, расстояния между элементами не меняются. Фон виден в просмотре и в брифе для нейросети</p></div>}
 function BlockPanel({dev,b,idx,editing,onTpl}:{dev:Dev;b:Block;idx:number;editing:boolean;onTpl:()=>void}){
-const s=useStore();const [qz,setQz]=useState(false);const tips=TIPS[b.title]??[];const els=b.els[dev];
+const s=useStore();const [qz,setQz]=useState(false);const tips=TIPS[b.title]??[];const els=b.els[dev];const lsel=curSel(s.multi,s.elId);
 const del=()=>requestDelBlock(b,dev);
 const pr=s.data?.projects.find(p=>p.id===s.projectId);const tchk=checkBlock(b,dev,pr?.style);
 const copyAi=async()=>{if(!pr)return;const txt=blockMd(pr,b);try{await navigator.clipboard.writeText(txt);toast('Описание блока скопировано. Вставь его в чат с нейросетью')}catch{download('block.md',txt,'text/markdown');toast('Буфер недоступен, описание скачано файлом')}};
@@ -242,14 +243,14 @@ const dlBlock=()=>{download('block_'+(b.title.trim().replace(/[^\p{L}\p{N}]+/gu,
 const devs=DEVS.filter(d=>onDev(b,d));
 const toggleDev=(d:Dev)=>{if(onDev(b,d)){if(devs.length<2){toast('Блок должен остаться хотя бы на одном устройстве');return}s.setDevs(b.id,devs.filter(x=>x!==d));toast(`Блок скрыт на устройстве: ${DEVN[d]}`,{label:'Отменить',run:()=>s.undo()},5000);return}
 const copy=!b.els[d].length&&b.els[dev].length>0;s.setDevs(b.id,[...devs,d],dev);toast(copy?`Блок добавлен на устройство: ${DEVN[d]}. Элементы скопированы с ${DEVN[dev]}, подгони их`:`Блок добавлен на устройство: ${DEVN[d]}`,{label:'Отменить',run:()=>s.undo()},5000)};
-return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>{editing?'Редактирование':'Настройки'}</span>{!editing&&<button className="btn ic" onClick={()=>s.setBlock(null)} aria-label="Закрыть"><X size={14}/></button>}</div>
+return<aside className="panel"><div className="stk"><div className="ph"><b>Блок {idx+1}</b><span>{editing?'Редактирование':'Настройки'}</span>{!editing&&<button className="btn ic" onClick={()=>s.setBlock(null)} aria-label="Закрыть"><X size={14}/></button>}</div><div className="sec dvsec"><h4>Показывать на</h4><div className="dvs">{DEVS.map(d=><button key={d} className={'dvc'+(onDev(b,d)?' on':'')+(d===dev?' cur':'')} aria-pressed={onDev(b,d)} title={onDev(b,d)?`Скрыть на устройстве: ${DEVN[d]}`:`Добавить на устройство: ${DEVN[d]}`} onClick={()=>toggleDev(d)}><DevIcon d={d} size={15}/>{DEVN[d]}</button>)}</div></div></div>
 <div className="sec"><label className="fld"><span>Название</span><input className="inp" value={b.title} placeholder="Название блока" onChange={e=>s.editBlock(b.id,{title:e.target.value})}/></label>
 <div className="grid2"><label className="num"><span>В</span><input type="number" value={b.h[dev]} onChange={e=>s.setH(dev,b.id,+e.target.value||0)}/></label><label className="num"><span>Ш</span><input type="number" value={FW[dev]} disabled/></label></div>
 {b.sv&&!b.sv.x&&<StepsSec b={b}/>}{teamN(b.title)!==null&&!b.sv&&<TeamSec b={b}/>}{(!b.sv||b.sv.x)&&<StageSec b={b}/>}
 {dev==='mobile'&&b.h.mobile>844&&<p className="warn">Блок выше экрана телефона (844 px). Правило: один блок = один экран</p>}
 {!editing&&<button className="btn pri" onClick={()=>s.enterEdit(b.id)}><Pencil size={16}/>Редактировать блок</button>}</div>
 <BlockLook b={b} dev={dev} st={pr?.style}/>
-<div className="sec dvsec"><h4>Показывать на</h4><div className="dvs">{DEVS.map(d=><button key={d} className={'dvc'+(onDev(b,d)?' on':'')+(d===dev?' cur':'')} aria-pressed={onDev(b,d)} title={onDev(b,d)?`Скрыть на устройстве: ${DEVN[d]}`:`Добавить на устройство: ${DEVN[d]}`} onClick={()=>toggleDev(d)}><DevIcon d={d} size={15}/>{DEVN[d]}</button>)}</div></div>
+
 {b.quiz&&<div className="sec"><button className="btn pri" onClick={()=>setQz(true)}><Settings size={16}/>Настроить квиз</button><p className="hint">Вопросы, ответы, шкала, консультант, подарки, телефон и финал. Макет пересобирается сам. В просмотре (P) квиз проходится по кнопкам</p><button className="btn" title="Блок станет обычным: элементы правятся руками, настройки квиза пропадут" onClick={()=>{s.unlinkQuiz(b.id);toast('Блок отвязан от настроек квиза',{label:'Отменить',run:()=>s.undo()},5000)}}>Отвязать от настроек</button></div>}
 {qz&&b.quiz&&<QuizEditor b={b} onClose={()=>setQz(false)}/>}
 <label className="fld"><span>Задача текста</span><input className="inp" value={b.goal??''} placeholder="Зачем блок: что читатель должен сделать или понять" onChange={e=>s.editBlock(b.id,{goal:e.target.value})}/></label>
@@ -257,7 +258,7 @@ return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>
 <details className="fold2" open={!!b.text}><summary>Тексты и заметки</summary><textarea className="inp" placeholder="Тексты блока, пожелания дизайнеру, как работает: переходы, раскрытия, кнопки" value={b.text} onChange={e=>s.editBlock(b.id,{text:e.target.value})}/></details>
 <details className="fold2"><summary>Передать нейросети</summary><div className="stack"><button className="btn" onClick={copyAi}><Copy size={15}/>Скопировать описание</button><button className="btn" onClick={dlBlock}><Download size={15}/>Скачать блок (JSON)</button></div><p className="hint">Описание: тексты, заметки и элементы с координатами для каждого устройства. JSON загружается в Настройках как шаблон</p></details>
 {tips.length>0&&<details className="fold2"><summary>Из твоих конспектов</summary><ul className="tipl">{tips.map(t=><li key={t}>{t}</li>)}</ul></details>}
-{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4>{[...els].reverse().map(x=><button key={x.id} className={'lyr'+(s.elId===x.id?' on':'')} title={NAME[x.t]+(x.text?' · '+x.text:'')} onClick={()=>s.setEl(x.id)}>{(()=>{const I=LI[x.t]??Shapes;return<I size={14}/>})()}<b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>)}</div>}
+{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4>{[...els].reverse().map(x=><button key={x.id} className={'lyr'+(lsel.includes(x.id)?' on':'')} title={NAME[x.t]+(x.text?' · '+x.text:'')+' (Shift: диапазон, Ctrl: добавить или убрать)'} onClick={e=>s.setMulti(pickIds(els,lsel,s.elId,x.id,modsOf(e)))}>{(()=>{const I=LI[x.t]??Shapes;return<I size={14}/>})()}<b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>)}</div>}
 {editing&&((b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0))>0&&<div className="sec"><h4>Направляющие · {(b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0)}</h4><button className="btn" onClick={()=>s.setGuides(b.id,dev,{x:[],y:[]})}><X size={14}/>Очистить направляющие</button></div>}
 {!editing&&<div className="sec"><h4>Положение</h4><div className="btnrow"><button className="btn" title="Блок выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1,dev)}><ArrowUp size={16}/>Выше</button><button className="btn" title="Блок ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1,dev)}><ArrowDown size={16}/>Ниже</button></div></div>}
 {!editing&&els.length>0&&<div className="sec"><h4>Отразить блок</h4><div className="btnrow"><button className="btn" title="Левая часть уезжает вправо, правая влево, на всех устройствах" onClick={()=>{s.flipBlock(b.id,'x');toast('Блок отражён по горизонтали',{label:'Отменить',run:()=>s.undo()},5000)}}><FlipHorizontal size={16}/>Слева направо</button><button className="btn" title="Верх и низ блока меняются местами, на всех устройствах" onClick={()=>{s.flipBlock(b.id,'y');toast('Блок отражён по вертикали',{label:'Отменить',run:()=>s.undo()},5000)}}><FlipVertical size={16}/>Сверху вниз</button></div><p className="hint">Тексты и сетка подстраиваются. Для части блока выдели элементы и нажми Shift+H или Shift+V</p></div>}

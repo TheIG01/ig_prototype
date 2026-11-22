@@ -23,4 +23,4 @@ return<aside className="panel"><div className="ph"><b>Выбрано {ids.length
 <p className="hint">Группа отражается целиком, текст меняет выравнивание. «Поменять местами» работает для двух выбранных групп или элементов</p></div>
 <LayPanel dev={dev} ids={ids}/>
 <div className="sec"><div className="btnrow"><button className="btn" title="Дублировать (Ctrl+D)" onClick={()=>s.dupEls(dev,ids,16,ids.map(()=>uid()))}><Copy size={16}/>Дублировать</button><button className="btn danger" title="Удалить (Delete)" onClick={()=>s.delEls(dev,ids)}><Trash2 size={16}/>Удалить</button></div></div>
-<div className="sec"><h4>Слои выделения</h4>{[...els].reverse().map(x=><button key={x.id} className="row sm" onClick={()=>s.setMulti([x.id])}><span>{NM[x.t]}{x.text?` · ${x.text.slice(0,24)}`:''}{x.g?' · группа':''}</span></button>)}</div></aside>}
+<div className="sec"><h4>Слои выделения</h4>{[...els].reverse().map(x=><button key={x.id} className="row sm" title="Ctrl: убрать из выделения" onClick={e=>s.setMulti(e.ctrlKey||e.metaKey?ids.filter(i=>i!==x.id):[x.id])}><span>{NM[x.t]}{x.text?` · ${x.text.slice(0,24)}`:''}{x.g?' · группа':''}</span></button>)}</div></aside>}
