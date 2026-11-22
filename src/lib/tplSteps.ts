@@ -84,13 +84,14 @@ yy+=rh+gap}
 return yy-gap}
 const maxH=<T,>(a:T[],f:(c:C,i:T)=>number)=>Math.max(...a.map(i=>f(ctx(),i)));
 
+const navFs=(n:number,m:boolean)=>m?16:n>=6?15:16;
 // ---------- 1. Табы горизонтально (лучший) ----------
 function tabsH(d:Dev,n:number,i:number,g:string):Out{const c=ctx(),m=d==='mobile',W=FW[d],X=XX(d),w=W-2*X;
 let y=head(c,d,n,SUB_T,'Нажми на этап');
 const gap=m?6:d==='tablet'?8:12;let tw=(w-(n-1)*gap)/n;let lab=!m;if(d==='tablet'&&tw<120)lab=false;
 if(m)tw=Math.min(56,Math.floor((w-(n-1)*gap)/n));
-const nh=m?44:56,x0=m?X:X+(w-(n*tw+(n-1)*gap))/2;
-for(let k=0;k<n;k++)c.add('btn',x0+k*(tw+gap),y,tw,nh,lab?`${k+1}. ${ST[k].t}`:String(k+1),{fs:m?16:n>=6?15:16,...(k===i?{acc:true}:{}),tg:g+':'+k,sk:'t'+k});
+const nfs=navFs(n,m),nh=m?44:r4(3*nfs*1.3+12),x0=m?X:X+(w-(n*tw+(n-1)*gap))/2;
+for(let k=0;k<n;k++)c.add('btn',x0+k*(tw+gap),y,tw,nh,lab?`${k+1}. ${ST[k].t}`:String(k+1),{fs:nfs,...(k===i?{acc:true}:{}),tg:g+':'+k,sk:'t'+k});
 y+=nh+(m?12:24);
 const pad=m?16:d==='tablet'?24:32,top=y;const bt=body(c,d,X+pad,y+pad,w-2*pad,ST[i],i,n,'side');
 const ch=r4(bt+pad-top);bg(c,X,top,w,ch);return fin(c,d,top+ch)}
@@ -98,7 +99,7 @@ const ch=r4(bt+pad-top);bg(c,X,top,w,ch);return fin(c,d,top+ch)}
 // ---------- 2. Табы вертикально (лучший) ----------
 function tabsV(d:Dev,n:number,i:number,g:string):Out{const c=ctx(),m=d==='mobile',t=d==='tablet',W=FW[d],X=XX(d),w=W-2*X;
 let y=head(c,d,n,'Нажми на этап слева и посмотри, что делаем и что получаешь','Нажми на этап');
-const nh=m?44:t?64:72,gp=m?6:8,nw=m?w:t?200:360,top=y;
+const nh=m?44:r4(3*(t?14:18)*1.3+12),gp=m?6:8,nw=m?w:t?200:360,top=y;
 for(let k=0;k<n;k++)c.add('btn',X,top+k*(nh+gp),nw,nh,`${k+1}. ${ST[k].t}`,{fs:m?15:t?14:18,...(k===i?{acc:true}:{}),tg:g+':'+k,sk:'t'+k});
 const nb=top+n*nh+(n-1)*gp;
 if(m){const p=16,cy=nb+12;const bt=body(c,d,X+p,cy+p,w-2*p,ST[i],i,n,'stack');const ch=r4(bt+p-cy);bg(c,X,cy,w,ch);return fin(c,d,cy+ch)}
@@ -242,3 +243,26 @@ export const STEPS_TIPS:Record<string,string[]>={
 'Этапы: аккордеон':[...SR,'Когда текста много, а экран мобилки один: открыт первый этап, остальные раскрываются','Менее конверсионный вариант: человек должен нажимать, чтобы читать'],
 'Этапы: результат':[...SR,'Когда заказ сложный и человеку важно, что он получит на каждом шаге','Три колонки: что делаем, срок, что получаешь. Формула «Вы получите … за счёт …»'],
 'Этапы: с формой':[...SR,'Форма рядом с этапами: человек понял путь и оставляет телефон не уходя с экрана','Подсказка над полем, кнопка с тем же текстом, что заголовок формы']};
+
+// ---------- авто-лейаут вкладок ----------
+const tkOf=(e:El)=>+(e.tg??':0').split(':')[1];
+/** правка названия вкладки в одном этапе подтягивается в остальные этапы группы (с ПК ещё и на планшет и мобилку, если там не просто номер) */
+export function syncTabText(bl:Block[],src:Block,dev:Dev,e:El){const g=src.sv?.g;if(!g||!e.tg)return;
+for(const b of bl)if(b.sv?.g===g&&!b.sv.x)for(const d of DEVS){if(d!==dev&&dev!=='desktop')continue;
+for(const t of b.els[d])if(t.tg===e.tg&&t!==e&&(d===dev||!/^\d+$/.test(t.text)))t.text=e.text}}
+/** высота вкладок по тексту: влезает 3 строки, длиннее удлиняется. Горизонтальные: все равны, содержимое ниже сдвигается. Вертикальные: каждая по тексту, ряд пересчитывается. Во всех этапах одинаково */
+export function syncTabs(bl:Block[]|undefined){if(!bl||!bl.some(b=>b.sv?.tab))return;const seen=new Set<string>();
+for(const b0 of bl){const sv=b0.sv;if(!sv||!sv.tab||sv.x||seen.has(sv.g))continue;seen.add(sv.g);
+const v=VARS.find(x=>x.name===sv.v);if(!v)continue;const ps=bl.filter(x=>x.sv?.g===sv.g&&!x.sv.x);
+for(const d of DEVS){const base=v.gen(d,sv.n,0,sv.g).els.find(e=>e.tg)?.h??0;
+const ref=ps[0].els[d].filter(e=>e.tg).sort((a,b)=>tkOf(a)-tkOf(b));if(ref.length<2)continue;
+const need=ref.map(e=>Math.max(base,r4(th(e.text,e.fs??16,Math.max(20,e.w-12),true)+16)));
+const H=Math.max(...need);
+for(const p of ps){const tabs=p.els[d].filter(e=>e.tg).sort((a,b)=>tkOf(a)-tkOf(b));if(tabs.length!==ref.length)continue;
+const top=Math.min(...tabs.map(e=>e.y)),oldB=Math.max(...tabs.map(e=>e.y+e.h));let delta=0;
+if(!v.vert){if(tabs.every(e=>e.h===H))continue;for(const e of tabs)e.h=H;delta=H-(oldB-top)}
+else{const gap=tabs[1].y-tabs[0].y-tabs[0].h;let y=top;tabs.forEach((e,k)=>{e.y=y;e.h=need[k];y+=need[k]+gap});const nb=y-gap;delta=nb-oldB;if(!delta&&tabs.every((e,k)=>e.h===need[k]))continue;
+if(d!=='mobile'){const right=Math.max(...tabs.map(e=>e.x+e.w));const card=p.els[d].find(e=>e.t==='rect'&&e.x>=right&&Math.abs(e.y-top)<2);
+if(card&&card.h<nb-top)card.h=nb-top;p.h[d]=Math.max(p.h[d],r4(nb+48));continue}}
+if(delta)for(const e of p.els[d])if(!e.tg&&e.y>=oldB-1)e.y+=delta;
+p.h[d]=Math.max(120,p.h[d]+delta)}}}}
