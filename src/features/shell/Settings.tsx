@@ -1,11 +1,11 @@
 import {useState,useRef} from 'react';
 import {useStore} from '../../store';import {tplsFile,parseTpls,download} from '../../lib/export';import {toast} from '../../lib/toast';
-import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,useUi,saveUi} from '../../lib/ui';import type {Ui} from '../../lib/ui';
+import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,useUi,saveUi,liteOn,weakDevice} from '../../lib/ui';import type {Ui} from '../../lib/ui';
 import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';import {typo,TY_RULES,TY_DEMO,TY0} from '../../lib/typo';import type {TyKey} from '../../lib/typo';
 export function SettingsBody({onBackup}:{onBackup:()=>void}){
-const s=useStore();const tf=useRef<HTMLInputElement>(null);const nTpl=s.data?.blockTpls.length??0;
-const dlTpls=()=>{download('ig_templates.json',tplsFile(s.data?.blockTpls??[]),'application/json');toast('Шаблоны скачаны')};
-const ulTpls=async(fl:FileList|null)=>{if(!fl)return;let n=0;const bad:string[]=[];for(const f of Array.from(fl)){try{const l=parseTpls(await f.text());s.importTpls(l);n+=l.length}catch(e){bad.push(f.name+': '+(e instanceof Error?e.message:'ошибка'))}}if(tf.current)tf.current.value='';toast(n?`Загружено шаблонов: ${n}`+(bad.length?`. Не подошли: ${bad.length}`:''):bad.join('; ')||'Нечего загружать',undefined,5000)};
+const tpls=useStore(x=>x.data?.blockTpls);const importTpls=useStore(x=>x.importTpls);const tf=useRef<HTMLInputElement>(null);const nTpl=tpls?.length??0;
+const dlTpls=()=>{download('ig_templates.json',tplsFile(tpls??[]),'application/json');toast('Шаблоны скачаны')};
+const ulTpls=async(fl:FileList|null)=>{if(!fl)return;let n=0;const bad:string[]=[];for(const f of Array.from(fl)){try{const l=parseTpls(await f.text());importTpls(l);n+=l.length}catch(e){bad.push(f.name+': '+(e instanceof Error?e.message:'ошибка'))}}if(tf.current)tf.current.value='';toast(n?`Загружено шаблонов: ${n}`+(bad.length?`. Не подошли: ${bad.length}`:''):bad.join('; ')||'Нечего загружать',undefined,5000)};
 const u=useUi();const up=(p:Partial<Ui>)=>{saveUi(p)};
 const tg=(k:'grid'|'rulers'|'guides'|'smart'|'snap'|'hover'|'dims'|'cols',t:string,d:string)=><div className="set-row"><div><b>{t}</b><p>{d}</p></div><input type="checkbox" className="sw" checked={u[k]} onChange={e=>up({[k]:e.target.checked} as unknown as Partial<Ui>)}/></div>;
 const nm=(k:'nudge'|'gut'|'mar',v:number|'',ph:string)=><input type="number" className="inp nm" min={0} placeholder={ph} value={v} onChange={e=>up({[k]:e.target.value===''?-1:+e.target.value} as unknown as Partial<Ui>)}/>;const [rem,setRem]=useState(!!localStorage.getItem('igp.rem'));const [word,setWord]=useState('');const [del,setDel]=useState(false);
@@ -21,6 +21,7 @@ return<div>
 <div className="set-row"><div><b>Плотность интерфейса</b><p>Компактная вмещает больше на экран</p></div><div className="seg">{([['cozy','Обычная'],['compact','Компактная']] as const).map(([k,l])=><button key={k} className={u.density===k?'on':''} onClick={()=>up({density:k})}>{l}</button>)}</div></div>
 <div className="set-row"><div><b>Подписи на холсте</b><p>Названия блоков, размеры, расстояния</p></div><div className="seg">{([[1,'M'],[1.25,'L'],[1.5,'XL']] as const).map(([k,l])=><button key={k} className={u.labels===k?'on':''} onClick={()=>up({labels:k})}>{l}</button>)}</div></div>
 <div className="set-row"><div><b>Точечная сетка на холсте</b><p>Привязка к 8 px работает и без неё</p></div><input type="checkbox" className="sw" checked={u.grid} onChange={e=>up({grid:e.target.checked})}/></div>
+<div className="set-row"><div><b>Режим «Лёгкий»</b><p>Без теней, размытия и анимаций интерфейса: быстрее на слабых ноутбуках и телефонах. Авто включает его на устройстве с малым числом ядер или памяти. Сейчас: {liteOn(u)?'включён':'выключен'}{u.perf==='auto'&&weakDevice()?' (слабое устройство)':''}</p></div><div className="seg">{([['auto','Авто'],['on','Вкл'],['off','Выкл']] as const).map(([k,l])=><button key={k} className={u.perf===k?'on':''} onClick={()=>up({perf:k})}>{l}</button>)}</div></div>
 <div className="set-row"><div><b>Анимации</b><p>Выключи, если интерфейс кажется шумным</p></div><input type="checkbox" className="sw" checked={u.motion==='on'} onChange={e=>up({motion:e.target.checked?'on':'off'})}/></div>
 <h4 className="set-h">Холст</h4>
 {tg('rulers','Линейки','Деления в px макета, с них тянутся направляющие. Shift+R')}

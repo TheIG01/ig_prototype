@@ -50,7 +50,7 @@ const H1='Читайте, как три семьи получили бассей
 const S1='Каждый отзыв подтверждён договором, актом и фото объекта';
 function resultV(d:Dev):Out{const c=ctx();const W=FW[d],X=XX(d),w=W-2*X;let y=head(c,d,H1,S1,'Договор, акт и фото объекта подтверждают каждый отзыв');
 if(d==='desktop'){const g=24,cw=(w-2*g)/3,hh=maxH(REV,(t,r)=>pcard(t,0,0,cw,0,r,24));REV.forEach((r,i)=>pcard(c,X+i*(cw+g),y,cw,hh,r,24));y+=hh+32}
-else if(d==='tablet'){for(const r of REV){const hh=pcard(ctx(),0,0,w,0,r,24);pcard(c,X,y,w,hh,r,24);y+=hh+16}y+=8}
+else if(d==='tablet'){const hh=pcard(ctx(),0,0,w,0,REV[0],24);pcard(c,X,y,w,hh,REV[0],24);y+=hh+12;for(const r of REV.slice(1))y=acc(c,X,y,w,r.n+', '+r.r.split(' · ')[0])+8;y+=8}
 else{const hh=pcard(ctx(),0,0,w,0,REV[0],16);pcard(c,X,y,w,hh,REV[0],16);y+=hh+10;for(const r of REV.slice(1))y=acc(c,X,y,w,r.n+', '+r.r.split(' · ')[0])+8}
 return fin(c,d,foot(c,d,y))}
 
@@ -81,7 +81,7 @@ const H3='Читайте отзывы в оригинале: переписки,
 const S3='Нажми на скриншот или скан, чтобы открыть оригинал отзыва';
 function origV(d:Dev):Out{const c=ctx();const W=FW[d],X=XX(d),w=W-2*X;let y=head(c,d,H3,S3,'Нажми на скриншот, чтобы открыть оригинал');
 if(d==='desktop'){const g=24,cw=(w-3*g)/4;let hh=0;ORG.forEach((o,i)=>{hh=Math.max(hh,ocard(c,X+i*(cw+g),y,cw,300,o,15))});y+=hh+32}
-else{const g=d==='tablet'?24:12,cw=(w-g)/2,ih=d==='tablet'?260:200,fs=d==='tablet'?15:13;for(let r=0;r<2;r++){let hh=0;for(let k=0;k<2;k++)hh=Math.max(hh,ocard(c,X+k*(cw+g),y,cw,ih,ORG[r*2+k],fs));y+=hh+(d==='tablet'?24:12)}}
+else{const g=d==='tablet'?24:12,cw=(w-g)/2,ih=d==='tablet'?200:200,fs=d==='tablet'?15:13;for(let r=0;r<2;r++){let hh=0;for(let k=0;k<2;k++)hh=Math.max(hh,ocard(c,X+k*(cw+g),y,cw,ih,ORG[r*2+k],fs));y+=hh+(d==='tablet'?16:12)}}
 return fin(c,d,foot(c,d,y))}
 
 // ---------- 4. Крупно: один отзыв, переключатель по людям ----------

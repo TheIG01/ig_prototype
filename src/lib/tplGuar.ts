@@ -27,13 +27,13 @@ y=c.tx(m?s.subm:s.sub,X,y,w,m?14:16)+(m?14:18);
 const nw=m?44:56,tx0=X+16+nw+12,tw=X+w-16-tx0;
 s.items.forEach((it,i)=>{const d=m?it.dm:it.d;
 const ty=th(it.t,m?16:18,tw,true),dy=d?th(d,m?14:16,tw):0;
-const hh=r4(Math.max(m?72:84,16+ty+(d?4:0)+dy+16));
+const hh=r4(Math.max(m?72:76,16+ty+(d?4:0)+dy+16));
 c.add('rect',X,y,w,hh);
 if(mode==='num')c.add('text',X+16,y+16,nw,th('00.',20,nw,true),'0'+(i+1)+'.',{fs:20,b:true});
 else c.add('img',X+16,y+(hh-36)/2,36,36,'Иконка');
 let y0=y+(hh-(ty+(d?4:0)+dy))/2;y0=c.tx(it.t,tx0,y0,tw,m?16:18,{b:true})+(d?4:0);if(d)c.tx(d,tx0,y0,tw,m?14:16);
 y+=hh+(m?8:12)});
-if(withDoc){const ih=m?88:152;c.add('img',X,y+2,w,ih,s.doc);y+=ih+14}
+if(withDoc){const ih=m?88:120;c.add('img',X,y+2,w,ih,s.doc);y+=ih+14}
 if(m){const h=Math.max(SCR.mobile,r4(y+8+96));bar(c,h,s.ctam);return{h,els:c.els}}
 c.add('btn',X,y,Math.min(w,440),56,s.cta,{fs:16,acc:true});y+=56+10;c.tx(s.note,X,y,w,14);y+=20;
 return{h:Math.max(SCR[dev],r4(y+40)),els:c.els}}
@@ -47,7 +47,7 @@ y=c.tx(b.post,X,y,w,m?18:24,{b:true,al:'c'})+(m?16:20);
 y=c.tx(m?b.lhm:b.lh,X,y,w,m?18:22,{b:true})+8;
 y=c.tx(m?b.lpm:b.lp,X,y,w,m?14:16)+12;
 const ph=m?72:80;c.add('rect',X,y,w,ph);c.add('text',X+16,y+8,w-32,ph-16,m?b.bubm:b.bub,{fs:m?14:16,b:true});y+=ph+14;
-if(withDoc){const ih=m?88:152;c.add('img',X,y,w,ih,s.doc);y+=ih+14}
+if(withDoc){const ih=m?88:120;c.add('img',X,y,w,ih,s.doc);y+=ih+14}
 if(m){const h=Math.max(SCR.mobile,r4(y+8+96));bar(c,h,s.ctam);return{h,els:c.els}}
 c.add('btn',X,y,Math.min(w,440),56,s.cta,{fs:16,acc:true});y+=56+10;c.tx(s.note,X,y,w,14);y+=20;
 return{h:Math.max(SCR[dev],r4(y+40)),els:c.els}}
@@ -70,16 +70,16 @@ doc:'Мокап: договор со штампом и выделенными п
 cta:'Получить договор с гарантиями на проверку',ctam:'Получить договор',note:'Пришлём образец договора в мессенджер за 2 минуты',
 tips:['Оценка: +8–12% к конверсии страницы. Самый сильный вариант: четыре гарантии вокруг документа дают и конкретику, и физическое доказательство','Заголовок обещает число: гарантий в блоке ровно 4, цифра совпадает','Документ в центре снимает главное сомнение «а в договоре это будет?»','Каждая гарантия: что именно, на какой срок, что будет при нарушении. «Качество» без срока и суммы не убеждает','Ставь после выгод и перед формой: форма закрывает сомнение','Подставь свои сроки и суммы: диваны это пример','Мобилка: четыре строки с номерами, кнопка и мессенджеры закреплены внизу']};
 
-function numD(s:S):Out{const c=ctx();let y=48;
+function numD(s:S):Out{const c=ctx();let y=40;
 y=c.tx(s.h,220,y,1000,36,{b:true,al:'c'})+14;
-y=c.tx(s.sub,320,y,800,18,{al:'c'})+24;
-const cw=360,top=y;
+y=c.tx(s.sub,320,y,800,18,{al:'c'})+20;
+const cw=380,top=y;
 const hs=s.items.map(it=>th('01.',32,cw,true)+4+th(it.t,20,cw,true)+8+th(it.d,16,cw));
-const ih=Math.max(...hs);const mh=Math.max(440,2*ih+24);
+const ih=Math.max(...hs);const mh=Math.max(400,2*ih+24);
 c.add('img',520,top,400,mh,s.doc);
 s.items.forEach((it,i)=>{const x=i<2?LX:960;const yy=i%2===0?top:top+mh-ih;
 let t=c.tx('0'+(i+1)+'.',x,yy,cw,32,{b:true})+4;t=c.tx(it.t,x,t,cw,20,{b:true})+8;c.tx(it.d,x,t,cw,16)});
-c.add('btn',470,top+mh+28,500,56,s.cta,{fs:16,acc:true});
+c.add('btn',470,top+mh+24,500,56,s.cta,{fs:16,acc:true});
 return{h:SCR.desktop,els:c.els}}
 
 // ---------- 2. Список с иконками и договором справа (3 гарантии) ----------
@@ -145,17 +145,17 @@ doc:'Мокап: договор подряда с выделенными пун�
 cta:'Получить договор с гарантиями на проверку',ctam:'Получить договор',note:'Пришлём образец договора в мессенджер за 2 минуты',
 tips:['Оценка: +5–8% к конверсии страницы. Подходит для строительства, ремонта и других дорогих услуг, где много возражений','Шесть карточек закрывают шесть страхов: цена, срок, качество, доплаты','Заголовок обещает 6, в блоке ровно 6','Первыми ставь самые сильные: цена и сроки','Карточка: иконка, короткий заголовок, одна строка пояснения. Длинные абзацы убирай в договор','Мобилка: шесть коротких строк в один экран, договор не показывается, если не влезает']};
 
-function sixD(s:S):Out{const c=ctx();let y=48;
+function sixD(s:S):Out{const c=ctx();let y=40;
 y=c.tx(s.h,LX,y,1200,36,{b:true})+12;
-y=c.tx(s.sub,LX,y,1200,18)+24;
+y=c.tx(s.sub,LX,y,1200,18)+20;
 const top=y,gx=16,cw=372,tw=cw-84-16;
-const ch=Math.max(112,...s.items.map(it=>r4(20+th(it.t,18,tw,true)+6+th(it.d,16,tw)+20)));
+const ch=Math.max(100,...s.items.map(it=>r4(16+th(it.t,18,tw,true)+6+th(it.d,16,tw)+16)));
 s.items.forEach((it,i)=>{const x=LX+(i%2)*(cw+gx),yy=top+Math.floor(i/2)*(ch+gx);
 c.add('rect',x,yy,cw,ch);c.add('img',x+20,yy+(ch-48)/2,48,48,'Иконка');
 const dh=th(it.t,18,tw,true)+6+th(it.d,16,tw);let t=yy+(ch-dh)/2;t=c.tx(it.t,x+84,t,tw,18,{b:true})+6;c.tx(it.d,x+84,t,tw,16)});
 const end=top+3*ch+2*gx;
 c.add('img',920,top,400,end-top,s.doc);
-c.add('btn',LX,end+28,500,56,s.cta,{fs:16,acc:true});c.tx(s.note,LX+520,end+28+14,680,14);
+c.add('btn',LX,end+24,500,56,s.cta,{fs:16,acc:true});c.tx(s.note,LX+520,end+24+14,680,14);
 return{h:SCR.desktop,els:c.els}}
 
 const mk=(d:(s:S)=>Out,st:(s:S,dev:Dev,wd:boolean)=>Out,s:S)=>(dev:Dev):Out=>dev==='desktop'?d(s):fit(wd=>st(s,dev,wd),dev);

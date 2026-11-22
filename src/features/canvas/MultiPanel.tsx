@@ -1,5 +1,5 @@
 import {AlignStartVertical,AlignCenterVertical,AlignEndVertical,AlignStartHorizontal,AlignCenterHorizontal,AlignEndHorizontal,AlignHorizontalSpaceBetween,AlignVerticalSpaceBetween,Group,Ungroup,Copy,Trash2,X,ArrowLeftRight,ArrowUpDown,FlipHorizontal,FlipVertical,Replace,Bold,AlignLeft,AlignCenter,AlignRight} from 'lucide-react';
-import {useStore} from '../../store';
+import {useStore} from '../../store';import {useLive} from '../../lib/live';import {VList} from './VList';
 import type {Dev,El} from '../../store';import {Color} from './ElPanel';
 import {uid} from '../../lib/uid';
 import {NAME_NEW} from '../../lib/art';import {LayPanel} from './LayPanel';
@@ -8,7 +8,8 @@ type M='l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv';
 const AL:[M,string,typeof AlignStartVertical][]=[['l','Влево (Alt+A)',AlignStartVertical],['c','По центру горизонтально (Alt+H)',AlignCenterVertical],['r','Вправо (Alt+D)',AlignEndVertical],['t','Вверх (Alt+W)',AlignStartHorizontal],['m','По центру вертикально (Alt+V)',AlignCenterHorizontal],['b','Вниз (Alt+S)',AlignEndHorizontal]];
 /** ползунок для общих свойств */
 function Rng({label,value,min,max,unit,onChange}:{label:string;value:number;min:number;max:number;unit:string;onChange:(v:number)=>void}){
-return<label className="rng"><span>{label}</span><input type="range" min={min} max={max} value={value} onChange={ev=>onChange(+ev.target.value)}/><output>{value}{unit}</output></label>}
+const [v,setV]=useLive(value,onChange);
+return<label className="rng"><span>{label}</span><input type="range" min={min} max={max} value={v} onChange={ev=>setV(+ev.target.value)}/><output>{v}{unit}</output></label>}
 const TX=new Set(['text','btn','input']),BX=new Set(['rect','btn','input','img','shape']),SZ=[12,13,14,16,18,20,24,32,40,48,56,72];
 /** right panel for several selected elements: shared properties, align, distribute, group, copy, delete */
 export function MultiPanel({dev,ids}:{dev:Dev;ids:string[]}){
@@ -35,4 +36,4 @@ return<aside className="panel"><div className="ph"><b>Выбрано {ids.length
 <p className="hint">Группа отражается целиком, текст меняет выравнивание. «Поменять местами» работает для двух выбранных групп или элементов</p></div>
 <LayPanel dev={dev} ids={ids}/>
 <div className="sec"><div className="btnrow"><button className="btn" title="Дублировать (Ctrl+D)" onClick={()=>s.dupEls(dev,ids,16,ids.map(()=>uid()))}><Copy size={16}/>Дублировать</button><button className="btn danger" title="Удалить (Delete)" onClick={()=>s.delEls(dev,ids)}><Trash2 size={16}/>Удалить</button></div></div>
-<div className="sec"><h4>Слои выделения</h4>{[...els].reverse().map(x=><button key={x.id} className="row sm" title="Ctrl: убрать из выделения" onClick={e=>s.setMulti(e.ctrlKey||e.metaKey?ids.filter(i=>i!==x.id):[x.id])}><span>{NM[x.t]}{x.text?` · ${x.text.slice(0,24)}`:''}{x.g?' · группа':''}</span></button>)}</div></aside>}
+<div className="sec"><h4>Слои выделения</h4><VList items={[...els].reverse()} row={x=><button className="row sm" title="Ctrl: убрать из выделения" onClick={e=>s.setMulti(e.ctrlKey||e.metaKey?ids.filter(i=>i!==x.id):[x.id])}><span>{NM[x.t]}{x.text?` · ${x.text.slice(0,24)}`:''}{x.g?' · группа':''}</span></button>}/></div></aside>}

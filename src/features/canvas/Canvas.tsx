@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useRef,useState,lazy,Suspense} from 'react';
 import {pickIds,modsOf,curSel} from '../../lib/select';
 import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye,Download,FlipHorizontal,FlipVertical} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
@@ -9,7 +9,7 @@ import {download,blockMd,blockFile} from '../../lib/export';
 import type {El,ET,Dev,Block} from '../../store';
 import {toast} from '../../lib/toast';
 import {TIPS} from '../../lib/tpl';import {checkBlock} from '../../lib/textcheck';
-import {QuizEditor} from '../quiz/QuizEditor';import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel,Color} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
+import {VList} from './VList';const QuizEditor=lazy(()=>import('../quiz/QuizEditor').then(m=>({default:m.QuizEditor})));import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel,Color} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
 const STY=['fs','b','al','acc','fill','stroke','sw','r','op','c'] as const;let styClip:Partial<El>|null=null;
@@ -257,13 +257,13 @@ return<aside className="panel"><div className="stk"><div className="ph"><b>Бл�
 <BlockLook b={b} dev={dev} st={pr?.style}/>
 
 {b.quiz&&<div className="sec"><button className="btn pri" onClick={()=>setQz(true)}><Settings size={16}/>Настроить квиз</button><p className="hint">Вопросы, ответы, шкала, консультант, подарки, телефон и финал. Макет пересобирается сам. В просмотре (P) квиз проходится по кнопкам</p><button className="btn" title="Блок станет обычным: элементы правятся руками, настройки квиза пропадут" onClick={()=>{s.unlinkQuiz(b.id);toast('Блок отвязан от настроек квиза',{label:'Отменить',run:()=>s.undo()},5000)}}>Отвязать от настроек</button></div>}
-{qz&&b.quiz&&<QuizEditor b={b} onClose={()=>setQz(false)}/>}
+{qz&&b.quiz&&<Suspense fallback={null}><QuizEditor b={b} onClose={()=>setQz(false)}/></Suspense>}
 <label className="fld"><span>Задача текста</span><input className="inp" value={b.goal??''} placeholder="Зачем блок: что читатель должен сделать или понять" onChange={e=>s.editBlock(b.id,{goal:e.target.value})}/></label>
 {tchk.length>0&&<details className="fold2" open><summary>Проверка текста: {tchk.length}</summary><div className="stack">{tchk.map(({e,m})=><p key={e.id} className="warn"><b>«{e.text.replace(/\n/g,' ').slice(0,28)}»</b>: {m.join('; ')}</p>)}</div></details>}
 <details className="fold2" open={!!b.text}><summary>Тексты и заметки</summary><textarea className="inp" placeholder="Тексты блока, пожелания дизайнеру, как работает: переходы, раскрытия, кнопки" value={b.text} onChange={e=>s.editBlock(b.id,{text:e.target.value})}/></details>
 <details className="fold2"><summary>Передать нейросети</summary><div className="stack"><button className="btn" onClick={copyAi}><Copy size={15}/>Скопировать описание</button><button className="btn" onClick={dlBlock}><Download size={15}/>Скачать блок (JSON)</button></div><p className="hint">Описание: тексты, заметки и элементы с координатами для каждого устройства. JSON загружается в Настройках как шаблон</p></details>
 {tips.length>0&&<details className="fold2"><summary>Из твоих конспектов</summary><ul className="tipl">{tips.map(t=><li key={t}>{t}</li>)}</ul></details>}
-{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4>{[...els].reverse().map(x=><button key={x.id} className={'lyr'+(lsel.includes(x.id)?' on':'')} title={NAME[x.t]+(x.text?' · '+x.text:'')+' (Shift: диапазон, Ctrl: добавить или убрать)'} onClick={e=>s.setMulti(pickIds(els,lsel,s.elId,x.id,modsOf(e)))}>{(()=>{const I=LI[x.t]??Shapes;return<I size={14}/>})()}<b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>)}</div>}
+{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4><VList items={[...els].reverse()} row={x=><button className={'lyr'+(lsel.includes(x.id)?' on':'')} title={NAME[x.t]+(x.text?' · '+x.text:'')+' (Shift: диапазон, Ctrl: добавить или убрать)'} onClick={e=>s.setMulti(pickIds(els,lsel,s.elId,x.id,modsOf(e)))}>{(()=>{const I=LI[x.t]??Shapes;return<I size={14}/>})()}<b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>}/></div>}
 {editing&&((b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0))>0&&<div className="sec"><h4>Направляющие · {(b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0)}</h4><button className="btn" onClick={()=>s.setGuides(b.id,dev,{x:[],y:[]})}><X size={14}/>Очистить направляющие</button></div>}
 {!editing&&<div className="sec"><h4>Положение</h4><div className="btnrow"><button className="btn" title="Блок выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1,dev)}><ArrowUp size={16}/>Выше</button><button className="btn" title="Блок ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1,dev)}><ArrowDown size={16}/>Ниже</button></div></div>}
 {!editing&&els.length>0&&<div className="sec"><h4>Отразить блок</h4><div className="btnrow"><button className="btn" title="Левая часть уезжает вправо, правая влево, на всех устройствах" onClick={()=>{s.flipBlock(b.id,'x');toast('Блок отражён по горизонтали',{label:'Отменить',run:()=>s.undo()},5000)}}><FlipHorizontal size={16}/>Слева направо</button><button className="btn" title="Верх и низ блока меняются местами, на всех устройствах" onClick={()=>{s.flipBlock(b.id,'y');toast('Блок отражён по вертикали',{label:'Отменить',run:()=>s.undo()},5000)}}><FlipVertical size={16}/>Сверху вниз</button></div><p className="hint">Тексты и сетка подстраиваются. Для части блока выдели элементы и нажми Shift+H или Shift+V</p></div>}
@@ -275,7 +275,7 @@ const {s,sh,st}=useSheet();const blocks=(sh?.blocks??[]).filter(b=>onDev(b,dev)|
 const ms=editing&&s.multi.includes(s.elId??'')?s.multi.filter(id=>blocks.some(b=>(b.els?.[dev]??[]).some(e=>e.id===id))):[];
 if(ms.length>1)return<MultiPanel dev={dev} ids={ms}/>;
 const f=editing?blocks.flatMap(b=>(b.els?.[dev]??[]).map(e=>({e,b}))).find(x=>x.e.id===s.elId):undefined;
-if(f&&st)return<ElPanel dev={dev} e={f.e} b={f.b} st={st}/>;
+if(f&&st)return<ElPanel key={f.e.id} dev={dev} e={f.e} b={f.b} st={st}/>;
 const bi=blocks.findIndex(x=>x.id===s.blockId);
 if(bi>=0)return<BlockPanel dev={dev} b={blocks[bi]} idx={bi} editing={editing} onTpl={onTpl}/>;
 return<aside className="panel idle"><div className="ph"><b>Страница</b><span>{blocks.length} блоков</span></div>{blocks.map((b,i)=><button key={b.id} className="row sm" onClick={()=>s.setBlock(b.id)}><b className="no">{i+1}</b><span>{b.title}</span></button>)}

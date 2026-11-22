@@ -1,4 +1,4 @@
-import {useMemo,useState} from 'react';
+import {useMemo,useState} from 'react';import {useLive} from '../../lib/live';
 import {X,ChevronDown,Bold,AlignLeft,AlignCenter,AlignRight,ArrowUp,ArrowDown,Copy,Trash2,Smartphone,LayoutTemplate,Search} from 'lucide-react';
 import {useStore,FW} from '../../store';
 import type {El,Dev,Block} from '../../store';
@@ -25,7 +25,11 @@ return<div className="clr"><span>{label}</span><div className="cs-row">
 <label className="cs pick" title="Свой цвет"><input type="color" value={HEX.test(cur)?cur:'#000000'} onChange={e=>onChange(e.target.value)}/></label></div></div>}
 
 function Range({label,value,min,max,step=1,unit='',onChange}:{label:string;value:number;min:number;max:number;step?:number;unit?:string;onChange:(v:number)=>void}){
-return<label className="rng"><span>{label}</span><input type="range" min={min} max={max} step={step} value={value} onChange={ev=>onChange(+ev.target.value)}/><output>{Math.round(value*10)/10}{unit}</output></label>}
+const [v,setV]=useLive(value,onChange);
+return<label className="rng"><span>{label}</span><input type="range" min={min} max={max} step={step} value={v} onChange={ev=>setV(+ev.target.value)}/><output>{Math.round(v*10)/10}{unit}</output></label>}
+/** текст элемента: ввод сразу на экране, в store после паузы 180 мс и при выходе из поля */
+function TextBox({value,onText}:{value:string;onText:(t:string)=>void}){const [v,setV,flush]=useLive(value,onText,180);
+return<textarea id="el-text" className="inp" placeholder="Проще: двойной клик по элементу на холсте" value={v} onChange={ev=>setV(ev.target.value)} onBlur={flush} onKeyDown={ev=>{if(ev.key==='Escape')(ev.target as HTMLElement).blur()}}/>}
 
 export function ElPanel({dev,e,b,st}:{dev:Dev;e:El;b:Block;st:PStyle}){
 const s=useStore();const set=(p:Partial<El>)=>s.updEl(dev,e.id,p);const [q,setQ]=useState('');const t=e.t;const r=resolve(e,st);
@@ -49,7 +53,7 @@ return<aside className="panel ep"><div className="ph"><b>{NM[t]}</b><span>Эле
 <button className="btn" title="Привязать положение и размер к шкале 4 px: отступы 4, 8, 12, 16, 24, 32, 48, 64 складываются из неё" onClick={()=>{const q=(v:number)=>Math.round(v/4)*4;set({x:q(e.x),y:q(e.y),...(e.hug?{}:{w:Math.max(4,q(e.w)),...(t==='line'?{}:{h:Math.max(4,q(e.h))})})})}}>К шкале 4 px</button></div>
 
 <LayPanel dev={dev} ids={[e.id]} single/>
-{hasText&&<div className="sec"><h4>{t==='list'?'Пункты (каждый с новой строки)':'Текст'}</h4><textarea id="el-text" className="inp" placeholder="Проще: двойной клик по элементу на холсте" value={e.text} onChange={ev=>set({text:ev.target.value})} onKeyDown={ev=>{if(ev.key==='Escape')(ev.target as HTMLElement).blur()}}/>
+{hasText&&<div className="sec"><h4>{t==='list'?'Пункты (каждый с новой строки)':'Текст'}</h4><TextBox key={e.id} value={e.text??''} onText={t=>set({text:t})}/>
 {checkText(e,st).map(m=><p key={m} className="warn">{m}</p>)}
 <label className="clr"><span>Стиль текста</span><select className="inp sl" value={e.role??''} title="Размер и жирность берутся из стиля проекта" onChange={ev=>{const v=ev.target.value as Role|'';set(v?{role:v,fs:undefined,b:undefined}:{role:undefined})}}><option value="">Свой</option>{ROLES.map(([k,l])=><option key={k} value={k}>{l} · {st.roles[k].fs} px</option>)}</select></label>
 <div className="btnrow fmt"><select className="inp" value={r.fs??16} onChange={ev=>set({fs:+ev.target.value})}>{sizes.map(n=><option key={n} value={n}>{n} px</option>)}</select>

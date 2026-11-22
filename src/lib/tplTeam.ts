@@ -62,7 +62,7 @@ const fit=(f:(sub:boolean)=>Out,d:Dev):Out=>{const a=f(true);return a.h<=CAP[d]?
 /** заголовок и подзаголовок: ПК и планшет по центру, мобилка слева */
 function head(c:C,d:Dev,n:number,sub:boolean):number{
 const m=d==='mobile',X=m?20:d==='tablet'?48:LX,w=FW[d]-2*X;const al=m?undefined:'c' as const;const o=al?{b:true,al}:{b:true};
-let y=m?20:d==='tablet'?40:48;
+let y=m?20:40;
 y=c.tx(m?titleM(n):title(n),X,y,w,m?22:d==='tablet'?28:36,o)+12;
 if(sub)y=c.tx(m?SUBM:SUB,X,y,w,m?14:d==='tablet'?16:18,al?{al}:{})+(m?14:24);
 else y+=m?4:12;
@@ -85,11 +85,11 @@ return y+(m?6:10)}
 // ---------- 3. Все на виду: сетка карточек без табов ----------
 function v3d(n:number,sub:boolean):Out{const c=ctx();const a=mem(n);
 const top=head(c,'desktop',n,sub);
-const nc=n<=4?n:n<=6?3:4,rows=Math.ceil(n/nc),g=16,cw=(LW-(nc-1)*g)/nc,ps=n<=4?128:96,iw=cw-32;
+const nc=n<=4?n:n<=6?3:4,rows=Math.ceil(n/nc),g=16,cw=(LW-(nc-1)*g)/nc,ps=n<=4?128:64,iw=cw-32;
 const ch=Math.max(...a.map(p=>r4(16+ps+12+th(p.nm,16,iw,true)+4+th(p.r,14,iw)+8+th(p.d,14,iw)+16)));
 a.forEach((p,i)=>{const x=LX+(i%nc)*(cw+g),y=top+Math.floor(i/nc)*(ch+g);box(c,x,y,cw,ch);
 avatar(c,x+(cw-ps)/2,y+16,ps);let ty=y+16+ps+12;ty=c.tx(p.nm,x+16,ty,iw,16,{b:true,al:'c'})+4;ty=c.tx(p.r,x+16,ty,iw,14,{al:'c'})+8;c.tx(p.d,x+16,ty,iw,14,{al:'c'})});
-const y=top+rows*(ch+g)-g+24;
+const y=top+rows*(ch+g)-g+20;
 c.add('btn',LX,y,440,56,L.cta,{fs:16,acc:true});c.tx(L.note,LX+464,y+8,LW-464,14);
 return{h:Math.max(SCR.desktop,r4(y+56+40)),els:c.els}}
 

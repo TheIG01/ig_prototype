@@ -1,13 +1,14 @@
-import {useState} from 'react';import type React from 'react';
+import {useState,memo} from 'react';import type React from 'react';
 import {X,Plus,Monitor,Tablet,Smartphone,Star} from 'lucide-react';
 import {useStore,FW} from '../../store';
 import type {El,Dev,BlockTpl} from '../../store';import type {PStyle} from '../../lib/art';
 import {TPLS,CATS,buildTpl} from '../../lib/tpl';import type {Tpl} from '../../lib/tpl';
 import {elStyle,elInner} from '../canvas/elStyle';
 /** miniature of a block: real wireframe scaled to tw px wide */
-export function Thumb({els,h,dev='desktop',tw=200,st}:{els:El[];h:number;dev?:Dev;tw?:number;st?:PStyle}){
+/** превью блока: memo, чтобы миниатюры не перерисовывались, пока их элементы не менялись */
+export const Thumb=memo(function Thumb({els,h,dev='desktop',tw=200,st}:{els:El[];h:number;dev?:Dev;tw?:number;st?:PStyle}){
 const w=FW[dev],k=tw/w;
-return<div className="th" style={{width:tw,height:Math.max(20,h*k)}}><div className="th-in" style={{width:w,height:h,transform:`scale(${k})`}}>{els.map(e=><div key={e.id} className={'el '+e.t} style={elStyle(e,0,st)}>{elInner(e)}</div>)}</div></div>}
+return<div className="th" style={{width:tw,height:Math.max(20,h*k)}}><div className="th-in" style={{width:w,height:h,transform:`scale(${k})`}}>{els.map(e=><div key={e.id} className={'el '+e.t} style={elStyle(e,0,st)}>{elInner(e)}</div>)}</div></div>});
 const SZ=[['Мелко',150],['Обычно',200],['Крупно',280]] as const;
 const DV=[['desktop','ПК',Monitor],['tablet','Планшет',Tablet],['mobile','Телефон',Smartphone]] as const;
 const ld=<T,>(k:string,d:T,ok:(v:unknown)=>boolean):T=>{try{const v=JSON.parse(localStorage.getItem(k)??'null');return ok(v)?v as T:d}catch{return d}};

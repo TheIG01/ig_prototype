@@ -139,7 +139,7 @@ if(op){const dh=th(s.d,14,w-32),sh=th('Срок: '+s.w,14,w-32,true),H=r4(52+dh+
 let yy=c.tx(s.d,X+16,y+52,w-32,14,{sk:'d'+k})+8;c.tx('Срок: '+s.w,X+16,yy,w-32,14,{b:true});y+=H+8}
 else{c.add('rect',X,y,w,52);c.add('text',X+16,y+14,w-72,24,`${k+1}. ${s.t}`,{fs:15,b:true,sk:'t'+k});c.add('text',X+w-44,y+10,28,32,'+',{fs:22,b:true,al:'c'});y+=52+8}}
 return fin(c,d,y-8)}
-const cc=d==='desktop'?(n<=4?n:n<=6?3:4):2,g=24,cw=(w-(cc-1)*g)/cc,p=d==='desktop'?24:20,big=d==='desktop'?56:44;
+const cc=d==='desktop'?(n<=4?n:n<=6?3:4):2,g=d==='tablet'?16:24,cw=(w-(cc-1)*g)/cc,p=20,big=d==='desktop'?40:32;
 const hh=maxH(idx,(t,k)=>card(t,0,0,cw,0,k,p,big));
 idx.forEach(k=>card(c,X+(k%cc)*(cw+g),y+Math.floor(k/cc)*(hh+g),cw,hh,k,p,big));
 y+=Math.ceil(n/cc)*(hh+g)-g+24;return fin(c,d,foot(c,d,y))}

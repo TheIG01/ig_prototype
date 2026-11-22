@@ -259,7 +259,7 @@ const O9:[string,string[]][]=[
 const v9:F=(d,lv)=>{const c=ctx();const H9='Работаем на 6 типах объектов по всей России',S9='Нажми на тип объекта и посмотри, где мы уже работали';
 const card=(c:C,x:number,y:number,w:number,ih:number,o:typeof O9[0],nb:number,ti:number)=>{const bh=nb*20,h=16+ih+12+26+6+bh+16;c.add('rect',x,y,w,h,'',{r:12});c.add('img',x+16,y+16,w-32,ih,'Фото');
 let t=tx(c,o[0],x+16,y+16+ih+12,w-32,ti,{b:true})+6;for(const l of o[1].slice(0,nb))t=tx(c,'• '+l,x+16,t,w-32,15);return h};
-if(d==='desktop'){let y=head(c,d,H9,S9);const g=24,cw=(1200-2*g)/3,ih=lv>=1?88:96,hh=card(ctx(),0,0,cw,ih,O9[0],3,20);
+if(d==='desktop'){let y=head(c,d,H9,S9);const g=24,cw=(1200-2*g)/3,ih=lv>=1?64:72,hh=card(ctx(),0,0,cw,ih,O9[0],3,20);
 O9.forEach((o,i)=>card(c,120+(i%3)*(cw+g),y+Math.floor(i/3)*(hh+g),cw,ih,o,3,20));y+=2*hh+g+20;y=cta(c,d,y,'Рассчитать для моего объекта');return fin(c,d,y,'')}
 if(d==='tablet'){const X=48,g=16,cw=(672-g)/2,ih=lv>=1?80:96,hh=card(ctx(),0,0,cw,ih,O9[0],2,20);let y=head(c,d,H9,S9);
 O9.forEach((o,i)=>card(c,X+(i%2)*(cw+g),y+Math.floor(i/2)*(hh+g),cw,ih,o,2,20));y+=3*hh+2*g+16;y=cta(c,d,y,'Рассчитать для моего объекта');return fin(c,d,y,'')}
@@ -273,9 +273,9 @@ const F10:[string,string,string][]=[['12:40','Анна, Казань','зака�
 const v10:F=(d)=>{const c=ctx();const H10='Сегодня 5 заявок: смотри, кто уже выбрал нас',S10='Список обновляется каждый день, показываем только настоящие заявки';
 const row=(x:number,y:number,w:number,h:number,r:typeof F10[0],fs:number)=>{c.add('rect',x,y,w,h,'',{r:10});ct(c,r[0],x+16,y,64,h,fs,{b:true,c:BD});ct(c,r[1]+': '+r[2],x+88,y,w-104,h,fs)};
 if(d==='desktop'){let y=head(c,d,H10,S10);
-L10.forEach(([n,t],i)=>{const yy=y+i*(124+10);c.add('rect',120,yy,400,124,'',{r:12});tx(c,n,144,yy+14,352,44,{b:true});tx(c,t,144,yy+14+58+2,352,18,{c:GR})});
-tx(c,'Последние заявки',560,y,760,20,{b:true});F10.forEach((r,i)=>row(560,y+34+i*(60+8),760,60,r,16));
-y+=Math.max(3*124+2*10,34+5*60+4*8)+24;c.add('rect',120,y,1200,80,'',{r:12});for(let i=0;i<5;i++)c.add('img',150+i*56,y+16,48,48,'Фото');
+L10.forEach(([n,t],i)=>{const yy=y+i*(104+10);c.add('rect',120,yy,400,104,'',{r:12});tx(c,n,144,yy+14,352,44,{b:true});tx(c,t,144,yy+14+58+2,352,18,{c:GR})});
+tx(c,'Последние заявки',560,y,760,20,{b:true});F10.forEach((r,i)=>row(560,y+34+i*(52+8),760,52,r,16));
+y+=Math.max(3*104+2*10,34+5*52+4*8)+24;c.add('rect',120,y,1200,80,'',{r:12});for(let i=0;i<5;i++)c.add('img',150+i*56,y+16,48,48,'Фото');
 ct(c,'Более 1 240 клиентов выбрали нас с 2012 года',450,y,840,80,20,{b:true});y+=80+24;y=cta(c,d,y,'Стать клиентом сегодня');return fin(c,d,y,'')}
 if(d==='tablet'){const X=48,g=12,cw=(672-2*g)/3;let y=head(c,d,H10,S10);
 L10.forEach(([n,t],i)=>{const x=X+i*(cw+g);c.add('rect',x,y,cw,104,'',{r:12});tx(c,n,x+16,y+12,cw-32,36,{b:true});tx(c,t,x+16,y+12+48,cw-32,16,{c:GR})});y+=104+16;
