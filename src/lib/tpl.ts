@@ -6,6 +6,7 @@ import type {El,ET} from '../store';
 import {FIRST,FIRST_TIPS} from './tplFirst';
 import {REVIEWS,REVIEWS_TIPS} from './tplReviews';
 import {GUAR,GUAR_TIPS} from './tplGuar';
+import {SOCIAL,SOCIAL_TIPS} from './tplSocial';
 import {STEPS,STEPS_TIPS} from './tplSteps';
 import {TEAM,TEAM_TIPS} from './tplTeam';
 import {MGR,MGR_TIPS} from './tplManager';
@@ -86,6 +87,7 @@ export const TPLS:Tpl[]=[
 ...REVIEWS,
 ...STEPS,
 ...GUAR,
+...SOCIAL,
 ...TEAM,
 ...MGR,
 ...QUIZ,
@@ -115,7 +117,7 @@ export const TPLS:Tpl[]=[
 {name:'Список',cat:'Прочее',spec:[{k:'li',t:'Товар 1',r:'0 ₽'},{k:'li',t:'Товар 2',r:'0 ₽'},{k:'li',t:'Товар 3',r:'0 ₽'}]},
 {name:'Итого',cat:'Прочее',spec:[card({k:'p',t:'Товары: 0 ₽'},{k:'p',t:'Доставка: 0 ₽'},{k:'h2',t:'Итого: 0 ₽'},{k:'btn',t:'Оформить заказ',full:true})]}];
 export const CATS=[...new Set(TPLS.map(t=>t.cat))];
-export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...STEPS_TIPS,...GUAR_TIPS,...TEAM_TIPS,...MGR_TIPS,...QUIZ_TIPS,'Отзывы':REVIEWS_TIPS['Отзывы: результат'],
+export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...STEPS_TIPS,...GUAR_TIPS,...SOCIAL_TIPS,...TEAM_TIPS,...MGR_TIPS,...QUIZ_TIPS,'Отзывы':REVIEWS_TIPS['Отзывы: результат'],
 'Шапка':['Шапка занимает до 10% первого экрана','Логотип, дескриптор, телефон и «Заказать звонок»'],
 'Преимущества':['Формула: «Вы получите … за счёт …»','Иконка и заголовок 3 уровня работают лучше сплошного текста'],
 'Форма заявки':['Только телефон, остальное выяснит менеджер','Подсказка над полем, маска номера не нужна','Если есть поле, нужна галочка согласия','Форма каждые 2–3 блока, но не одинаковая','Текст кнопки совпадает с заголовком формы'],

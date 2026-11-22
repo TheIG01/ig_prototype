@@ -7,6 +7,7 @@ import {FW,DEVS} from './dev';
 import type {Dev} from './dev';
 import {uid} from './uid';
 import type {Block,El,SV} from '../store';
+import {SOC_TABS} from './tplSocial';
 
 const di=(d:Dev)=>d==='desktop'?0:d==='tablet'?1:2;
 const XX=(d:Dev)=>d==='mobile'?20:d==='tablet'?48:120;
@@ -186,7 +187,7 @@ if(d==='tablet'){const b=tl(c,X,y,w,n,{cs:44,ft:18,fd:15,desc:'h',srok:true,gap:
 const b=rows(c,X,y,w,n,36,6,true);const fh=formCard(c,d,X,b+16,w);return fin(c,d,b+16+fh)}
 
 // ---------- реестр ----------
-interface V{name:string;tab:boolean;vert?:boolean;gen:(d:Dev,n:number,i:number,g:string)=>Out}
+interface V{name:string;tab:boolean;vert?:boolean;n0?:number;gen:(d:Dev,n:number,i:number,g:string)=>Out}
 const VARS:V[]=[
 {name:'Этапы: табы горизонтально',tab:true,gen:tabsH},
 {name:'Этапы: табы вертикально',tab:true,vert:true,gen:tabsV},
@@ -195,13 +196,14 @@ const VARS:V[]=[
 {name:'Этапы: карточки',tab:false,gen:(d,n)=>cardsV(d,n)},
 {name:'Этапы: аккордеон',tab:false,gen:(d,n)=>accV(d,n)},
 {name:'Этапы: результат',tab:false,gen:(d,n)=>resV(d,n)},
-{name:'Этапы: с формой',tab:false,gen:(d,n)=>formV(d,n)}];
+{name:'Этапы: с формой',tab:false,gen:(d,n)=>formV(d,n)},
+...SOC_TABS.map(t=>({name:t.name,tab:true,vert:t.vert,n0:t.n0,gen:t.gen}))];
 export const STEPS:{name:string;cat:string;spec:(d:Dev)=>Out}[]=VARS.map(v=>({name:v.name,cat:'Этапы',spec:(d:Dev)=>v.gen(d,5,0,'t')}));
 const mk=(v:V,n:number,i:number,g:string):Block=>{const h={} as Record<Dev,number>,els={} as Record<Dev,El[]>;
 for(const d of DEVS){const o=v.gen(d,n,i,g);h[d]=o.h;els[d]=o.els}
 return{id:uid(),title:v.name,text:v.tab?`Вкладка ${i+1} из ${n}. В просмотре виден только блок активной вкладки, клик по вкладке переключает этапы`:`Этапов: ${n}`,h,els,sv:{v:v.name,g,i,n,tab:v.tab}}};
 /** новый набор блоков: табы дают по блоку на каждую вкладку, остальные один блок. null, если имя не из этапов */
-export function stepsBlocks(name:string,n=5):Block[]|null{const v=VARS.find(x=>x.name===name);if(!v)return null;const g=uid();
+export function stepsBlocks(name:string,n0?:number):Block[]|null{const v=VARS.find(x=>x.name===name);if(!v)return null;const g=uid();const n=n0??v.n0??5;
 return Array.from({length:v.tab?n:1},(_,i)=>mk(v,n,i,g))}
 /** группа вкладок, к которой можно привязать блок: у доп. блока своя, у обычного ближайшая выше */
 export function stageGroup(bl:Block[],b:Block):SV|null{if(b.sv?.x)return b.sv;if(b.sv)return null;
