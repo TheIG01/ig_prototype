@@ -7,7 +7,7 @@ import {DEVN} from '../../lib/dev';
 import {download,blockMd,blockFile} from '../../lib/export';
 import type {El,ET,Dev,Block} from '../../store';
 import {toast} from '../../lib/toast';
-import {TIPS} from '../../lib/tpl';
+import {TIPS} from '../../lib/tpl';import {checkBlock} from '../../lib/textcheck';
 import {QuizEditor} from '../quiz/QuizEditor';import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
@@ -225,7 +225,7 @@ return<div className="sec dvsec"><h4>Сотрудников: {n}</h4><div classN
 function BlockPanel({dev,b,idx,editing,onTpl}:{dev:Dev;b:Block;idx:number;editing:boolean;onTpl:()=>void}){
 const s=useStore();const [qz,setQz]=useState(false);const tips=TIPS[b.title]??[];const els=b.els[dev];
 const del=()=>requestDelBlock(b,dev);
-const pr=s.data?.projects.find(p=>p.id===s.projectId);
+const pr=s.data?.projects.find(p=>p.id===s.projectId);const tchk=checkBlock(b,dev,pr?.style);
 const copyAi=async()=>{if(!pr)return;const txt=blockMd(pr,b);try{await navigator.clipboard.writeText(txt);toast('Описание блока скопировано. Вставь его в чат с нейросетью')}catch{download('block.md',txt,'text/markdown');toast('Буфер недоступен, описание скачано файлом')}};
 const dlBlock=()=>{download('block_'+(b.title.trim().replace(/[^\p{L}\p{N}]+/gu,'_')||'blok')+'.json',blockFile(b),'application/json');toast('Блок скачан. Загрузить его можно в Настройках, раздел «Шаблоны блоков»')};
 const devs=DEVS.filter(d=>onDev(b,d));
@@ -240,6 +240,8 @@ return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>
 <div className="sec dvsec"><h4>Показывать на</h4><div className="dvs">{DEVS.map(d=><button key={d} className={'dvc'+(onDev(b,d)?' on':'')+(d===dev?' cur':'')} aria-pressed={onDev(b,d)} title={onDev(b,d)?`Скрыть на устройстве: ${DEVN[d]}`:`Добавить на устройство: ${DEVN[d]}`} onClick={()=>toggleDev(d)}><DevIcon d={d} size={15}/>{DEVN[d]}</button>)}</div></div>
 {b.quiz&&<div className="sec"><button className="btn pri" onClick={()=>setQz(true)}><Settings size={16}/>Настроить квиз</button><p className="hint">Вопросы, ответы, шкала, консультант, подарки, телефон и финал. Макет пересобирается сам. В просмотре (P) квиз проходится по кнопкам</p><button className="btn" title="Блок станет обычным: элементы правятся руками, настройки квиза пропадут" onClick={()=>{s.unlinkQuiz(b.id);toast('Блок отвязан от настроек квиза',{label:'Отменить',run:()=>s.undo()},5000)}}>Отвязать от настроек</button></div>}
 {qz&&b.quiz&&<QuizEditor b={b} onClose={()=>setQz(false)}/>}
+<label className="fld"><span>Задача текста</span><input className="inp" value={b.goal??''} placeholder="Зачем блок: что читатель должен сделать или понять" onChange={e=>s.editBlock(b.id,{goal:e.target.value})}/></label>
+{tchk.length>0&&<details className="fold2" open><summary>Проверка текста: {tchk.length}</summary><div className="stack">{tchk.map(({e,m})=><p key={e.id} className="warn"><b>«{e.text.replace(/\n/g,' ').slice(0,28)}»</b>: {m.join('; ')}</p>)}</div></details>}
 <details className="fold2" open={!!b.text}><summary>Тексты и заметки</summary><textarea className="inp" placeholder="Тексты блока, пожелания дизайнеру, как работает: переходы, раскрытия, кнопки" value={b.text} onChange={e=>s.editBlock(b.id,{text:e.target.value})}/></details>
 <details className="fold2"><summary>Передать нейросети</summary><div className="stack"><button className="btn" onClick={copyAi}><Copy size={15}/>Скопировать описание</button><button className="btn" onClick={dlBlock}><Download size={15}/>Скачать блок (JSON)</button></div><p className="hint">Описание: тексты, заметки и элементы с координатами для каждого устройства. JSON загружается в Настройках как шаблон</p></details>
 {tips.length>0&&<details className="fold2"><summary>Из твоих конспектов</summary><ul className="tipl">{tips.map(t=><li key={t}>{t}</li>)}</ul></details>}

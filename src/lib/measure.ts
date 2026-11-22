@@ -16,3 +16,5 @@ if((e.t==='btn'||e.t==='input')&&e.hug==='h'){const pw=e.t==='btn'?32:28;const p
 if(e.t==='btn')return{w:Math.max(64,Math.ceil(tw(txt,e))+48)};
 if(e.t==='input')return{w:Math.max(96,Math.ceil(tw(txt,e))+28)};
 return null}
+/** число строк текста элемента при его ширине (для проверки «до 4 строк») */
+export const textLines=(e0:El,st?:PStyle)=>{const e=resolve(e0,st);const w=e.t==='btn'?e.w-32:e.t==='input'?e.w-28:e.w;return lines(e.text??'',e,Math.max(8,w))};
