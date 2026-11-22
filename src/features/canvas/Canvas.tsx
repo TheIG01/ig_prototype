@@ -11,6 +11,7 @@ import {TIPS} from '../../lib/tpl';
 import {QuizEditor} from '../quiz/QuizEditor';import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
+const STY=['fs','b','al','acc','fill','stroke','sw','r','op','c'] as const;let styClip:Partial<El>|null=null;
 const KEYS:Record<string,ET|'sel'>={KeyV:'sel',KeyT:'text',KeyR:'rect',KeyB:'btn',KeyF:'input',KeyI:'img',KeyL:'line'};
 const HK:Record<string,string>={sel:'V',text:'T',rect:'R',btn:'B',input:'F',img:'I',line:'L'};
 const snap=(v:number,raw:boolean)=>{const u=getUi();return raw||!u.snap?Math.round(v):Math.round(v/u.gs)*u.gs};
@@ -82,7 +83,9 @@ if(e.code==='Quote'&&!e.altKey){e.preventDefault();saveUi(e.shiftKey?{cols:!ui.c
 if(e.code==='KeyA'&&editing){e.preventDefault();s.setMulti(els.map(x=>x.id));return}
 if(e.code==='KeyG'&&editing&&e.shiftKey&&selIds.length){e.preventDefault();s.groupEls(dev,selIds,false);return}
 if(e.code==='KeyG'&&editing&&selIds.length>1){e.preventDefault();s.groupEls(dev,selIds,true);return}
-if(e.altKey&&editing&&selIds.length>2&&(e.code==='KeyH'||e.code==='KeyV')){e.preventDefault();s.alignEls(dev,selIds,e.code==='KeyH'?'dh':'dv');return}
+if(e.altKey&&e.shiftKey&&editing&&selIds.length>2&&(e.code==='KeyH'||e.code==='KeyV')){e.preventDefault();s.alignEls(dev,selIds,e.code==='KeyH'?'dh':'dv');return}
+if(e.altKey&&editing&&!e.shiftKey&&e.code==='KeyC'&&cur){e.preventDefault();const o:Record<string,unknown>={};for(const k of STY)if(cur[k]!==undefined)o[k]=cur[k];styClip=o as Partial<El>;toast('Стиль скопирован');return}
+if(e.altKey&&editing&&!e.shiftKey&&e.code==='KeyV'&&selIds.length&&styClip){e.preventDefault();const o:Record<string,unknown>={};for(const k of STY)o[k]=styClip[k];for(const i of selIds)s.updEl(dev,i,o as Partial<El>);toast('Стиль применён');return}
 if(e.code==='KeyD'&&editing&&selIds.length>1){e.preventDefault();s.dupEls(dev,selIds,16,selIds.map(()=>uid()));return}
 if((e.code==='KeyC'||e.code==='KeyX')&&editing&&selIds.length>1){e.preventDefault();s.clipSetMany(dev,selIds);if(e.code==='KeyX')s.delEls(dev,selIds);return}
 if(e.code==='KeyV'&&editing&&s.clipM){e.preventDefault();s.clipPasteMany(dev);return}
@@ -103,6 +106,8 @@ if(e.shiftKey&&e.code==='Digit0'){e.preventDefault();setZ(1);return}
 if(e.shiftKey&&e.code==='Digit1'){e.preventDefault();fit();return}
 if(e.code==='KeyA'&&!e.shiftKey){e.preventDefault();if(!editing)onAdd(s.blockId??undefined);return}
 if(e.code==='KeyE'&&!e.shiftKey){e.preventDefault();if(editing)setIns(v=>!v);else if(curB){s.enterEdit(curB.id);setIns(true)}return}
+if(e.code==='KeyO'&&!e.shiftKey){e.preventDefault();if(editing)pick('shape',{sh:'circle',w:120,h:120});else if(curB){s.enterEdit(curB.id);pick('shape',{sh:'circle',w:120,h:120})}return}
+if(e.shiftKey&&e.code==='KeyH'&&editing&&selIds.length){e.preventDefault();const a=els.filter(x=>selSet.has(x.id));const x0=Math.min(...a.map(x=>x.x)),x1=Math.max(...a.map(x=>x.x+x.w));s.dragMany(dev,a.map(x=>({id:x.id,x:x0+x1-x.x-x.w,y:x.y})));return}
 const tk=e.shiftKey?undefined:KEYS[e.code];if(tk){if(editing)pick(tk);else if(curB){s.enterEdit(curB.id);pick(tk)}return}
 if(e.code==='Equal'||e.code==='NumpadAdd'){setZ(v=>clampZ(v+.1));return}
 if(e.code==='Minus'||e.code==='NumpadSubtract'){setZ(v=>clampZ(v-.1));return}
