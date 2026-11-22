@@ -64,13 +64,13 @@ const tb=(c:C,x:number,y:number,w:number,h:number,t:string,k:number,i:number,g:s
 const needH=(a:string[],fs:number,w:number,min:number)=>Math.max(min,...a.map(t=>r4(th(t,fs,Math.max(20,w-12),true)+16)));
 const bgc=(c:C,x:number,y:number,w:number,h:number)=>{c.els.unshift({id:uid(),t:'rect',x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h),text:'',r:12})};
 /** ряд вкладок сверху: ПК подписи, планшет подписи (если вкладка шире 120), мобилка номера. Возвращает нижнюю границу */
-function navH(c:C,d:Dev,y:number,names:string[],n:number,i:number,g:string):number{const X=XX(d),w=FW[d]-2*X,m=d==='mobile',gap=m?6:d==='tablet'?8:12;
+export function navH(c:C,d:Dev,y:number,names:string[],n:number,i:number,g:string):number{const X=XX(d),w=FW[d]-2*X,m=d==='mobile',gap=m?6:d==='tablet'?8:12;
 let tw=(w-(n-1)*gap)/n;const lab=!m&&tw>=120;if(m)tw=Math.min(56,Math.floor((w-(n-1)*gap)/n));
 const fs=m?16:d==='tablet'?14:n>=6?15:16;const labs=names.slice(0,n).map((t,k)=>lab?t:String(k+1));
 const h=m?44:needH(labs,fs,tw,64),x0=m?X:X+(w-(n*tw+(n-1)*gap))/2;
 labs.forEach((t,k)=>tb(c,x0+k*(tw+gap),y,tw,h,t,k,i,g,fs));return y+h+(m?12:24)}
 /** столбик вкладок слева: возвращает нижнюю границу */
-function navV(c:C,d:Dev,x:number,y:number,w:number,names:string[],n:number,i:number,g:string):number{const m=d==='mobile',fs=m?15:d==='tablet'?14:16,gp=m?4:8;
+export function navV(c:C,d:Dev,x:number,y:number,w:number,names:string[],n:number,i:number,g:string):number{const m=d==='mobile',fs=m?15:d==='tablet'?14:16,gp=m?4:8;
 const labs=names.slice(0,n),h=needH(labs,fs,w,m?44:64);labs.forEach((t,k)=>tb(c,x,y+k*(h+gp),w,h,t,k,i,g,fs));return y+n*h+(n-1)*gp}
 
 // ---------- 1. Кейсы: вкладки слева (лучший) ----------

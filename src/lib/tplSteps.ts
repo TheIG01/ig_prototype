@@ -8,6 +8,7 @@ import type {Dev} from './dev';
 import {uid} from './uid';
 import type {Block,El,SV} from '../store';
 import {SOC_TABS} from './tplSocial';
+import {TEAM_TABS} from './tplTeam';
 
 const di=(d:Dev)=>d==='desktop'?0:d==='tablet'?1:2;
 const XX=(d:Dev)=>d==='mobile'?20:d==='tablet'?48:120;
@@ -197,8 +198,11 @@ const VARS:V[]=[
 {name:'Этапы: аккордеон',tab:false,gen:(d,n)=>accV(d,n)},
 {name:'Этапы: результат',tab:false,gen:(d,n)=>resV(d,n)},
 {name:'Этапы: с формой',tab:false,gen:(d,n)=>formV(d,n)},
-...SOC_TABS.map(t=>({name:t.name,tab:true,vert:t.vert,n0:t.n0,gen:t.gen}))];
-export const STEPS:{name:string;cat:string;spec:(d:Dev)=>Out}[]=VARS.map(v=>({name:v.name,cat:'Этапы',spec:(d:Dev)=>v.gen(d,5,0,'t')}));
+...SOC_TABS.map(t=>({name:t.name,tab:true,vert:t.vert,n0:t.n0,gen:t.gen})),
+...TEAM_TABS.map(t=>({name:t.name,tab:true,vert:t.vert,n0:t.n0,gen:t.gen}))];
+/** вкладочные шаблоны других групп показываются в своих группах, в «Этапах» не дублируются */
+const OWN=new Set([...SOC_TABS,...TEAM_TABS].map(t=>t.name));
+export const STEPS:{name:string;cat:string;spec:(d:Dev)=>Out}[]=VARS.filter(v=>!OWN.has(v.name)).map(v=>({name:v.name,cat:'Этапы',spec:(d:Dev)=>v.gen(d,5,0,'t')}));
 const mk=(v:V,n:number,i:number,g:string):Block=>{const h={} as Record<Dev,number>,els={} as Record<Dev,El[]>;
 for(const d of DEVS){const o=v.gen(d,n,i,g);h[d]=o.h;els[d]=o.els}
 return{id:uid(),title:v.name,text:v.tab?`Вкладка ${i+1} из ${n}. В просмотре виден только блок активной вкладки, клик по вкладке переключает этапы`:`Этапов: ${n}`,h,els,sv:{v:v.name,g,i,n,tab:v.tab}}};

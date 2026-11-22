@@ -4,6 +4,8 @@
 // Все элементы обычные (текст, рамка, кнопка, картинка): правится каждая деталь. Фото и логотипы это плейсхолдеры.
 import {ctx,th,r4} from './tplFirst';
 import type {C,Out} from './tplFirst';
+import {navH,navV} from './tplSocial';
+import type {SocTab} from './tplSocial';
 import {FW} from './dev';
 import type {Dev} from './dev';
 
@@ -66,84 +68,19 @@ if(sub)y=c.tx(m?SUBM:SUB,X,y,w,m?14:d==='tablet'?16:18,al?{al}:{})+(m?14:24);
 else y+=m?4:12;
 return y}
 
+/** обязанности не первого сотрудника: пример, автор заменяет своими */
+const bulX=(p:M,m:boolean)=>m?[p.dm,'Отвечает в течение дня','Принимает каждый этап']:[p.d,'Отвечает клиентам в течение рабочего дня','Принимает каждый этап и подписывает акт','Выходит на связь в мессенджере'];
 /** главный блок выбранного сотрудника для планшета и мобилки: фото, имя, роль, цитата, обязанности */
-function profile(c:C,d:Dev,m0:M,y:number,X:number,w:number):number{
+function profile(c:C,d:Dev,m0:M,y:number,X:number,w:number,k=0):number{
 const m=d==='mobile',ps=m?88:136,tx=X+ps+16,tw=w-ps-16;
 const top=y;avatar(c,X,y,ps);
 let ty=c.tx(m0.nm,tx,y,tw,m?18:24,{b:true})+4;
 ty=c.tx(m0.r,tx,ty,tw,m?14:16)+8;
-ty=c.tx('«'+(m?L.qm:L.q)+'»',tx,ty,tw,m?14:16)+8;
+ty=c.tx('«'+(k?(m?m0.dm:m0.d):m?L.qm:L.q)+'»',tx,ty,tw,m?14:16)+8;
 y=Math.max(top+ps,ty)+(m?12:16);
 if(!m){const g=12,cw=(w-2*g)/3;L.chips.forEach((a,i)=>c.plate(X+i*(cw+g),y,cw,48,a,14,true,'c'));y+=48+14}
-for(const b of m?L.bm:L.b)y=c.tx('✓ '+b,X,y,w,m?14:16)+(m?6:8);
+for(const b of k?bulX(m0,m):m?L.bm:L.b)y=c.tx('✓ '+b,X,y,w,m?14:16)+(m?6:8);
 return y+(m?6:10)}
-
-// ---------- 1. Лучший: вертикальные табы слева, эксперт справа ----------
-function v1d(n:number,sub:boolean):Out{const c=ctx();const a=mem(n);
-const top=head(c,'desktop',n,sub);
-const lw=380,rh=Math.min(72,Math.floor((760-top-(n-1)*8)/n)),av=rh>=68?48:40;
-a.forEach((p,i)=>{const y=top+i*(rh+8);if(i===0)onBox(c,LX,y,lw,rh);else box(c,LX,y,lw,rh);
-avatar(c,LX+12,y+(rh-av)/2,av);
-const tw=lw-av-36,hh=th(p.nm,16,tw,true)+th(p.r,14,tw);let ty=y+(rh-hh)/2;ty=c.tx(p.nm,LX+av+24,ty,tw,16,{b:true});c.tx(p.r,LX+av+24,ty,tw,14)});
-const rx=560,rw=760,ps=200;
-avatar(c,rx,top,ps);
-const tx=rx+ps+28,tw=rw-ps-28;
-const blk=th(a[0].nm,28,tw,true)+4+th(a[0].r,16,tw)+14+th('«'+L.q+'»',16,tw);
-let ty=top+(ps-blk)/2;
-ty=c.tx(a[0].nm,tx,ty,tw,28,{b:true})+4;ty=c.tx(a[0].r,tx,ty,tw,16)+14;c.tx('«'+L.q+'»',tx,ty,tw,16);
-let y=top+ps+20;
-const g=12,cw=(rw-2*g)/3;L.chips.forEach((t,i)=>c.plate(rx+i*(cw+g),y,cw,52,t,14,true,'c'));y+=52+16;
-const bw=(rw-48-16)/2,bh=[0,1].map(r=>Math.max(...[0,1].map(k=>th('✓ '+L.b[r*2+k],16,bw)))),ch=r4(24+bh[0]+14+bh[1]+24);
-box(c,rx,y,rw,ch);let by=y+24;
-[0,1].forEach(r=>{[0,1].forEach(k=>c.tx('✓ '+L.b[r*2+k],rx+24+k*(bw+16),by,bw,16));by+=bh[r]+14});
-y+=ch+20;
-c.add('btn',rx,y,440,56,L.cta,{fs:16,acc:true});c.tx(L.note,rx+464,y+8,rw-464,14);
-return{h:Math.max(SCR.desktop,r4(y+56+40)),els:c.els}}
-
-/** планшет и мобилка: полоса аватаров (мобилка) или чипы (планшет), под ней выбранный сотрудник */
-function v1s(n:number,d:Dev,sub:boolean):Out{const c=ctx();const a=mem(n);const m=d==='mobile';
-const X=m?20:48,w=FW[d]-2*X;let y=head(c,d,n,sub);
-if(m){const s=n<=5?52:n<=6?48:40,g=Math.min(12,(w-n*s)/(n-1));
-a.forEach((p,i)=>avatar(c,X+i*(s+g),y+4,s,i===0));y+=s+8+12}
-else{const nc=Math.min(n,4),g=12,cw=(w-(nc-1)*g)/nc,rows=Math.ceil(n/nc),ch=92;
-a.forEach((p,i)=>{const x=X+(i%nc)*(cw+g),yy=y+Math.floor(i/nc)*(ch+g);if(i===0)onBox(c,x,yy,cw,ch);else box(c,x,yy,cw,ch);
-avatar(c,x+(cw-48)/2,yy+8,48);c.tx(p.sh,x+8,yy+8+48+6,cw-16,14,{b:true,al:'c'})});
-y+=rows*(ch+g)-g+20}
-y=profile(c,d,a[0],y,X,w);
-if(!m){c.add('btn',X,y,Math.min(w,440),56,L.cta,{fs:16,acc:true});y+=56+10;y=c.tx(L.note,X,y,w,14)}
-return done(c,d,y,L.ctam)}
-
-// ---------- 2. Горизонтальные табы сверху, панель под ними ----------
-function v2d(n:number,sub:boolean):Out{const c=ctx();const a=mem(n);
-const top=head(c,'desktop',n,sub);
-const g=16,tw=(LW-(n-1)*g)/n,vert=n>5;
-const th0=vert?Math.max(...a.map(p=>12+48+6+th(p.sh,14,tw-16,true)+2+th(p.r,12,tw-16)+12)):80;
-a.forEach((p,i)=>{const x=LX+i*(tw+g);if(i===0)onBox(c,x,top,tw,th0);else box(c,x,top,tw,th0);
-if(vert){avatar(c,x+(tw-48)/2,top+12,48);let ty=c.tx(p.sh,x+8,top+12+48+6,tw-16,14,{b:true,al:'c'})+2;c.tx(p.r,x+8,ty,tw-16,12,{al:'c'})}
-else{avatar(c,x+12,top+(th0-48)/2,48);const w2=tw-48-36,hh=th(p.nm,15,w2,true)+th(p.r,13,w2);let ty=top+(th0-hh)/2;ty=c.tx(p.nm,x+72,ty,w2,15,{b:true});c.tx(p.r,x+72,ty,w2,13)}});
-const py=top+th0+16;
-const ps=240,tx=LX+24+ps+32,tw2=LW-48-ps-32;
-const bw=(tw2-16)/2,bh=[0,1].map(r=>Math.max(...[0,1].map(k=>th('✓ '+L.b[r*2+k],16,bw)))),
-bl=th(a[0].nm,28,tw2,true)+4+th(a[0].r,16,tw2)+14+th('«'+L.q+'»',16,tw2)+20+bh[0]+12+bh[1]+22+56;
-const ph=Math.max(ps+48,r4(bl+48));
-box(c,LX,py,LW,ph);
-avatar(c,LX+24,py+(ph-ps)/2,ps);
-let y=py+(ph-bl)/2;
-y=c.tx(a[0].nm,tx,y,tw2,28,{b:true})+4;y=c.tx(a[0].r,tx,y,tw2,16)+14;y=c.tx('«'+L.q+'»',tx,y,tw2,16)+20;
-[0,1].forEach(r=>{[0,1].forEach(k=>c.tx('✓ '+L.b[r*2+k],tx+k*(bw+16),y,bw,16));y+=bh[r]+(r?0:12)});y+=22;
-c.add('btn',tx,y,400,56,L.cta,{fs:16,acc:true});c.tx(L.note,tx+420,y+8,tw2-420,14);
-return{h:Math.max(SCR.desktop,r4(py+ph+40)),els:c.els}}
-
-/** мобилка варианта 2: аккордеон, первая строка раскрыта */
-function v2m(n:number,sub:boolean):Out{const c=ctx();const a=mem(n);const X=20,w=350;
-let y=head(c,'mobile',n,sub);const rh=n>6?48:56,av=rh>=56?40:34;
-a.forEach((p,i)=>{if(i===0)onBox(c,X,y,w,rh);else box(c,X,y,w,rh);
-avatar(c,X+10,y+(rh-av)/2,av);const tw=w-av-24-36,hh=th(p.nm,15,tw,true)+th(p.r,12,tw);let ty=y+(rh-hh)/2;ty=c.tx(p.nm,X+av+20,ty,tw,15,{b:true});c.tx(p.r,X+av+20,ty,tw,12);
-c.add('text',X+w-36,y+(rh-24)/2,24,24,i===0?'−':'+',{fs:20,b:true,al:'c'});y+=rh;
-if(i===0){const q='«'+L.qm+'»';const eh=r4(12+th(q,14,w-24)+8+L.bm.slice(0,2).reduce((s,b)=>s+th('✓ '+b,14,w-24)+4,0)+10);
-box(c,X,y,w,eh);let yy=y+12;yy=c.tx(q,X+12,yy,w-24,14)+8;for(const b of L.bm.slice(0,2))yy=c.tx('✓ '+b,X+12,yy,w-24,14)+4;y+=eh}
-y+=8});
-return done(c,'mobile',y,L.ctam)}
 
 // ---------- 3. Все на виду: сетка карточек без табов ----------
 function v3d(n:number,sub:boolean):Out{const c=ctx();const a=mem(n);
@@ -198,25 +135,61 @@ y=c.tx(m?STATM:STAT.join(' · '),X,y+(m?2:6),w,m?13:14,{b:true,...(m?{}:{al:'c' 
 if(!m){c.add('btn',X,y,Math.min(w,440),56,L.cta,{fs:16,acc:true});y+=56+10;y=c.tx(L.note,X,y,w,14)}
 return done(c,d,y,L.ctam)}
 
+
+// ---------- табы с переключением: вкладка = отдельный блок (механизм «Этапов»: Block.sv, El.tg) ----------
+const CTAT='Написать эксперту напрямую',CTATM='Написать эксперту';
+const lab=(p:M)=>p.nm+'\n'+p.r;
+/** планшет и мобилка обоих вариантов: ряд вкладок, под ним выбранный сотрудник */
+function tabS(c:C,d:Dev,a:M[],n:number,i:number,g:string,y:number):Out{const m=d==='mobile',X=m?20:48,w=FW[d]-2*X;
+y=navH(c,d,y,a.map(p=>p.sh),n,i,g);y=profile(c,d,a[i],y,X,w,i);
+if(!m){c.add('btn',X,y,Math.min(w,440),56,CTAT,{fs:16,acc:true});y+=56+10;y=c.tx(L.note,X,y,w,14)}
+return done(c,d,y,CTATM)}
+/** 1. вертикальные вкладки слева, выбранный сотрудник справа */
+function t1(d:Dev,n:number,i:number,g:string):Out{return fit(sub=>{const c=ctx();const a=mem(n);const p=a[i];const top=head(c,d,n,sub);
+if(d!=='desktop')return tabS(c,d,a,n,i,g,top);
+const nb=navV(c,d,LX,top,380,a.map(lab),n,i,g);
+const rx=560,rw=760,ps=200,q=i?p.d:L.q,bl=i?bulX(p,false):L.b;
+avatar(c,rx,top,ps);const tx=rx+ps+28,tw=rw-ps-28;
+const blk=th(p.nm,28,tw,true)+4+th(p.r,16,tw)+14+th('«'+q+'»',16,tw);let ty=top+(ps-blk)/2;
+ty=c.tx(p.nm,tx,ty,tw,28,{b:true})+4;ty=c.tx(p.r,tx,ty,tw,16)+14;c.tx('«'+q+'»',tx,ty,tw,16);
+let y=top+ps+20;const g2=12,cw=(rw-2*g2)/3;L.chips.forEach((t,k)=>c.plate(rx+k*(cw+g2),y,cw,52,t,14,true,'c'));y+=52+16;
+const bw=(rw-48-16)/2,bh=[0,1].map(r=>Math.max(...[0,1].map(k=>th('✓ '+bl[r*2+k],16,bw)))),ch=r4(24+bh[0]+14+bh[1]+24);
+box(c,rx,y,rw,ch);let by=y+24;[0,1].forEach(r=>{[0,1].forEach(k=>c.tx('✓ '+bl[r*2+k],rx+24+k*(bw+16),by,bw,16));by+=bh[r]+14});
+y+=ch+20;c.add('btn',rx,y,440,56,CTAT,{fs:16,acc:true});c.tx(L.note,rx+464,y+8,rw-464,14);
+return{h:Math.max(SCR.desktop,r4(Math.max(y+56,nb)+40)),els:c.els}},d)}
+/** 2. горизонтальные вкладки сверху, панель под ними */
+function t2(d:Dev,n:number,i:number,g:string):Out{return fit(sub=>{const c=ctx();const a=mem(n);const p=a[i];const top=head(c,d,n,sub);
+if(d!=='desktop')return tabS(c,d,a,n,i,g,top);
+const py=navH(c,d,top,a.map(x=>x.sh+'\n'+x.r),n,i,g)-8;
+const ps=240,tx=LX+24+ps+32,tw2=LW-48-ps-32,q=i?p.d:L.q,bl=i?bulX(p,false):L.b;
+const bw=(tw2-16)/2,bh=[0,1].map(r=>Math.max(...[0,1].map(k=>th('✓ '+bl[r*2+k],16,bw)))),
+bk=th(p.nm,28,tw2,true)+4+th(p.r,16,tw2)+14+th('«'+q+'»',16,tw2)+20+bh[0]+12+bh[1]+22+56,ph=Math.max(ps+48,r4(bk+48));
+box(c,LX,py,LW,ph);avatar(c,LX+24,py+(ph-ps)/2,ps);
+let y=py+(ph-bk)/2;y=c.tx(p.nm,tx,y,tw2,28,{b:true})+4;y=c.tx(p.r,tx,y,tw2,16)+14;y=c.tx('«'+q+'»',tx,y,tw2,16)+20;
+[0,1].forEach(r=>{[0,1].forEach(k=>c.tx('✓ '+bl[r*2+k],tx+k*(bw+16),y,bw,16));y+=bh[r]+(r?0:12)});y+=22;
+c.add('btn',tx,y,400,56,CTAT,{fs:16,acc:true});c.tx(L.note,tx+420,y+8,tw2-420,14);
+return{h:Math.max(SCR.desktop,r4(py+ph+40)),els:c.els}},d)}
+
 // ---------- сборка ----------
 type Fn=(n:number)=>(dev:Dev)=>Out;
 const mk=(dsk:(n:number,s:boolean)=>Out,stk:(n:number,d:Dev,s:boolean)=>Out):Fn=>n=>dev=>dev==='desktop'?fit(s=>dsk(n,s),dev):fit(s=>stk(n,dev,s),dev);
-const B1=mk(v1d,v1s);
-const B2=mk(v2d,(n,d,s)=>d==='mobile'?v2m(n,s):v1s(n,d,s));
 const B3=mk(v3d,v3s);
 const B4=mk(v4d,v4s);
-interface V{name:string;n:number;f:Fn;tips:string[]}
+interface V{name:string;n:number;f:Fn;tips:string[];tab?:boolean}
 const COMMON=['Цифра в заголовке совпадает с числом людей в блоке: заголовок обещает N специалистов, в блоке ровно N','Фото живых людей на рабочем месте работает лучше студийных портретов: покажи реальную команду','Подпись «что делает для клиента» сильнее одной должности: человек видит, кто за что отвечает','Подставь реальных людей, их роли и цифры: бассейны и имена это пример','От 3 до 8 человек: меньше выглядит пусто, больше размывает доверие. Остальных убери в отдельную страницу «О компании»','Кнопка ведёт к руководителю лично: письмо основателю даёт больше заявок, чем общая форма'];
+const TABT=['Вкладка = отдельный блок: в просмотре клик по сотруднику переключает блоки. Число вкладок 3–7 меняется кнопкой «Этапов» в панели блока','Тексты сотрудников, кроме первого, это пример: замени на настоящие имена, роли и обязанности'];
 const VARS:V[]=[
-{name:'Команда: табы слева и эксперт',n:6,f:B1,tips:['Оценка: +7–11% к конверсии страницы. Лучший вариант: человек выбирает сотрудника в списке и сразу видит его роль, цитату, цифры и 4 обязанности','Список слева даёт быстрый обзор всей команды, а блок справа показывает главного человека крупно и с доказательствами: 3 цифры и 4 обязанности','Кнопка «Написать …» привязана к руководителю: личный контакт повышает доверие','Табы кастомные: при нажатии на сотрудника справа открывается его карточка (в просмотре показана карточка первого)','Мобилка: полоса аватаров, под ней карточка выбранного, кнопка и мессенджеры закреплены внизу']},
-{name:'Команда: табы сверху',n:4,f:B2,tips:['Оценка: +5–9% к конверсии страницы. Подходит, когда людей 3–5 и у каждого есть что показать подробно','Горизонтальные табы читаются слева направо, как этапы: человек проходит команду по очереди','Крупная панель под табами даёт место для цитаты, цифр и 4 обязанностей','При 6–8 людях табы становятся вертикальными карточками (аватар сверху), ничего не обрезается','Мобилка: аккордеон вместо слайдера, раскрыта первая строка']},
+{name:'Команда: табы слева и эксперт',n:6,tab:true,f:n=>d=>t1(d,n,0,'t'),tips:['Оценка: +7–11% к конверсии страницы. Лучший вариант: человек выбирает сотрудника в списке и сразу видит его роль, цитату, цифры и 4 обязанности','Список слева даёт быстрый обзор всей команды, а блок справа показывает главного человека крупно и с доказательствами: 3 цифры и 4 обязанности','Кнопка «Написать …» привязана к руководителю: личный контакт повышает доверие','Табы кастомные: при нажатии на сотрудника справа открывается его карточка (в просмотре показана карточка первого)','Мобилка: полоса аватаров, под ней карточка выбранного, кнопка и мессенджеры закреплены внизу']},
+{name:'Команда: табы сверху',n:4,tab:true,f:n=>d=>t2(d,n,0,'t'),tips:['Оценка: +5–9% к конверсии страницы. Подходит, когда людей 3–5 и у каждого есть что показать подробно','Горизонтальные табы читаются слева направо, как этапы: человек проходит команду по очереди','Крупная панель под табами даёт место для цитаты, цифр и 4 обязанностей','При 6–8 людях табы становятся вертикальными карточками (аватар сверху), ничего не обрезается','Мобилка: аккордеон вместо слайдера, раскрыта первая строка']},
 {name:'Команда: все на виду',n:8,f:B3,tips:['Оценка: +4–7% к конверсии страницы. Нет кликов, вся команда видна сразу: подходит, когда людей 6–8 и лишние нажатия мешают','Карточка: фото, имя, роль, одна строка «что делает для клиента». Длинные описания убирай на отдельную страницу','Сетка 4×2 при 7–8 людях, 3×2 при 5–6, одна строка при 3–4','Ставь после выгод и перед формой: форма закрывает сомнение «а кто будет работать с моим заказом»','Мобилка: компактный список с одной строкой пояснения, кнопка закреплена внизу']},
 {name:'Команда: общее фото и руководители',n:3,f:B4,tips:['Оценка: +4–8% к конверсии страницы. Сильнее всего у производств и сервисов: общее фото показывает масштаб, три руководителя дают лица','Общее фото в одном кадре со всеми: видно, что компания живая и людей много','Три цифры под карточками (штат, стаж, объекты) подтверждают масштаб, как и число в заголовке','Подходит для 3–4 руководителей: остальные сотрудники показаны на общем фото','Мобилка: общее фото сверху, три компактные строки, цифры в одну строку, кнопка закреплена внизу']}];
 
 export const TEAM:{name:string;cat:string;spec:(d:Dev)=>Out}[]=VARS.map(v=>({name:v.name,cat:'Команда',spec:v.f(v.n)}));
-export const TEAM_TIPS:Record<string,string[]>=Object.fromEntries(VARS.map(v=>[v.name,[...v.tips,...COMMON]]));
+export const TEAM_TIPS:Record<string,string[]>=Object.fromEntries(VARS.map(v=>[v.name,[...v.tips,...(v.tab?TABT:[]),...COMMON]]));
 /** сборка варианта с нужным числом сотрудников (3–8): для проверки и будущего счётчика */
 export const teamBuild=(name:string,n:number,dev:Dev):Out|null=>{const v=VARS.find(x=>x.name===name);return v?v.f(nn(n))(dev):null};
 export const TEAM_NAMES=VARS.map(v=>v.name);
 /** типовое число сотрудников варианта по имени блока, null если имя не из «Команды» */
-export const teamN=(name:string):number|null=>VARS.find(x=>x.name===name)?.n??null;
+export const teamN=(name:string):number|null=>{const v=VARS.find(x=>x.name===name);return v&&!v.tab?v.n:null};
+/** варианты с вкладками: подключены к механизму «Этапов» (tplSteps), каждая вкладка отдельный блок */
+export const TEAM_TABS:SocTab[]=[{name:'Команда: табы слева и эксперт',vert:true,n0:6,gen:t1},{name:'Команда: табы сверху',n0:4,gen:t2}];
