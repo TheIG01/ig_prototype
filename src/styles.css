@@ -622,3 +622,6 @@ select.inp{text-overflow:ellipsis}
 .panel .stk .dvsec{border:0;padding:0 12px 10px;gap:6px}
 .panel .stk .dvsec h4{margin:0;font-size:calc(11.5px*var(--u));color:var(--mute)}
 .panel .stk .dvc{flex-direction:row;justify-content:center;gap:6px;padding:6px 4px}
+
+/* v1.40: рамка входа в группу */
+.gbox{position:absolute;pointer-events:none;z-index:2;border:calc(1.5px/var(--z,1)) dashed var(--acc);border-radius:6px}
