@@ -7,7 +7,7 @@ import {DelDialog,requestDelBlock} from '../blocks/DelBlock';
 import type {Kind,Dev,Project,Sheet,Block} from '../../store';
 import {exportBackup,importBackup} from '../../lib/vault';
 const SettingsBody=lazy(()=>import('./Settings').then(m=>({default:m.SettingsBody})));
-import {briefMd,download} from '../../lib/export';
+import {briefMd,specJson,download} from '../../lib/export';
 import {toast,dismiss,useToast} from '../../lib/toast';
 import {BlockPicker,ContentPanel,Thumb} from '../blocks/blocks';
 import {Canvas,RightPanel} from '../canvas/Canvas';
@@ -49,7 +49,10 @@ const dropProject=(p:Project)=>{s.delProject(p.id);undoable(`Проект «${p.
 const dropSheet=(x:Sheet)=>{s.delSheet(x.id);undoable(`Лист «${x.name}» удалён`,()=>s.setSheet(x.id))};
 const dropBlock=(b:Block)=>requestDelBlock(b,fr);
 const lastOn=(bs:Block[])=>[...bs].reverse().find(q=>onDev(q,fr))?.id;
-const aiPack=(p:Project)=>{download('brief.md',briefMd(p,types.find(t=>t.id===p.typeId)?.name??'Сайт'),'text/markdown');setTimeout(()=>download('project.json',JSON.stringify(p,null,2),'application/json'),300)};
+const tName=(p:Project)=>types.find(t=>t.id===p.typeId)?.name??'Сайт';
+const aiPack=(p:Project)=>{download('brief.md',briefMd(p,tName(p)),'text/markdown');setTimeout(()=>download('spec.json',specJson(p,tName(p)),'application/json'),300);setTimeout(()=>download('project.json',JSON.stringify(p,null,2),'application/json'),600)};
+const saveMd=(p:Project)=>{download(slug(p.name)+'_tz.md',briefMd(p,tName(p)),'text/markdown');toast('ТЗ скачано (Markdown)')};
+const saveSpec=(p:Project)=>{download(slug(p.name)+'_spec.json',specJson(p,tName(p)),'application/json');toast('Спецификация скачана (JSON)')};
 const backup=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([exportBackup()],{type:'application/json'}));a.download='ig_prototype_backup.json';a.click()};
 const restore=async()=>{const f=pend;close();if(!f)return;try{importBackup(await f.text());toast('Копия загружена. Введи ПИН из этой копии');setTimeout(()=>location.reload(),1500)}catch{toast('Это не файл копии IG prototype')}};
 const submit=(e:React.FormEvent)=>{e.preventDefault();const n=name.trim();if(!n)return;
@@ -130,7 +133,9 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 <button type="button" className="am" onClick={()=>{saveHtml();close()}}><span className="amic"><Eye size={20}/></span><b>Интерактив (HTML)</b><small>Один файл: кликабельные переходы, попапы, переключение размеров. Открывается без интернета, ссылкой делится как любой файл на хостинге. Заметок внутри нет</small></button>
 <button type="button" className="am" onClick={()=>{savePdf(false);close()}}><span className="amic"><Share2 size={20}/></span><b>PDF для заказчика</b><small>Все листы и блоки по порядку, без внутренних заметок</small></button>
 <button type="button" className="am" onClick={()=>{savePdf(true);close()}}><span className="amic"><Pencil size={20}/></span><b>PDF с заметками</b><small>Для команды: под каждым блоком его тексты и пожелания</small></button>
-<button type="button" className="am" onClick={()=>{aiPack(pr);close()}}><span className="amic"><Sparkles size={20}/></span><b>Для нейросети</b><small>brief.md и project.json: структура, координаты, акценты, переходы</small></button></div></Ask>}
+<button type="button" className="am" onClick={()=>{aiPack(pr);close()}}><span className="amic"><Sparkles size={20}/></span><b>Всё для нейросети</b><small>brief.md, spec.json и project.json тремя файлами</small></button>
+<button type="button" className="am" onClick={()=>{saveMd(pr);close()}}><span className="amic"><Pencil size={20}/></span><b>ТЗ (Markdown)</b><small>Читаемое задание: блоки по порядку, тексты, статус «обязательно/опционально», адаптив</small></button>
+<button type="button" className="am" onClick={()=>{saveSpec(pr);close()}}><span className="amic"><Sparkles size={20}/></span><b>Спецификация (JSON)</b><small>Для ИИ-агентов: страницы, блоки, тексты, токены стиля, размеры по устройствам, переходы</small></button></div></Ask>}
 {modal==='imp'&&<Ask title="Импорт структуры из майнд-карты" wide onClose={close}><form onSubmit={e=>{e.preventDefault();const n=name.trim()||'Новый проект';if(!outline.trim())return;s.importOutline(n,outline);toast('Проект собран из текста');close()}}>
 <input className="inp" autoFocus placeholder="Название проекта" value={name} onChange={e=>setName(e.target.value)}/>
 <textarea className="inp outl" placeholder={'Вставь текстовую структуру. Например:\n# Главная\n## 1 экран\nЗаголовок и подзаголовок\n## Преимущества\n# Спасибо\n## Подтверждение'} value={outline} onChange={e=>setOutline(e.target.value)}/>
