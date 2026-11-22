@@ -4,6 +4,7 @@ import {FW} from './dev';
 import type {Dev} from './dev';
 import type {El,ET} from '../store';
 import {FIRST,FIRST_TIPS} from './tplFirst';
+import {REVIEWS,REVIEWS_TIPS} from './tplReviews';
 type Al='l'|'c'|'r';
 export type Node=
 |{k:'h1'|'h2'|'h3'|'p'|'sm';t:string;al?:Al}
@@ -72,11 +73,11 @@ export const TPLS:Tpl[]=[
 {name:'Баннер',cat:'Первый экран',spec:[card(H2('Акция: выгода в цифрах','c'),{k:'p',t:'Условия и срок действия',al:'c'},{k:'btn',t:'Получить предложение',al:'c'})]},
 {name:'Кнопка старта',cat:'Первый экран',spec:[{k:'h1',t:'Заголовок квиза с ключевым словом',al:'c'},{k:'p',t:'Ответьте на 5 простых вопросов и получите расчёт',al:'c'},{k:'btn',t:'Начать',al:'c'}]},
 {name:'Преимущества',cat:'Доверие',spec:[H2('Выгоды для вас','c'),cols(4,4,card({k:'img',h:56,t:'Иконка'},{k:'h3',t:'Выгода в цифрах'},{k:'p',t:'Вы получите … за счёт …'}))]},
-{name:'Отзывы',cat:'Доверие',spec:[H2('Отзывы клиентов','c'),cols(3,3,card({k:'p',t:'Текст отзыва: была проблема, получили результат в цифрах'},{k:'sm',t:'Имя, город · фото или видео'}))]},
 {name:'Кейсы',cat:'Доверие',spec:[H2('Кейсы','c'),cols(3,3,card({k:'img',h:200,t:'Фото'},{k:'h3',t:'Название кейса'},{k:'p',t:'Задача → результат в цифрах'}))]},
 {name:'Команда',cat:'Доверие',spec:[H2('Команда','c'),cols(4,4,card({k:'img',h:200,t:'Фото'},{k:'h3',t:'Имя Фамилия'},{k:'sm',t:'Должность'}))]},
 {name:'О компании',cat:'Доверие',spec:[{k:'split',a:[H2('О компании'),{k:'p',t:'Чем занимаемся, сколько лет на рынке, главные цифры'},{k:'p',t:'Почему нам доверяют: гарантии, сертификаты, опыт'}],b:[{k:'img',h:360,t:'Фото'}]}]},
 {name:'История',cat:'Доверие',spec:[{k:'split',a:[H2('История'),{k:'p',t:'Как начинали и чего достигли'}],b:[{k:'img',h:320,t:'Фото'}]}]},
+...REVIEWS,
 {name:'Услуги',cat:'Продажа',spec:[H2('Услуги','c'),cols(3,3,card({k:'img',h:160,t:'Фото'},{k:'h3',t:'Услуга {i}'},{k:'p',t:'Результат для клиента'},{k:'btn',t:'Подробнее'}))]},
 {name:'Список услуг',cat:'Продажа',spec:[H2('Услуги и цены'),{k:'li',t:'Услуга 1',r:'от 10 000 ₽'},{k:'li',t:'Услуга 2',r:'от 10 000 ₽'},{k:'li',t:'Услуга 3',r:'от 10 000 ₽'},{k:'li',t:'Услуга 4',r:'от 10 000 ₽'}]},
 {name:'Тарифы',cat:'Продажа',spec:[H2('Тарифы','c'),cols(3,3,card({k:'h3',t:'Тариф {i}'},{k:'h2',t:'Цена ₽'},{k:'p',t:'• Что входит\n• Что входит\n• Что входит'},{k:'btn',t:'Выбрать',full:true}))]},
@@ -103,7 +104,7 @@ export const TPLS:Tpl[]=[
 {name:'Список',cat:'Прочее',spec:[{k:'li',t:'Товар 1',r:'0 ₽'},{k:'li',t:'Товар 2',r:'0 ₽'},{k:'li',t:'Товар 3',r:'0 ₽'}]},
 {name:'Итого',cat:'Прочее',spec:[card({k:'p',t:'Товары: 0 ₽'},{k:'p',t:'Доставка: 0 ₽'},{k:'h2',t:'Итого: 0 ₽'},{k:'btn',t:'Оформить заказ',full:true})]}];
 export const CATS=[...new Set(TPLS.map(t=>t.cat))];
-export const TIPS:Record<string,string[]>={...FIRST_TIPS,
+export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,'Отзывы':REVIEWS_TIPS['Отзывы: результат'],
 'Шапка':['Шапка занимает до 10% первого экрана','Логотип, дескриптор, телефон и «Заказать звонок»'],
 'Преимущества':['Формула: «Вы получите … за счёт …»','Иконка и заголовок 3 уровня работают лучше сплошного текста'],
 'Форма заявки':['Только телефон, остальное выяснит менеджер','Подсказка над полем, маска номера не нужна','Если есть поле, нужна галочка согласия','Форма каждые 2–3 блока, но не одинаковая','Текст кнопки совпадает с заголовком формы'],
@@ -113,10 +114,9 @@ export const TIPS:Record<string,string[]>={...FIRST_TIPS,
 'Бонус':['Перед телефоном спроси, куда отправить результат','Напомни про подарок: он закреплён за этим номером'],
 'Подтверждение':['Прогревающая страница: что будет дальше, преимущества, отзывы'],
 'FAQ':['Раскрывающиеся блоки вместо слайдеров'],
-'Отзывы':['Фото или видео усиливают доверие'],
 'Тарифы':['Чем больше блок влияет на конверсию, тем крупнее элемент']};
 export function buildTpl(t:Tpl):Built{const h={} as Record<Dev,number>,els={} as Record<Dev,El[]>;
 for(const d of ['desktop','tablet','mobile'] as Dev[]){const r=typeof t.spec==='function'?t.spec(d):render(t.spec,d);h[d]=r.h;els[d]=r.els}return{h,els}}
-export const buildByName=(name:string):Built|null=>{if(name==='Оффер')name='1 экран';const t=TPLS.find(x=>x.name===name);return t?buildTpl(t):null};
+export const buildByName=(name:string):Built|null=>{if(name==='Оффер')name='1 экран';if(name==='Отзывы')name='Отзывы: результат';const t=TPLS.find(x=>x.name===name);return t?buildTpl(t):null};
 export const emptyBuild=():Built=>({h:{desktop:400,tablet:400,mobile:480},els:{desktop:[],tablet:[],mobile:[]}});
 export const fresh=(e:Record<Dev,El[]>):Record<Dev,El[]>=>({desktop:e.desktop.map(x=>({...x,id:uid()})),tablet:e.tablet.map(x=>({...x,id:uid()})),mobile:e.mobile.map(x=>({...x,id:uid()}))});

@@ -7,15 +7,15 @@ import type {Dev} from './dev';
 import type {El,ET} from '../store';
 export interface Out{h:number;els:El[]}
 /** .el в CSS: Inter 500, line-height 1.3, overflow hidden, текст по центру по вертикали. Высота текста считается по этому правилу */
-const r4=(v:number)=>Math.ceil(v/4)*4;
-const th=(t:string,fs:number,w:number,b=false)=>r4(t.split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length*fs*(b?.66:.58)/w)),0)*fs*1.3);
-function ctx(){const els:El[]=[];
+export const r4=(v:number)=>Math.ceil(v/4)*4;
+export const th=(t:string,fs:number,w:number,b=false)=>r4(t.split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length*fs*(b?.66:.58)/w)),0)*fs*1.3);
+export function ctx(){const els:El[]=[];
 const add=(t:ET,x:number,y:number,w:number,h:number,text='',more:Partial<El>={})=>{els.push({id:uid(),t,x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h),text,...more})};
 const tx=(text:string,x:number,y:number,w:number,fs:number,more:Partial<El>={})=>{const h=th(text,fs,w,!!more.b);add('text',x,y,w,h,text,{fs,...more});return y+h};
 /** плашка: рамка и текст по центру по вертикали (текст внутри рамки, а не в углу) */
 const plate=(x:number,y:number,w:number,h:number,text:string,fs=14,b=false,al?:'l'|'c')=>{add('rect',x,y,w,h);add('text',x+16,y+8,w-32,h-16,text,{fs,...(b?{b:true}:{}),...(al?{al}:{})})};
 return{els,add,tx,plate}}
-type C=ReturnType<typeof ctx>;
+export type C=ReturnType<typeof ctx>;
 
 export type Part=
 |{k:'h1'|'sub'|'lead'|'note';t:string;mt?:string|null}
