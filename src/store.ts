@@ -1,14 +1,16 @@
 import {create} from 'zustand';import {immer} from 'zustand/middleware/immer';
 import {save} from './lib/vault';import {migrate,mkBlock,mkFromTpl} from './lib/migrate';import {uid} from './lib/uid';
-import {fresh} from './lib/tpl';import {sheetsFromOutline} from './lib/outline';
+import {fresh} from './lib/tpl';import {stepsBlocks,resizeSteps,stageGroup} from './lib/tplSteps';import {sheetsFromOutline} from './lib/outline';
 import {FW,DEVS,onDev} from './lib/dev';import {defStyle} from './lib/art';import type {PStyle,Role} from './lib/art';import type {Dev} from './lib/dev';
 export {FW,DEVS,onDev};export type {Dev};
 export type Kind='page'|'popup';
 export type ET='text'|'rect'|'btn'|'input'|'img'|'line'|'shape'|'icon'|'mock'|'list';
-export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h'}
+export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h';tg?:string;sk?:string}
 /** авто-лейаут группы: d направление, gap отступ, al выравнивание поперёк, x y начало, mx центр по ширине блока, fl одинаковый поперечный размер */
 export interface Lay{d:'h'|'v';gap:number;al:'s'|'c'|'e';x:number;y:number;mx?:boolean;fl?:boolean}
-export interface Block{id:string;title:string;text:string;dv?:Dev[];h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>;guides?:Partial<Record<Dev,{x:number[];y:number[]}>>}
+/** этапы: v вариант, g группа, i номер вкладки, n число этапов, tab вкладки переключаются в просмотре, x доп. блок этапа */
+export interface SV{v:string;g:string;i:number;n:number;tab:boolean;x?:1}
+export interface Block{id:string;title:string;text:string;sv?:SV;dv?:Dev[];h:Record<Dev,number>;els:Record<Dev,El[]>;lay?:Partial<Record<Dev,Record<string,Lay>>>;guides?:Partial<Record<Dev,{x:number[];y:number[]}>>}
 export interface BlockTpl{id:string;name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}
 export interface Sheet{id:string;name:string;kind:Kind;blocks:Block[]}
 export interface Project{id:string;name:string;typeId:string;style:PStyle;sheets:Sheet[];createdAt:number;updatedAt:number}
@@ -34,7 +36,7 @@ interface S{data:Data|null;projectId:string|null;sheetId:string|null;blockId:str
 enterEdit:(id:string)=>void;exitEdit:(save:boolean)=>void;
 load:(d:Data)=>void;addProject:(name:string,typeId:string)=>void;importOutline:(name:string,text:string)=>void;delProject:(id:string)=>void;openProject:(id:string)=>void;renameProject:(id:string,n:string)=>void;
 addSheet:(name:string,kind:Kind)=>void;renameSheet:(id:string,n:string)=>void;delSheet:(id:string)=>void;setSheet:(id:string)=>void;
-addBlock:(title:string,o?:{after?:string;tpl?:string;dev?:Dev})=>void;delBlock:(id:string,dev?:Dev)=>void;moveBlock:(id:string,dir:-1|1,dev?:Dev)=>void;setDevs:(id:string,devs:Dev[],from?:Dev)=>void;adaptSheet:(dev:Dev,from:Dev)=>void;delAsk:{id:string;dev:Dev}|null;setDelAsk:(v:{id:string;dev:Dev}|null)=>void;dupBlock:(id:string)=>void;
+addBlock:(title:string,o?:{after?:string;tpl?:string;dev?:Dev})=>void;delBlock:(id:string,dev?:Dev)=>void;moveBlock:(id:string,dir:-1|1,dev?:Dev)=>void;setDevs:(id:string,devs:Dev[],from?:Dev)=>void;adaptSheet:(dev:Dev,from:Dev)=>void;delAsk:{id:string;dev:Dev}|null;setDelAsk:(v:{id:string;dev:Dev}|null)=>void;dupBlock:(id:string)=>void;setSteps:(id:string,n:number)=>void;addStepBlock:(id:string)=>void;setStage:(id:string,i:number|null)=>void;
 editBlock:(id:string,patch:Partial<Pick<Block,'title'|'text'>>)=>void;setH:(dev:Dev,id:string,h:number)=>void;setGuides:(id:string,dev:Dev,g:{x:number[];y:number[]})=>void;saveBlockTpl:(id:string,name:string,cat?:string)=>void;delBlockTpl:(id:string)=>void;importTpls:(l:{name:string;cat?:string;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}[])=>void;
 addEl:(dev:Dev,t:ET,x:number,y:number,bid?:string,extra?:Partial<El>)=>void;setStyle:(patch:Partial<PStyle>)=>void;setRole:(r:Role,p:Partial<PStyle['roles'][Role]>)=>void;updEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dragEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dropEl:(dev:Dev,id:string,stay?:boolean)=>void;
 delEl:(dev:Dev,id:string)=>void;dupEl:(dev:Dev,id:string)=>void;moveEl:(dev:Dev,id:string,dir:number)=>void;copyEl:(dev:Dev,id:string)=>void;
@@ -83,7 +85,11 @@ addSheet:(name,kind)=>mut((s,p)=>{if(!p)return;const sh:Sheet={id:uid(),name,kin
 renameSheet:(id,n)=>mut((_,p)=>{const x=p?.sheets.find(q=>q.id===id);if(x)x.name=n}),
 delSheet:id=>mut((s,p)=>{if(!p)return;p.sheets=p.sheets.filter(q=>q.id!==id);if(s.sheetId===id){s.sheetId=p.sheets[0]?.id??null;s.blockId=null;s.elId=null}}),
 setSheet:id=>set({sheetId:id,blockId:null,elId:null,editId:null,snap:null}),
-addBlock:(title,o)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const tp=o?.tpl?s.data!.blockTpls.find(x=>x.id===o.tpl):undefined;const b=tp?mkFromTpl(tp):mkBlock(title);if(o?.dev)b.dv=[o.dev];const i=o?.after?sh.blocks.findIndex(x=>x.id===o.after):-1;if(i>=0)sh.blocks.splice(i+1,0,b);else sh.blocks.push(b);s.blockId=b.id;s.elId=null}),
+addBlock:(title,o)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const tp=o?.tpl?s.data!.blockTpls.find(x=>x.id===o.tpl):undefined;const sg=tp?null:stepsBlocks(title);const bs=sg??[tp?mkFromTpl(tp):mkBlock(title)];const b=bs[0];if(o?.dev)for(const x of bs)x.dv=[o.dev];const i=o?.after?sh.blocks.findIndex(x=>x.id===o.after):-1;if(i>=0)sh.blocks.splice(i+1,0,...bs);else sh.blocks.push(...bs);s.blockId=b.id;s.elId=null}),
+setSteps:(id,n)=>mut(s=>{const sh=curSheet(s);const b=sh?.blocks.find(x=>x.id===id);if(!sh||!b)return;resizeSteps(sh.blocks,b,n);if(!sh.blocks.some(x=>x.id===id)){s.blockId=null;s.elId=null}}),
+addStepBlock:id=>mut(s=>{const sh=curSheet(s);const b=sh?.blocks.find(x=>x.id===id);if(!sh||!b?.sv)return;const sv=b.sv;let at=-1;sh.blocks.forEach((x,k)=>{if(x.sv?.g===sv.g&&x.sv.i===sv.i)at=k});
+const nb:Block={id:uid(),title:'Блок этапа '+(sv.i+1),text:'',h:{desktop:400,tablet:400,mobile:480},els:{desktop:[],tablet:[],mobile:[]},sv:{...sv,x:1}};sh.blocks.splice(at+1,0,nb);s.blockId=nb.id;s.elId=null}),
+setStage:(id,i)=>mut(s=>{const sh=curSheet(s);const b=sh?.blocks.find(x=>x.id===id);if(!sh||!b)return;const g=stageGroup(sh.blocks,b);if(!g)return;if(i===null)delete b.sv;else b.sv={v:g.v,g:g.g,i,n:g.n,tab:true,x:1}}),
 delBlock:(id,dev)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const b=sh.blocks.find(x=>x.id===id);if(!b)return;const rest=dev?(b.dv??[...DEVS]).filter(d=>d!==dev):[];if(dev&&rest.length){b.dv=DEVS.filter(d=>rest.includes(d))}else sh.blocks=sh.blocks.filter(x=>x.id!==id);if(s.blockId===id){s.blockId=null;s.elId=null}if(s.editId===id){s.editId=null;s.snap=null}}),
 enterEdit:id=>set(s=>{const b=curSheet(s)?.blocks.find(x=>x.id===id);if(!b)return;s.editId=id;s.blockId=id;s.elId=null;s.snap=JSON.parse(JSON.stringify(b))}),
 exitEdit:save=>{if(save){set(s=>{s.editId=null;s.snap=null;s.elId=null});return}mut(s=>{if(s.snap&&s.editId){const sh=curSheet(s);const i=sh?sh.blocks.findIndex(b=>b.id===s.editId):-1;if(sh&&i>=0)sh.blocks[i]=s.snap}s.editId=null;s.snap=null;s.elId=null})},
