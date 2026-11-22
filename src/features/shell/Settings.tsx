@@ -13,6 +13,9 @@ const toggle=async(v:boolean)=>{setRem(v);if(v){await rememberDevice();localStor
 const out=async()=>{await forgetDevice();localStorage.removeItem('igp.rem');lock();location.reload()};
 const [demo,setDemo]=useState(TY_DEMO);const upTy=(k:TyKey|'on',v:boolean)=>up({ty:{...u.ty,[k]:v}});
 const tyOut=typo(demo,u.ty).split('\u00A0').flatMap((x,i)=>i?[<span key={i} className="nb">{'\u00A0'}</span>,x]:[x]);
+const lf=useRef<HTMLInputElement>(null);const setAg=(k:'n'|'r'|'l',v:string)=>up({ag:{...u.ag,[k]:v}});
+const pickLogo=(fl:FileList|null)=>{const f=fl?.[0];if(!f)return;if(lf.current)lf.current.value='';const fr=new FileReader();fr.onerror=()=>toast('Файл не прочитался');fr.onload=()=>{const src=String(fr.result);if(f.type==='image/svg+xml'){if(src.length>240000){toast('SVG больше 240 КБ. Возьми файл меньше');return}setAg('l',src);return}
+const im=new Image();im.onerror=()=>toast('Не получилось открыть картинку');im.onload=()=>{const k=Math.min(1,320/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d')!.drawImage(im,0,0,c.width,c.height);setAg('l',c.toDataURL('image/png'));toast('Логотип сохранён')};im.src=src};fr.readAsDataURL(f)};
 const kill=async()=>{await wipe();location.reload()};
 return<div>
 <h4 className="set-h">Вид</h4>
@@ -41,6 +44,10 @@ return<div>
 <div className="set-row"><div><b>Типограф RU / EN</b><p>Кавычки, неразрывные пробелы, тире. Работает в просмотре, HTML и PDF, текст в проекте не меняется. Теги, ссылки, email и телефоны не трогает</p></div><input type="checkbox" className="sw" checked={u.ty.on} onChange={e=>upTy('on',e.target.checked)}/></div>
 {u.ty.on&&<details className="fold2" open><summary>Правила по отдельности</summary><div>{TY_RULES.map(r=><div className="set-row" key={r.k}><div><b>{r.l}</b><p>{r.d}</p></div><input type="checkbox" className="sw" checked={u.ty[r.k]} onChange={e=>upTy(r.k,e.target.checked)}/></div>)}<button className="btn" style={{marginTop:10}} onClick={()=>up({ty:TY0})}>Включить все правила</button></div></details>}
 <div className="set-row" style={{flexDirection:'column'}}><div><b>Живой предпросмотр</b><p>Напиши свой текст слева. Неразрывные пробелы подсвечены</p></div><textarea className="inp" rows={4} value={demo} onChange={e=>setDemo(e.target.value)}/><div className="ty-out">{u.ty.on?tyOut:demo}</div></div>
+<h4 className="set-h">Агентство для отчёта</h4>
+<div className="set-row"><div><b>Название</b><p>Показывается на обложке и в подвале PDF</p></div><input className="inp" maxLength={80} value={u.ag.n} onChange={e=>setAg('n',e.target.value)} placeholder="Название агентства"/></div>
+<div className="set-row"><div><b>Реквизиты</b><p>Адрес, сайт, телефон, ИНН. Выводятся внизу обложки</p></div><textarea className="inp" rows={3} maxLength={600} value={u.ag.r} onChange={e=>setAg('r',e.target.value)} placeholder={'ООО «Агентство»\nИНН 0000000000\nsite.ru · +7 000 000-00-00'}/></div>
+<div className="set-row"><div><b>Логотип</b><p>PNG, JPG, WebP или SVG. Сохраняется в браузере, на сервер не уходит</p></div><div className="seg">{u.ag.l&&<img src={u.ag.l} alt="" style={{height:32,maxWidth:120,objectFit:'contain',marginRight:8}}/>}<button type="button" onClick={()=>lf.current?.click()}>{u.ag.l?'Заменить':'Загрузить'}</button>{u.ag.l&&<button type="button" onClick={()=>setAg('l','')}>Убрать</button>}<input ref={lf} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={e=>pickLogo(e.target.files)}/></div></div>
 <h4 className="set-h">Шаблоны блоков</h4>
 <div className="set-row"><div><b>Мои шаблоны</b><p>{nTpl} шт. Скачай файл, чтобы передать блоки нейросети или перенести на другое устройство. Подходит и файл одного блока</p></div><div className="stack"><button className="btn" disabled={!nTpl} onClick={dlTpls}><Download size={16}/>Скачать</button><button className="btn" onClick={()=>tf.current?.click()}><Upload size={16}/>Загрузить</button></div><input ref={tf} type="file" accept=".json,application/json" multiple hidden onChange={e=>ulTpls(e.target.files)}/></div>
 <h4 className="set-h">Безопасность</h4>

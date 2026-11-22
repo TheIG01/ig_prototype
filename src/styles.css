@@ -642,3 +642,15 @@ html[data-lite=on] .cv{box-shadow:0 0 0 1px rgba(15,23,42,.14)}
 html[data-lite=on] .tools,html[data-lite=on] .toast,html[data-lite=on] .pal,html[data-lite=on] .vmenu,html[data-lite=on] .sheet,html[data-lite=on] .ins-p,html[data-lite=on] .bt,html[data-lite=on] .frame{outline:1px solid rgba(15,23,42,.14);outline-offset:-1px}
 html[data-lite=on] .top,html[data-lite=on] .panel .ph,html[data-lite=on] .tools{background:#fff}
 html[data-lite=on] .modal{background:rgba(15,23,42,.42)}
+
+/* PDF-отчёт: окно с предпросмотром */
+.rp-sheet{max-width:1100px;width:96vw}
+.rp{display:grid;grid-template-columns:280px 1fr;gap:16px;height:min(68vh,760px)}
+.rp-o{display:flex;flex-direction:column;gap:var(--sp-2,8px);overflow:auto;padding-right:4px}
+.rp-l{font-size:12px;font-weight:600;color:var(--tx2,#64748B);margin-top:4px}
+.rp-sh{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto;border:1px solid rgba(15,23,42,.1);border-radius:var(--r-md,10px);padding:8px}
+.rp-c{display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer}
+.rp-v{background:#E8EAEE;border-radius:var(--r-md,10px);overflow:hidden;min-width:0}
+.rp-v iframe{width:100%;height:100%;border:0;display:block;background:#E8EAEE}
+.rp-f{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+@media(max-width:760px){.rp{grid-template-columns:1fr;height:auto}.rp-v{height:52vh}.rp-o{max-height:none}}

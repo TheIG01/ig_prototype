@@ -1,16 +1,18 @@
 import {useSyncExternalStore} from 'react';import {TY0,cleanTy} from './typo';import type {Ty} from './typo';
 /** настройки вида и холста: localStorage (igp.ui), применяются к <html>; читаются через useUi/getUi */
+/** агентство для обложки отчёта: название, реквизиты, логотип (data URL, уменьшен до 320 px) */
+export type Ag={n:string;r:string;l:string};
 export type Ui={accent:string;density:'cozy'|'compact';size:'m'|'l'|'xl';motion:'on'|'off';labels:1|1.25|1.5;grid:boolean;
 rulers:boolean;guides:boolean;smart:boolean;snap:boolean;gs:4|8|16;hover:boolean;dims:boolean;nudge:number;
-cols:boolean;colsN:number;gut:number;mar:number;ty:Ty;perf:'auto'|'on'|'off'};
-export const UI0:Ui={accent:'#2F6BFF',density:'cozy',size:'m',motion:'on',labels:1,grid:true,rulers:true,guides:true,smart:true,snap:true,gs:8,hover:true,dims:true,nudge:8,cols:false,colsN:0,gut:-1,mar:-1,ty:TY0,perf:'auto'};
+cols:boolean;colsN:number;gut:number;mar:number;ty:Ty;perf:'auto'|'on'|'off';ag:Ag};
+export const UI0:Ui={accent:'#2F6BFF',density:'cozy',size:'m',motion:'on',labels:1,grid:true,rulers:true,guides:true,smart:true,snap:true,gs:8,hover:true,dims:true,nudge:8,cols:false,colsN:0,gut:-1,mar:-1,ty:TY0,perf:'auto',ag:{n:'',r:'',l:''}};
 export const ACCENTS:[string,string][]=[['#2F6BFF','Синий'],['#5B4BFF','Индиго'],['#0E9F9A','Бирюзовый'],['#16A34A','Зелёный'],['#F97316','Оранжевый'],['#E11D48','Малиновый']];
 const K='igp.ui';
 const num=(v:unknown,d:number,a:number,b:number)=>typeof v==='number'&&isFinite(v)?Math.max(a,Math.min(b,Math.round(v))):d;
 const bool=(v:unknown,d:boolean)=>typeof v==='boolean'?v:d;
 const clean=(o:Partial<Ui>):Ui=>({accent:/^#[0-9a-f]{6}$/i.test(o.accent??'')?o.accent!:UI0.accent,density:o.density==='compact'?'compact':'cozy',size:o.size==='l'||o.size==='xl'?o.size:'m',motion:o.motion==='off'?'off':'on',labels:o.labels===1.25||o.labels===1.5?o.labels:1,
 grid:bool(o.grid,true),rulers:bool(o.rulers,true),guides:bool(o.guides,true),smart:bool(o.smart,true),snap:bool(o.snap,true),gs:o.gs===4||o.gs===16?o.gs:8,hover:bool(o.hover,true),dims:bool(o.dims,true),nudge:num(o.nudge,8,1,100),
-cols:bool(o.cols,false),colsN:num(o.colsN,0,0,24),gut:num(o.gut,-1,-1,200),mar:num(o.mar,-1,-1,400),ty:cleanTy(o.ty),perf:o.perf==='on'||o.perf==='off'?o.perf:'auto'});
+cols:bool(o.cols,false),colsN:num(o.colsN,0,0,24),gut:num(o.gut,-1,-1,200),mar:num(o.mar,-1,-1,400),ty:cleanTy(o.ty),perf:o.perf==='on'||o.perf==='off'?o.perf:'auto',ag:{n:String(o.ag?.n??'').slice(0,80),r:String(o.ag?.r??'').slice(0,600),l:typeof o.ag?.l==='string'&&/^data:image\/(png|jpeg|webp|svg\+xml);/.test(o.ag.l)&&o.ag.l.length<250000?o.ag.l:''}});
 const read=():Ui=>{try{return clean(JSON.parse(localStorage.getItem(K)||'{}'))}catch{return UI0}};
 let cur:Ui=read();const subs=new Set<()=>void>();
 export const getUi=()=>cur;

@@ -6,14 +6,15 @@ import {DEVS_SHORT} from '../../lib/dev';
 import {DelDialog,requestDelBlock} from '../blocks/DelBlock';
 import type {Kind,Dev,Project,Sheet,Block} from '../../store';
 import {exportBackup,importBackup} from '../../lib/vault';
+const ReportDialog=lazy(()=>import('./ReportDialog').then(m=>({default:m.ReportDialog})));
 const SettingsBody=lazy(()=>import('./Settings').then(m=>({default:m.SettingsBody})));
 import {briefMd,specJson,download} from '../../lib/export';
 import {toast,dismiss,useToast} from '../../lib/toast';
 import {BlockPicker,ContentPanel,Thumb} from '../blocks/blocks';
 import {Canvas,RightPanel} from '../canvas/Canvas';
 import {Preview} from '../preview/Preview';
-import {buildHtml,printHtml} from '../../lib/share';
-type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share';
+import {buildHtml} from '../../lib/share';
+type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share'|'pdf';
 const FORMS:Modal[]=['proj','sheet','block','type','ren','tpl'];
 const TITLE:Record<string,string>={proj:'Новый проект',sheet:'Новый лист',block:'Новый блок',type:'Сохранить как тип сайта',ren:'Переименовать',tpl:'Сохранить блок как шаблон'};
 const DEVS:Dev[]=['desktop','tablet','mobile'];
@@ -40,7 +41,7 @@ const addAndEdit=(title:string,tpl?:string)=>{s.addBlock(title,{after,tpl,dev:tp
 const slug=(n:string)=>n.trim().replace(/[^\p{L}\p{N}]+/gu,'_')||'prototype';
 const openPreview=()=>{if(pr)setPv(buildHtml(pr,'proto',{dev:fr}))};
 const saveHtml=()=>{if(!pr)return;download(slug(pr.name)+'.html',buildHtml(pr,'proto',{dev:fr}),'text/html');toast('HTML-файл скачан. Открой его в браузере или залей на любой хостинг')};
-const savePdf=(notes:boolean)=>{if(!pr)return;toast('Откроется печать: выбери «Сохранить как PDF»');printHtml(buildHtml(pr,'report',{dev:fr,notes}))};
+
 const cancelEdit=()=>{s.exitEdit(false);toast('Изменения блока отменены')};
 useEffect(()=>{if(s.editId&&view!=='canvas')setView('canvas')},[s.editId]);
 const startRen=(k:'proj'|'sheet',id:string,cur:string)=>{setRen({k,id});setName(cur);setModal('ren')};
@@ -59,7 +60,7 @@ const submit=(e:React.FormEvent)=>{e.preventDefault();const n=name.trim();if(!n)
 if(modal==='proj')s.addProject(n,typeId);if(modal==='sheet')s.addSheet(n,kind);if(modal==='block')addAndEdit(n);if(modal==='type')s.saveType(n);if(modal==='tpl'&&s.blockId){s.saveBlockTpl(s.blockId,n,group.trim(),whole);toast(whole?`Набор этапов «${n}» в библиотеке блоков`:`Шаблон «${n}» в библиотеке блоков`)}
 if(modal==='ren'&&ren){if(ren.k==='proj')s.renameProject(ren.id,n);else s.renameSheet(ren.id,n)}close()};
 type Cmd={l:string;k?:string;run:()=>void};
-const cmds:Cmd[]=[{l:'Новый проект',run:()=>openForm('proj')},{l:'Импорт структуры из текста (майнд-карта)',run:()=>openForm('imp')},...(pr?[{l:'Просмотр для заказчика',k:'P',run:openPreview},{l:'Экспорт: интерактив, PDF, для ИИ',run:()=>setModal('share')},{l:'Скачать интерактив (HTML)',run:saveHtml},{l:'PDF для заказчика (без заметок)',run:()=>savePdf(false)},{l:'PDF с заметками',run:()=>savePdf(true)}]:[]),
+const cmds:Cmd[]=[{l:'Новый проект',run:()=>openForm('proj')},{l:'Импорт структуры из текста (майнд-карта)',run:()=>openForm('imp')},...(pr?[{l:'Просмотр для заказчика',k:'P',run:openPreview},{l:'Экспорт: интерактив, PDF, для ИИ',run:()=>setModal('share')},{l:'Скачать интерактив (HTML)',run:saveHtml},{l:'PDF-отчёт (предпросмотр и печать)',run:()=>setModal('pdf')}]:[]),
 ...(pr?[{l:'Новый лист',run:()=>openForm('sheet')},{l:'Добавить блок',k:'A',run:()=>openAdd(s.blockId??undefined)},...(s.blockId?[{l:'Сохранить блок как шаблон',run:()=>{setWhole(false);openForm('tpl')}}]:[]),{l:'Переименовать проект',run:()=>startRen('proj',pr.id,pr.name)},{l:'Для ИИ: скачать brief.md и project.json',run:()=>aiPack(pr)},{l:'Сохранить структуру как тип сайта',run:()=>openForm('type')}]:[]),
 ...(sh?[{l:'Переименовать лист',run:()=>startRen('sheet',sh.id,sh.name)}]:[]),
 {l:'Вид: холст',run:()=>setView('canvas')},{l:'Вид: структура',run:()=>setView('struct')},
@@ -129,10 +130,10 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 {modal==='cmd'&&<div className="modal top" onMouseDown={e=>e.target===e.currentTarget&&close()}><div className="pal"><div className="pal-in"><Search size={16}/><input autoFocus placeholder="Команда, проект или лист" value={q} onChange={e=>{setQ(e.target.value);setCi(0)}} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();setCi(Math.min(cur+1,list.length-1))}else if(e.key==='ArrowUp'){e.preventDefault();setCi(Math.max(cur-1,0))}else if(e.key==='Enter'){e.preventDefault();exec(list[cur])}}}/></div>
 <div className="pal-list">{list.map((c,i)=><button key={c.l} className={i===cur?'on':''} onMouseEnter={()=>setCi(i)} onClick={()=>exec(c)}><span>{c.l}</span>{c.k&&<kbd>{c.k}</kbd>}</button>)}{!list.length&&<p className="hint">Ничего не найдено</p>}</div></div></div>}
 {modal==='add'&&<Ask title="Новый блок" onClose={close}><div className="addm"><button type="button" className="am dash" onClick={()=>{addAndEdit('Блок');close()}}><span className="amic"><Plus size={20}/></span><b>Создать с нуля</b><small>Пустой блок. Откроется редактор: рисуй элементы сам</small></button><button type="button" className="am" onClick={()=>setModal('block')}><span className="amic"><LayoutTemplate size={20}/></span><b>Из библиотеки</b><small>Готовые макеты и твои шаблоны по группам</small></button></div></Ask>}
+{modal==='pdf'&&pr&&<Suspense fallback={null}><ReportDialog pr={pr} dev={fr} onClose={close}/></Suspense>}
 {modal==='share'&&pr&&<Ask title="Экспорт" wide onClose={close}><p className="txt">Размер для файла и PDF: {FW[fr]} px (переключается сверху)</p><div className="addm">
 <button type="button" className="am" onClick={()=>{saveHtml();close()}}><span className="amic"><Eye size={20}/></span><b>Интерактив (HTML)</b><small>Один файл: кликабельные переходы, попапы, переключение размеров. Открывается без интернета, ссылкой делится как любой файл на хостинге. Заметок внутри нет</small></button>
-<button type="button" className="am" onClick={()=>{savePdf(false);close()}}><span className="amic"><Share2 size={20}/></span><b>PDF для заказчика</b><small>Все листы и блоки по порядку, без внутренних заметок</small></button>
-<button type="button" className="am" onClick={()=>{savePdf(true);close()}}><span className="amic"><Pencil size={20}/></span><b>PDF с заметками</b><small>Для команды: под каждым блоком его тексты и пожелания</small></button>
+<button type="button" className="am" onClick={()=>setModal('pdf')}><span className="amic"><Share2 size={20}/></span><b>PDF-отчёт</b><small>Обложка с логотипом, оглавление, каждый блок со снимком, текстами и таблицей характеристик. A4 или Letter, предпросмотр, выбор листов, заметки по желанию</small></button>
 <button type="button" className="am" onClick={()=>{aiPack(pr);close()}}><span className="amic"><Sparkles size={20}/></span><b>Всё для нейросети</b><small>brief.md, spec.json и project.json тремя файлами</small></button>
 <button type="button" className="am" onClick={()=>{saveMd(pr);close()}}><span className="amic"><Pencil size={20}/></span><b>ТЗ (Markdown)</b><small>Читаемое задание: блоки по порядку, тексты, статус «обязательно/опционально», адаптив</small></button>
 <button type="button" className="am" onClick={()=>{saveSpec(pr);close()}}><span className="amic"><Sparkles size={20}/></span><b>Спецификация (JSON)</b><small>Для ИИ-агентов: страницы, блоки, тексты, токены стиля, размеры по устройствам, переходы</small></button></div></Ask>}
