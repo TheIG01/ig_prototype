@@ -123,7 +123,7 @@ kbd{font:600 11px/1 Inter;background:var(--bg);border:1px solid var(--line);bord
 .th{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;color:var(--mute)}
 .th-in{position:absolute;left:0;top:0;transform-origin:0 0}.th .el{cursor:default;pointer-events:none}
 .pick{max-height:62vh;overflow:auto;margin:0 -6px;padding:0 6px}.pick h4{margin:14px 0 8px;font:600 12px Inter;color:var(--mute)}
-.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:12px}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--pw,212px),1fr));gap:12px}
 .pcw{position:relative}.pc{display:flex;flex-direction:column;gap:8px;align-items:center;padding:10px;border-radius:14px;border:1px solid var(--line);background:#fff;width:100%;transition:all var(--t) var(--ease);font-weight:600}
 .pc:hover{border-color:var(--acc);background:var(--acc-s)}.pc.empty .th{border-style:dashed}
 .pcx{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);color:var(--mute)}.pcx:hover{color:#DC2626;border-color:#DC2626}
@@ -609,3 +609,6 @@ select.inp{text-overflow:ellipsis}
 @media(max-width:860px){.panel{padding-bottom:calc(12px + env(safe-area-inset-bottom));overscroll-behavior:contain}.side{padding-bottom:env(safe-area-inset-bottom)}.top{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}}
 
 .chk{display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:8px;cursor:pointer}.chk input{width:18px;height:18px;accent-color:var(--acc,#2563eb)}
+
+.libset{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:12px}.libset span{font:600 12px Inter;color:var(--mute);margin:0 4px 0 8px}.libset span:first-child{margin-left:0}
+.libset button{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;font:500 13px Inter;transition:all .15s}.libset button:hover{border-color:var(--acc)}.libset button.on{background:var(--acc-s);border-color:var(--acc);color:var(--acc);font-weight:600}

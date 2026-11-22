@@ -22,6 +22,7 @@ export type Node=
 |{k:'acc'|'li';t:string;r?:string}
 |{k:'cols';n:number;per?:number;item?:Node[];items?:Node[][]}
 |{k:'split';a:Node[];b:Node[]}
+|{k:'side';a:Node[];b:Node[]}
 |{k:'card';item:Node[]}
 |{k:'narrow';w:number;item:Node[]};
 export interface Built{h:Record<Dev,number>;els:Record<Dev,El[]>;quiz?:QuizCfg}
@@ -46,12 +47,15 @@ case 'inp':{out.push(mk('input',x,y,w,52,n.t));y+=52;break}
 case 'img':case 'rect':{const ih=n.k==='img'?Math.round(n.h*(dev==='mobile'?.55:dev==='tablet'?.8:1)/8)*8:n.h;out.push(mk(n.k,x,y,w,ih,n.t??''));y+=ih;break}
 case 'gap':{y+=n.h-gap;break}
 case 'acc':{out.push(mk('rect',x,y,w,56));out.push(mk('text',x+16,y+16,w-72,24,n.t,{fs:16}));out.push(mk('text',x+w-40,y+14,24,28,'+',{fs:20,b:true}));y+=56;break}
-case 'li':{out.push(mk('rect',x,y,w,64));out.push(mk('text',x+16,y+20,w*.6,24,n.t,{fs:16}));if(n.r)out.push(mk('text',x+w-176,y+20,160,24,n.r,{fs:16,b:true,al:'r'}));y+=64;break}
+case 'li':{out.push(mk('rect',x,y,w,64));out.push(mk('text',x+16,y+20,n.r?Math.min(w*.6,w-192):w*.6,24,n.t,{fs:16}));if(n.r)out.push(mk('text',x+w-176,y+20,160,24,n.r,{fs:16,b:true,al:'r'}));y+=64;break}
 case 'card':{const p=dev==='mobile'?16:24;const r=mk('rect',x,y,w,0);out.push(r);const e=place(n.item,x+p,y+p,w-2*p,dev,out,12);r.h=r8(e-y+p);y+=r.h;break}
 case 'narrow':{const nw=Math.min(n.w,w);y=place(n.item,x+(w-nw)/2,y,nw,dev,out,gap);break}
 case 'cols':{const per=n.per??n.n;const nc=dev==='mobile'?1:dev==='tablet'?Math.min(per,2):per;const g=dev==='mobile'?16:24;const cw=(w-(nc-1)*g)/nc;let top=y;
 for(let i=0;i<n.n;i+=nc){let end=top;for(let c=0;c<nc&&i+c<n.n;c++){const it=n.items?n.items[i+c]:sub(n.item??[],i+c);end=Math.max(end,place(it,x+c*(cw+g),top,cw,dev,out,gap))}top=end+g}
 y=top-g;break}
+case 'side':{if(dev!=='desktop'){const e=place(n.a,x,y,w,dev,out,gap);y=place(n.b,x,e+gap,w,dev,out,gap);break}
+const g=64;const aw=Math.round((w-g)*.36);const bw=w-g-aw;const A:El[]=[],B:El[]=[];const ea=place(n.a,0,0,aw,dev,A,gap),eb=place(n.b,0,0,bw,dev,B,gap);
+shift(A,x,y);shift(B,x+aw+g,y);out.push(...A,...B);y+=Math.max(ea,eb);break}
 case 'split':{if(dev!=='desktop'){const e=place(n.a,x,y,w,dev,out,gap);y=place(n.b,x,e+gap,w,dev,out,gap);break}
 const g=64;const hw=(w-g)/2;const A:El[]=[],B:El[]=[];const ea=place(n.a,0,0,hw,dev,A,gap),eb=place(n.b,0,0,hw,dev,B,gap);const hh=Math.max(ea,eb);
 shift(A,x,y+(hh-ea)/2);shift(B,x+hw+g,y+(hh-eb)/2);out.push(...A,...B);y+=hh;break}
@@ -79,9 +83,9 @@ export const TPLS:Tpl[]=[
 ...FIRST,
 {name:'Баннер',cat:'Первый экран',spec:[card(H2('Акция: выгода в цифрах','c'),{k:'p',t:'Условия и срок действия',al:'c'},{k:'btn',t:'Получить предложение',al:'c'})]},
 {name:'Кнопка старта',cat:'Первый экран',spec:[{k:'h1',t:'Заголовок квиза с ключевым словом',al:'c'},{k:'p',t:'Ответьте на 5 простых вопросов и получите расчёт',al:'c'},{k:'btn',t:'Начать',al:'c'}]},
-{name:'Преимущества',cat:'Доверие',spec:[H2('Выгоды для вас','c'),cols(4,4,card({k:'img',h:56,t:'Иконка'},{k:'h3',t:'Выгода в цифрах'},{k:'p',t:'Получите … за счёт …'}))]},
-{name:'Кейсы',cat:'Доверие',spec:[H2('Кейсы','c'),cols(3,3,card({k:'img',h:200,t:'Фото'},{k:'h3',t:'Название кейса'},{k:'p',t:'Задача → результат в цифрах'}))]},
-{name:'Команда',cat:'Доверие',spec:[H2('Команда','c'),cols(4,4,card({k:'img',h:200,t:'Фото'},{k:'h3',t:'Имя Фамилия'},{k:'sm',t:'Должность'}))]},
+{name:'Преимущества',cat:'Доверие',spec:[H2('Выгоды для вас'),cols(4,4,card({k:'img',h:56,t:'Иконка'},{k:'h3',t:'Выгода в цифрах'},{k:'p',t:'Получите … за счёт …'}))]},
+{name:'Кейсы',cat:'Доверие',spec:[H2('Кейсы'),cols(3,3,card({k:'img',h:200,t:'Фото'},{k:'h3',t:'Название кейса'},{k:'p',t:'Задача → результат в цифрах'}))]},
+{name:'Команда',cat:'Доверие',spec:[H2('Команда'),cols(4,4,card({k:'img',h:200,t:'Фото'},{k:'h3',t:'Имя Фамилия'},{k:'sm',t:'Должность'}))]},
 {name:'О компании',cat:'Доверие',spec:[{k:'split',a:[H2('О компании'),{k:'p',t:'Чем занимаемся, сколько лет на рынке, главные цифры'},{k:'p',t:'Почему нам доверяют: гарантии, сертификаты, опыт'}],b:[{k:'img',h:360,t:'Фото'}]}]},
 {name:'История',cat:'Доверие',spec:[{k:'split',a:[H2('История'),{k:'p',t:'Как начинали и чего достигли'}],b:[{k:'img',h:320,t:'Фото'}]}]},
 ...REVIEWS,
@@ -91,9 +95,13 @@ export const TPLS:Tpl[]=[
 ...TEAM,
 ...MGR,
 ...QUIZ,
-{name:'Услуги',cat:'Продажа',spec:[H2('Услуги','c'),cols(3,3,card({k:'img',h:160,t:'Фото'},{k:'h3',t:'Услуга {i}'},{k:'p',t:'Результат для клиента'},{k:'btn',t:'Подробнее'}))]},
+{name:'Преимущества: заголовок слева',cat:'Доверие',spec:[{k:'side',a:[H2('Выгоды в цифрах'),{k:'p',t:'Получите результат за счёт конкретных свойств'},{k:'btn',t:'Получить расчёт'}],b:[cols(2,2,card({k:'img',h:56,t:'Иконка'},{k:'h3',t:'Выгода в цифрах'},{k:'p',t:'Получите … за счёт …'}))]}]},
+{name:'Услуги: заголовок слева',cat:'Продажа',spec:[{k:'side',a:[H2('Услуги и цены'),{k:'p',t:'Выбери услугу и получи расчёт за 1 минуту'},{k:'btn',t:'Получить расчёт'}],b:[{k:'li',t:'Услуга 1',r:'от 10 000 ₽'},{k:'li',t:'Услуга 2',r:'от 10 000 ₽'},{k:'li',t:'Услуга 3',r:'от 10 000 ₽'},{k:'li',t:'Услуга 4',r:'от 10 000 ₽'}]}]},
+{name:'Этапы: заголовок слева',cat:'Прочее',spec:[{k:'side',a:[H2('Как работаем'),{k:'p',t:'4 шага от заявки до результата'},{k:'btn',t:'Начать проект'}],b:[{k:'cols',n:4,per:1,item:[card({k:'h3',t:'Этап {i}'},{k:'p',t:'Что делаем и что получает клиент'})]}]}]},
+{name:'FAQ: заголовок слева',cat:'Конверсия',spec:[{k:'side',a:[H2('Вопросы и ответы'),{k:'p',t:'Ответы на главные сомнения перед заявкой'},{k:'btn',t:'Задать вопрос'}],b:[{k:'acc',t:'Вопрос 1'},{k:'acc',t:'Вопрос 2'},{k:'acc',t:'Вопрос 3'},{k:'acc',t:'Вопрос 4'}]}]},
+{name:'Услуги',cat:'Продажа',spec:[H2('Услуги'),cols(3,3,card({k:'img',h:160,t:'Фото'},{k:'h3',t:'Услуга {i}'},{k:'p',t:'Результат для клиента'},{k:'btn',t:'Подробнее'}))]},
 {name:'Список услуг',cat:'Продажа',spec:[H2('Услуги и цены'),{k:'li',t:'Услуга 1',r:'от 10 000 ₽'},{k:'li',t:'Услуга 2',r:'от 10 000 ₽'},{k:'li',t:'Услуга 3',r:'от 10 000 ₽'},{k:'li',t:'Услуга 4',r:'от 10 000 ₽'}]},
-{name:'Тарифы',cat:'Продажа',spec:[H2('Тарифы','c'),cols(3,3,card({k:'h3',t:'Тариф {i}'},{k:'h2',t:'Цена ₽'},{k:'p',t:'• Что входит\n• Что входит\n• Что входит'},{k:'btn',t:'Выбрать',full:true}))]},
+{name:'Тарифы',cat:'Продажа',spec:[H2('Тарифы'),cols(3,3,card({k:'h3',t:'Тариф {i}'},{k:'h2',t:'Цена ₽'},{k:'p',t:'• Что входит\n• Что входит\n• Что входит'},{k:'btn',t:'Выбрать',full:true}))]},
 {name:'Хиты',cat:'Продажа',spec:[H2('Хиты продаж'),cols(4,4,card({k:'img',h:180,t:'Фото'},{k:'p',t:'Название товара'},{k:'h3',t:'Цена ₽'},{k:'btn',t:'В корзину',full:true}))]},
 {name:'Категории',cat:'Продажа',spec:[H2('Категории'),cols(4,4,card({k:'img',h:140,t:'Фото'},{k:'h3',t:'Категория'}))]},
 {name:'Сетка товаров',cat:'Продажа',spec:[cols(8,4,card({k:'img',h:180,t:'Фото'},{k:'p',t:'Название товара'},{k:'h3',t:'Цена ₽'},{k:'btn',t:'В корзину',full:true}))]},
@@ -110,8 +118,8 @@ export const TPLS:Tpl[]=[
 {name:'Варианты',cat:'Квиз',spec:[cols(4,4,card({k:'img',h:120,t:'Картинка'},{k:'p',t:'Вариант {i}',al:'c'})),{k:'sm',t:'Не забудь вариант «Не знаю / нужна консультация»',al:'c'}]},
 {name:'Далее',cat:'Квиз',spec:[{k:'btn',t:'Далее',al:'c'},{k:'sm',t:'Назад',al:'c'}]},
 {name:'Бонус',cat:'Квиз',spec:[{k:'split',a:[H2('Подарок закреплён за вашим номером'),{k:'p',t:'Куда отправить расчёт?'}],b:[{k:'img',h:300,t:'Подарок'}]}]},
-{name:'Проблемы',cat:'Прочее',spec:[H2('Знакомые проблемы?','c'),cols(3,3,card({k:'h3',t:'Проблема клиента'},{k:'p',t:'Как она мешает жить и зарабатывать'}))]},
-{name:'Как работаем',cat:'Прочее',spec:[H2('Как работаем','c'),cols(4,4,card({k:'h2',t:'{i}'},{k:'h3',t:'Этап {i}'},{k:'p',t:'Что делаем и что получает клиент'}))]},
+{name:'Проблемы',cat:'Прочее',spec:[H2('Знакомые проблемы?'),cols(3,3,card({k:'h3',t:'Проблема клиента'},{k:'p',t:'Как она мешает жить и зарабатывать'}))]},
+{name:'Как работаем',cat:'Прочее',spec:[H2('Как работаем'),cols(4,4,card({k:'h2',t:'{i}'},{k:'h3',t:'Этап {i}'},{k:'p',t:'Что делаем и что получает клиент'}))]},
 {name:'Карта',cat:'Прочее',spec:[{k:'img',h:400,t:'Карта'}]},
 {name:'Фильтры',cat:'Прочее',spec:[cols(4,4,{k:'inp',t:'Фильтр {i}'})]},
 {name:'Список',cat:'Прочее',spec:[{k:'li',t:'Товар 1',r:'0 ₽'},{k:'li',t:'Товар 2',r:'0 ₽'},{k:'li',t:'Товар 3',r:'0 ₽'}]},
@@ -127,7 +135,7 @@ export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...STEP
 'Бонус':['Перед телефоном спроси, куда отправить результат','Напомни про подарок: он закреплён за этим номером'],
 'Подтверждение':['Прогревающая страница: что будет дальше, преимущества, отзывы'],
 'FAQ':['Раскрывающиеся блоки вместо слайдеров'],
-'Тарифы':['Чем больше блок влияет на конверсию, тем крупнее элемент']};
+'Преимущества: заголовок слева':['Заголовок и призыв слева, выгоды справа: глаз идёт слева направо','Заголовок и текст ближе друг к другу, чем к карточкам'],'FAQ: заголовок слева':['Заголовок слева, раскрывающиеся ответы справа'],'Тарифы':['Чем больше блок влияет на конверсию, тем крупнее элемент']};
 export function buildTpl(t:Tpl):Built{const h={} as Record<Dev,number>,els={} as Record<Dev,El[]>;
 for(const d of ['desktop','tablet','mobile'] as Dev[]){const r=typeof t.spec==='function'?t.spec(d):render(t.spec,d);h[d]=r.h;els[d]=r.els}return{h,els,quiz:t.quiz?.()}}
 export const buildByName=(name:string):Built|null=>{if(name==='Оффер')name='1 экран';if(name==='Отзывы')name='Отзывы: результат';const t=TPLS.find(x=>x.name===name);return t?buildTpl(t):null};
