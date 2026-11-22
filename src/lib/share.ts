@@ -1,6 +1,6 @@
 // One renderer for everything the client sees: in-app preview (iframe), downloadable HTML, PDF report (print).
 import type {Project} from '../store';
-import type {Dev} from './dev';import {artHtml,resolve,styleCss} from './art';import type {El} from '../store';import {quizFrame} from './quiz';
+import type {Dev} from './dev';import {artHtml,resolve,styleCss} from './art';import type {El} from '../store';import {quizFrame} from './quiz';import {typo} from './typo';import {getUi} from './ui';
 /** quizFrame вставляется в страницу как QF (см. buildHtml) */
 declare const QF:(c:unknown,s:unknown,d:string)=>{h:number;els:{id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;c?:string;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;role?:string;qa?:string}[];kinds:string[]};
 /** Runs inside the generated page, so it must not reference anything outside itself. */
@@ -125,7 +125,7 @@ section h2{font:700 18px Inter,sans-serif;margin:28px 0 12px;break-after:avoid}f
 body[data-mode=report] .fw{margin:0;box-shadow:none;border:1px solid #CBD5E1}.nt{white-space:pre-wrap;font-size:12px;color:#334155;margin:8px 0 0}
 @page{size:A4 landscape;margin:12mm}`;
 export function buildHtml(p:Project,mode:'proto'|'report',o:{dev?:Dev;notes?:boolean}={}){
-const ex=(a:El[])=>a.map(e=>({...resolve(e,p.style),a:artHtml(e),k:styleCss(e,p.style)}));
+const ty=getUi().ty;const ex=(a:El[])=>a.map(e0=>{const e=e0.text?{...e0,text:typo(e0.text,ty)}:e0;return{...resolve(e,p.style),a:artHtml(e),k:styleCss(e0,p.style)}});
 const data={name:p.name,sheets:p.sheets.map(s=>({id:s.id,name:s.name,kind:s.kind,blocks:s.blocks.map(b=>({id:b.id,dv:b.dv,sv:b.sv?{g:b.sv.g,i:b.sv.i,tab:b.sv.tab}:undefined,title:b.title,quiz:b.quiz,text:mode==='report'&&o.notes?b.text:'',h:b.h,els:b.quiz?{desktop:[],tablet:[],mobile:[]}:{desktop:ex(b.els.desktop),tablet:ex(b.els.tablet),mobile:ex(b.els.mobile)}}))}))};
 const json=JSON.stringify(data).replace(/</g,'\\u003c');
 const esc=p.name.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'} as Record<string,string>)[c]);

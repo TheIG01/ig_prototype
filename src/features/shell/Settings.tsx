@@ -1,7 +1,7 @@
 import {useState,useRef} from 'react';
 import {useStore} from '../../store';import {tplsFile,parseTpls,download} from '../../lib/export';import {toast} from '../../lib/toast';
 import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,useUi,saveUi} from '../../lib/ui';import type {Ui} from '../../lib/ui';
-import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';
+import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';import {typo,TY_RULES,TY_DEMO,TY0} from '../../lib/typo';import type {TyKey} from '../../lib/typo';
 export function SettingsBody({onBackup}:{onBackup:()=>void}){
 const s=useStore();const tf=useRef<HTMLInputElement>(null);const nTpl=s.data?.blockTpls.length??0;
 const dlTpls=()=>{download('ig_templates.json',tplsFile(s.data?.blockTpls??[]),'application/json');toast('Шаблоны скачаны')};
@@ -11,6 +11,8 @@ const tg=(k:'grid'|'rulers'|'guides'|'smart'|'snap'|'hover'|'dims'|'cols',t:stri
 const nm=(k:'nudge'|'gut'|'mar',v:number|'',ph:string)=><input type="number" className="inp nm" min={0} placeholder={ph} value={v} onChange={e=>up({[k]:e.target.value===''?-1:+e.target.value} as unknown as Partial<Ui>)}/>;const [rem,setRem]=useState(!!localStorage.getItem('igp.rem'));const [word,setWord]=useState('');const [del,setDel]=useState(false);
 const toggle=async(v:boolean)=>{setRem(v);if(v){await rememberDevice();localStorage.setItem('igp.rem','1')}else{await forgetDevice();localStorage.removeItem('igp.rem')}};
 const out=async()=>{await forgetDevice();localStorage.removeItem('igp.rem');lock();location.reload()};
+const [demo,setDemo]=useState(TY_DEMO);const upTy=(k:TyKey|'on',v:boolean)=>up({ty:{...u.ty,[k]:v}});
+const tyOut=typo(demo,u.ty).split('\u00A0').flatMap((x,i)=>i?[<span key={i} className="nb">{'\u00A0'}</span>,x]:[x]);
 const kill=async()=>{await wipe();location.reload()};
 return<div>
 <h4 className="set-h">Вид</h4>
@@ -34,6 +36,10 @@ return<div>
 <div className="set-row"><div><b>Число колонок</b><p>Авто: 12 на Desktop, 8 на Tablet, 4 на Mobile</p></div><div className="seg">{([[0,'Авто'],[4,'4'],[6,'6'],[8,'8'],[12,'12']] as const).map(([k,l])=><button key={k} className={u.colsN===k?'on':''} onClick={()=>up({colsN:k})}>{l}</button>)}</div></div>
 <div className="set-row"><div><b>Промежуток между колонками</b><p>px, пусто: авто</p></div>{nm('gut',u.gut<0?'':u.gut,'авто')}</div>
 <div className="set-row"><div><b>Поля по краям</b><p>px, пусто: авто</p></div>{nm('mar',u.mar<0?'':u.mar,'авто')}</div>
+<h4 className="set-h">Типограф</h4>
+<div className="set-row"><div><b>Типограф RU / EN</b><p>Кавычки, неразрывные пробелы, тире. Работает в просмотре, HTML и PDF, текст в проекте не меняется. Теги, ссылки, email и телефоны не трогает</p></div><input type="checkbox" className="sw" checked={u.ty.on} onChange={e=>upTy('on',e.target.checked)}/></div>
+{u.ty.on&&<details className="fold2" open><summary>Правила по отдельности</summary><div>{TY_RULES.map(r=><div className="set-row" key={r.k}><div><b>{r.l}</b><p>{r.d}</p></div><input type="checkbox" className="sw" checked={u.ty[r.k]} onChange={e=>upTy(r.k,e.target.checked)}/></div>)}<button className="btn" style={{marginTop:10}} onClick={()=>up({ty:TY0})}>Включить все правила</button></div></details>}
+<div className="set-row" style={{flexDirection:'column'}}><div><b>Живой предпросмотр</b><p>Напиши свой текст слева. Неразрывные пробелы подсвечены</p></div><textarea className="inp" rows={4} value={demo} onChange={e=>setDemo(e.target.value)}/><div className="ty-out">{u.ty.on?tyOut:demo}</div></div>
 <h4 className="set-h">Шаблоны блоков</h4>
 <div className="set-row"><div><b>Мои шаблоны</b><p>{nTpl} шт. Скачай файл, чтобы передать блоки нейросети или перенести на другое устройство. Подходит и файл одного блока</p></div><div className="stack"><button className="btn" disabled={!nTpl} onClick={dlTpls}><Download size={16}/>Скачать</button><button className="btn" onClick={()=>tf.current?.click()}><Upload size={16}/>Загрузить</button></div><input ref={tf} type="file" accept=".json,application/json" multiple hidden onChange={e=>ulTpls(e.target.files)}/></div>
 <h4 className="set-h">Безопасность</h4>
