@@ -35,7 +35,7 @@ const close=()=>{setModal('');setName('');setRen(null);setQ('');setCi(0);setPend
 const openForm=(m:Modal)=>{setName('');setModal(m)};
 const openAdd=(a?:string)=>{setAfter(a);setName('');setModal('add')};
 const eb=sh?.blocks.find(b=>b.id===s.editId);const ed=!!eb;
-const addAndEdit=(title:string,tpl?:string)=>{s.addBlock(title,{after,tpl,dev:tpl?undefined:fr});const g=useStore.getState();const b=g.data?.projects.find(p=>p.id===g.projectId)?.sheets.find(x=>x.id===g.sheetId)?.blocks.find(x=>x.id===g.blockId);if(b&&!b.els.desktop.length&&!b.els.tablet.length&&!b.els.mobile.length)g.enterEdit(b.id)};
+const addAndEdit=(title:string,tpl?:string)=>{s.addBlock(title,{after,tpl,dev:tpl?undefined:fr});const g=useStore.getState();const b=g.data?.projects.find(p=>p.id===g.projectId)?.sheets.find(x=>x.id===g.sheetId)?.blocks.find(x=>x.id===g.blockId);if(b&&!b.els.desktop.length&&!b.els.tablet.length&&!b.els.mobile.length)g.enterEdit(b.id);if(tpl&&b&&(b.els.desktop.length||b.els.tablet.length||b.els.mobile.length))toast('Блок добавлен из библиотеки',{label:'Отразить слева направо',run:()=>{useStore.getState().flipBlock(b.id,'x');toast('Блок отражён по горизонтали',{label:'Отменить',run:()=>useStore.getState().undo()},5000)}},7000)};
 const slug=(n:string)=>n.trim().replace(/[^\p{L}\p{N}]+/gu,'_')||'prototype';
 const openPreview=()=>{if(pr)setPv(buildHtml(pr,'proto',{dev:fr}))};
 const saveHtml=()=>{if(!pr)return;download(slug(pr.name)+'.html',buildHtml(pr,'proto',{dev:fr}),'text/html');toast('HTML-файл скачан. Открой его в браузере или залей на любой хостинг')};
