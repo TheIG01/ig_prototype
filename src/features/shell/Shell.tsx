@@ -25,17 +25,17 @@ const HELP:[string,[string,string][]][]=[
 function Ask({title,children,onClose,wide,xl}:{title:string;children:React.ReactNode;onClose:()=>void;wide?:boolean;xl?:boolean}){return<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><div className={'sheet'+(wide?' wide':'')+(xl?' wide xl':'')}><h2>{title}</h2>{children}</div></div>}
 
 export function Shell(){
-const s=useStore();const d=s.data!;const pr=d.projects.find(p=>p.id===s.projectId);const sh=pr?.sheets.find(x=>x.id===s.sheetId);const tt=useToast(x=>x.t);
+const s=useStore();const d=s.data!;const pr=d.projects.find(p=>p.id===s.projectId);const sh=pr?.sheets.find(x=>x.id===s.sheetId);const tt=useToast(x=>x.t);const curBlk=sh?.blocks.find(x=>x.id===s.blockId);
 const [fr,setFr]=useState<Dev>('desktop');const [view,setView]=useState<'struct'|'canvas'>('canvas');const [open,setOpen]=useState(false);const [hide,setHide]=useState(false);
 const [modal,setModal]=useState<Modal>('');const [name,setName]=useState('');const [typeId,setTypeId]=useState('landing');const [kind,setKind]=useState<Kind>('page');
-const [ren,setRen]=useState<{k:'proj'|'sheet';id:string}|null>(null);const [q,setQ]=useState('');const [ci,setCi]=useState(0);const [pend,setPend]=useState<File|null>(null);const [outline,setOutline]=useState('');const [after,setAfter]=useState<string|undefined>(undefined);const [pv,setPv]=useState('');const [group,setGroup]=useState('');
+const [ren,setRen]=useState<{k:'proj'|'sheet';id:string}|null>(null);const [q,setQ]=useState('');const [ci,setCi]=useState(0);const [pend,setPend]=useState<File|null>(null);const [outline,setOutline]=useState('');const [after,setAfter]=useState<string|undefined>(undefined);const [pv,setPv]=useState('');const [group,setGroup]=useState('');const [whole,setWhole]=useState(false);
 const file=useRef<HTMLInputElement>(null);
 const types=[...PRESETS,...d.siteTypes];
 const close=()=>{setModal('');setName('');setRen(null);setQ('');setCi(0);setPend(null);setOutline('');setGroup('')};
 const openForm=(m:Modal)=>{setName('');setModal(m)};
 const openAdd=(a?:string)=>{setAfter(a);setName('');setModal('add')};
 const eb=sh?.blocks.find(b=>b.id===s.editId);const ed=!!eb;
-const addAndEdit=(title:string,tpl?:string)=>{s.addBlock(title,{after,tpl,dev:tpl?undefined:fr});const g=useStore.getState();const b=g.data?.projects.find(p=>p.id===g.projectId)?.sheets.find(x=>x.id===g.sheetId)?.blocks.find(x=>x.id===g.blockId);if(b&&!b.els.desktop.length&&!b.els.tablet.length&&!b.els.mobile.length)g.enterEdit(b.id);if(tpl&&b&&(b.els.desktop.length||b.els.tablet.length||b.els.mobile.length))toast('Блок добавлен из библиотеки',{label:'Отразить слева направо',run:()=>{useStore.getState().flipBlock(b.id,'x');toast('Блок отражён по горизонтали',{label:'Отменить',run:()=>useStore.getState().undo()},5000)}},7000)};
+const addAndEdit=(title:string,tpl?:string)=>{s.addBlock(title,{after,tpl,dev:tpl?undefined:fr});const g=useStore.getState();const b=g.data?.projects.find(p=>p.id===g.projectId)?.sheets.find(x=>x.id===g.sheetId)?.blocks.find(x=>x.id===g.blockId);if(b&&!b.els.desktop.length&&!b.els.tablet.length&&!b.els.mobile.length)g.enterEdit(b.id);if(tpl&&b&&g.data!.blockTpls.find(x=>x.id===tpl)?.set)toast('Набор этапов добавлен из библиотеки',undefined,5000);else if(tpl&&b&&(b.els.desktop.length||b.els.tablet.length||b.els.mobile.length))toast('Блок добавлен из библиотеки',{label:'Отразить слева направо',run:()=>{useStore.getState().flipBlock(b.id,'x');toast('Блок отражён по горизонтали',{label:'Отменить',run:()=>useStore.getState().undo()},5000)}},7000)};
 const slug=(n:string)=>n.trim().replace(/[^\p{L}\p{N}]+/gu,'_')||'prototype';
 const openPreview=()=>{if(pr)setPv(buildHtml(pr,'proto',{dev:fr}))};
 const saveHtml=()=>{if(!pr)return;download(slug(pr.name)+'.html',buildHtml(pr,'proto',{dev:fr}),'text/html');toast('HTML-файл скачан. Открой его в браузере или залей на любой хостинг')};
@@ -52,11 +52,11 @@ const aiPack=(p:Project)=>{download('brief.md',briefMd(p,types.find(t=>t.id===p.
 const backup=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([exportBackup()],{type:'application/json'}));a.download='ig_prototype_backup.json';a.click()};
 const restore=async()=>{const f=pend;close();if(!f)return;try{importBackup(await f.text());toast('Копия загружена. Введи ПИН из этой копии');setTimeout(()=>location.reload(),1500)}catch{toast('Это не файл копии IG prototype')}};
 const submit=(e:React.FormEvent)=>{e.preventDefault();const n=name.trim();if(!n)return;
-if(modal==='proj')s.addProject(n,typeId);if(modal==='sheet')s.addSheet(n,kind);if(modal==='block')addAndEdit(n);if(modal==='type')s.saveType(n);if(modal==='tpl'&&s.blockId){s.saveBlockTpl(s.blockId,n,group.trim());toast(`Шаблон «${n}» в библиотеке блоков`)}
+if(modal==='proj')s.addProject(n,typeId);if(modal==='sheet')s.addSheet(n,kind);if(modal==='block')addAndEdit(n);if(modal==='type')s.saveType(n);if(modal==='tpl'&&s.blockId){s.saveBlockTpl(s.blockId,n,group.trim(),whole);toast(whole?`Набор этапов «${n}» в библиотеке блоков`:`Шаблон «${n}» в библиотеке блоков`)}
 if(modal==='ren'&&ren){if(ren.k==='proj')s.renameProject(ren.id,n);else s.renameSheet(ren.id,n)}close()};
 type Cmd={l:string;k?:string;run:()=>void};
 const cmds:Cmd[]=[{l:'Новый проект',run:()=>openForm('proj')},{l:'Импорт структуры из текста (майнд-карта)',run:()=>openForm('imp')},...(pr?[{l:'Просмотр для заказчика',k:'P',run:openPreview},{l:'Экспорт: интерактив, PDF, для ИИ',run:()=>setModal('share')},{l:'Скачать интерактив (HTML)',run:saveHtml},{l:'PDF для заказчика (без заметок)',run:()=>savePdf(false)},{l:'PDF с заметками',run:()=>savePdf(true)}]:[]),
-...(pr?[{l:'Новый лист',run:()=>openForm('sheet')},{l:'Добавить блок',k:'A',run:()=>openAdd(s.blockId??undefined)},...(s.blockId?[{l:'Сохранить блок как шаблон',run:()=>openForm('tpl')}]:[]),{l:'Переименовать проект',run:()=>startRen('proj',pr.id,pr.name)},{l:'Для ИИ: скачать brief.md и project.json',run:()=>aiPack(pr)},{l:'Сохранить структуру как тип сайта',run:()=>openForm('type')}]:[]),
+...(pr?[{l:'Новый лист',run:()=>openForm('sheet')},{l:'Добавить блок',k:'A',run:()=>openAdd(s.blockId??undefined)},...(s.blockId?[{l:'Сохранить блок как шаблон',run:()=>{setWhole(false);openForm('tpl')}}]:[]),{l:'Переименовать проект',run:()=>startRen('proj',pr.id,pr.name)},{l:'Для ИИ: скачать brief.md и project.json',run:()=>aiPack(pr)},{l:'Сохранить структуру как тип сайта',run:()=>openForm('type')}]:[]),
 ...(sh?[{l:'Переименовать лист',run:()=>startRen('sheet',sh.id,sh.name)}]:[]),
 {l:'Вид: холст',run:()=>setView('canvas')},{l:'Вид: структура',run:()=>setView('struct')},
 {l:'Размер: Desktop 1440',k:'Alt+1',run:()=>setFr('desktop')},{l:'Размер: Tablet 768',k:'Alt+2',run:()=>setFr('tablet')},{l:'Размер: Mobile 390',k:'Alt+3',run:()=>setFr('mobile')},
@@ -138,7 +138,7 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 {form&&<Ask title={TITLE[modal]} xl={modal==='block'} onClose={close}><form onSubmit={submit}>
 <input className="inp" autoFocus placeholder={modal==='block'?'Поиск или название нового блока':'Название'} value={name} onChange={e=>setName(e.target.value)}/>
 {modal==='block'&&<BlockPicker q={name} tpls={d.blockTpls} onPick={n=>{addAndEdit(n);close()}} onTpl={id=>{addAndEdit('',id);close()}} onDelTpl={id=>{s.delBlockTpl(id);toast('Шаблон удалён')}}/>}
-{modal==='tpl'&&<><input className="inp" list="grp" placeholder="Группа шаблона, например: Мои первые экраны" value={group} onChange={e=>setGroup(e.target.value)}/><datalist id="grp">{[...new Set(d.blockTpls.map(t=>t.cat).filter(Boolean))].map(c=><option key={c} value={c}/>)}</datalist></>}
+{modal==='tpl'&&<>{curBlk?.sv?.tab&&<label className="chk"><input type="checkbox" checked={whole} onChange={e=>setWhole(e.target.checked)}/> Сохранить весь набор этапов ({curBlk.sv.n})</label>}<input className="inp" list="grp" placeholder="Группа шаблона, например: Мои первые экраны" value={group} onChange={e=>setGroup(e.target.value)}/><datalist id="grp">{[...new Set(d.blockTpls.map(t=>t.cat).filter(Boolean))].map(c=><option key={c} value={c}/>)}</datalist></>}
 {modal==='proj'&&<div className="types">{types.map(t=><button type="button" key={t.id} className={typeId===t.id?'on':''} onClick={()=>setTypeId(t.id)}>{t.name}</button>)}</div>}
 {modal==='sheet'&&<div className="seg" style={{marginBottom:14}}>{(['page','popup'] as Kind[]).map(k=><button type="button" key={k} className={kind===k?'on':''} onClick={()=>setKind(k)}>{k==='page'?'Страница':'Попап'}</button>)}</div>}
 <button className="btn pri" style={{width:'100%',justifyContent:'center'}}>{modal==='ren'||modal==='type'||modal==='tpl'?'Сохранить':modal==='block'?'Создать пустой блок':'Создать'}</button></form></Ask>}

@@ -607,3 +607,5 @@ select.inp{text-overflow:ellipsis}
 /* v1.30: телефон. Крупные зоны нажатия, безопасные отступы, плавная шторка настроек */
 @media(hover:none) and (pointer:coarse){.tools button,.top button,.panel button,.side button{min-height:40px}.panel input,.panel select{min-height:40px;font-size:16px}}
 @media(max-width:860px){.panel{padding-bottom:calc(12px + env(safe-area-inset-bottom));overscroll-behavior:contain}.side{padding-bottom:env(safe-area-inset-bottom)}.top{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}}
+
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:8px;cursor:pointer}.chk input{width:18px;height:18px;accent-color:var(--acc,#2563eb)}
