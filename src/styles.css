@@ -603,3 +603,7 @@ select.inp{text-overflow:ellipsis}
 .qchk{display:flex;gap:10px;padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.4}.qchk b{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:13px}
 .qchk.ok{background:#F0FDF4}.qchk.ok b{background:#16A34A}.qchk.bad{background:#FFF7ED}.qchk.bad b{background:#EA580C}
 @media(max-width:860px){.qzb{grid-template-columns:1fr;overflow:auto}.qzf{border-right:0;overflow:visible}.qzp{overflow:visible}}
+
+/* v1.30: телефон. Крупные зоны нажатия, безопасные отступы, плавная шторка настроек */
+@media(hover:none) and (pointer:coarse){.tools button,.top button,.panel button,.side button{min-height:40px}.panel input,.panel select{min-height:40px;font-size:16px}}
+@media(max-width:860px){.panel{padding-bottom:calc(12px + env(safe-area-inset-bottom));overscroll-behavior:contain}.side{padding-bottom:env(safe-area-inset-bottom)}.top{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}}

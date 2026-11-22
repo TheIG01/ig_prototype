@@ -51,7 +51,7 @@ for(const p of pins){const t=r.top+p.y0*k,b=r.top+p.y1*k;if(t<mid&&b>mid){hit=p;
 if(!hit){pn.className='pin';return}
 const bt=r.top+(hit.y0+hit.e.y)*k,bb=bt+hit.e.h*k;const seen=bt>=0&&bb<=vb-8;
 const key=hit.e.text+'|'+(hit.e.go||'')+'|'+(hit.e.tg||'');if(pn.getAttribute('data-k')!==key){pn.setAttribute('data-k',key);pn.innerHTML='<button class="pb"'+(hit.e.go&&ids[hit.e.go]?' data-go="'+hit.e.go+'"':'')+(hit.e.tg?' data-tg="'+esc(hit.e.tg)+'"':'')+'>'+esc(hit.e.text)+'</button>'}
-pn.className='pin'+(seen?'':' on')};
+pn.className='pin'+(seen&&hit!==pins[0]?'':' on')};
 const render=()=>{if(mode==='report')report();else{proto();fade=false;pinUpd()}};
 let raf=0;const tick=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;if(mode!=='report')pinUpd()})};
 let tt=0;const toast=(m:string)=>{let n=document.getElementById('tt');if(!n){n=document.createElement('div');n.id='tt';document.body.appendChild(n)}n.textContent=m;n.className='on';clearTimeout(tt);tt=window.setTimeout(()=>{n!.className=''},1800)};
