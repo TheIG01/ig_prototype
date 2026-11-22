@@ -1,4 +1,4 @@
-import {AlignStartVertical,AlignCenterVertical,AlignEndVertical,AlignStartHorizontal,AlignCenterHorizontal,AlignEndHorizontal,AlignHorizontalSpaceBetween,AlignVerticalSpaceBetween,Group,Ungroup,Copy,Trash2,X} from 'lucide-react';
+import {AlignStartVertical,AlignCenterVertical,AlignEndVertical,AlignStartHorizontal,AlignCenterHorizontal,AlignEndHorizontal,AlignHorizontalSpaceBetween,AlignVerticalSpaceBetween,Group,Ungroup,Copy,Trash2,X,ArrowLeftRight,ArrowUpDown} from 'lucide-react';
 import {useStore} from '../../store';
 import type {Dev} from '../../store';
 import {uid} from '../../lib/uid';
@@ -13,6 +13,9 @@ const els=(sh?.blocks??[]).flatMap(b=>b.els[dev]).filter(e=>ids.includes(e.id));
 return<aside className="panel"><div className="ph"><b>Выбрано {ids.length}</b><span>Несколько элементов</span><button className="btn ic" onClick={()=>s.setMulti([])} aria-label="Снять выделение"><X size={14}/></button></div>
 <div className="sec"><h4>Выравнивание</h4><div className="algrid">{AL.map(([m,t,I])=><button key={m} className="btn ic" title={t} onClick={()=>s.alignEls(dev,ids,m)}><I size={16}/></button>)}</div>
 <div className="btnrow"><button className="btn" disabled={ids.length<3} title="Равные промежутки по горизонтали (Ctrl+Alt+Shift+H)" onClick={()=>s.alignEls(dev,ids,'dh')}><AlignHorizontalSpaceBetween size={16}/>По горизонтали</button><button className="btn" disabled={ids.length<3} title="Равные промежутки по вертикали (Ctrl+Alt+Shift+V)" onClick={()=>s.alignEls(dev,ids,'dv')}><AlignVerticalSpaceBetween size={16}/>По вертикали</button></div></div>
+<div className="sec"><h4>Размер и отступ</h4><div className="btnrow"><button className="btn" title="Все выбранные получают ширину самого широкого" onClick={()=>s.alignEls(dev,ids,'ew')}><ArrowLeftRight size={16}/>Равная ширина</button><button className="btn" title="Все выбранные получают высоту самого высокого" onClick={()=>s.alignEls(dev,ids,'eh')}><ArrowUpDown size={16}/>Равная высота</button></div>
+<div className="btnrow">{[4,8,12,16,24,32,48,64].map(n=><button key={n} className="btn" title={'Одинаковый отступ '+n+' px между выбранными'} onClick={()=>s.gapEls(dev,ids,n)}>{n}</button>)}</div>
+<p className="hint">Цифры это отступ между элементами по шкале 4, 8, 12, 16, 24, 32, 48, 64</p></div>
 <div className="sec"><h4>Группа</h4><div className="btnrow"><button className="btn" title="Сгруппировать (Ctrl+G)" onClick={()=>s.groupEls(dev,ids,true)}><Group size={16}/>Сгруппировать</button><button className="btn" disabled={!grouped} title="Разгруппировать (Ctrl+Shift+G)" onClick={()=>s.groupEls(dev,ids,false)}><Ungroup size={16}/>Разгруппировать</button></div>
 <p className="hint">Группа двигается и выделяется целиком. Ctrl+клик выбирает элемент внутри группы</p></div>
 <LayPanel dev={dev} ids={ids}/>

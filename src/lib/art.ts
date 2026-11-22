@@ -73,6 +73,9 @@ const e=resolve(e0,st);const o:Record<string,string>={};const t=e.t;
 if(ART.has(t)&&t!=='list'){o['background']='none';o['border']='0';o['padding']='0';o['overflow']='visible';o['display']=t==='shape'?'flex':'block';if(t==='shape'){o['position']='absolute';if(!e.al){o['justify-content']='center';o['text-align']='center'}}}
 if(t==='list'){o['align-items']='flex-start';o['overflow']='visible'}
 if(e.op!==undefined&&e.op<1)o['opacity']=String(e.op);
+if(e.lh!==undefined)o['line-height']=String(e.lh);
+if(e.ls)o['letter-spacing']=e.ls+'px';
+if(e.va&&(t==='text'||t==='rect'||t==='list'||t==='shape')){o['align-items']=e.va==='t'?'flex-start':e.va==='b'?'flex-end':'center'}
 if(e.c&&t!=='icon')o['color']=e.c;
 if(t==='btn'||t==='rect'||t==='input'||t==='img'){if(e.fill)o['background']=e.fill==='none'?'transparent':e.fill;if(e.stroke)o['border-color']=e.stroke==='none'?'transparent':e.stroke;if(e.sw!==undefined){o['border-width']=e.sw+'px';o['border-style']=e.sw?'solid':'none'}if(e.r!==undefined)o['border-radius']=e.r+'px'}
 if(st&&(t==='text'||t==='btn'||t==='input'||t==='rect'||t==='list'||t==='shape')){const f=e.role==='h1'||e.role==='h2'||e.role==='h3'?st.head:st.body;if(f!=='Inter')o['font-family']=stack(f)}

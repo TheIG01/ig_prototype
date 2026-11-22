@@ -15,7 +15,7 @@ const AL=v?['Слева','Центр','Справа']:['Сверху','Цент�
 return<div className="sec lay"><h4><span>Авто-лейаут</span><button className="btn ic" title="Убрать авто-лейаут (Shift+A)" onClick={()=>s.delLay(dev,gid)}><X size={14}/></button></h4>
 <div className="seg">{([['v','Колонка',ArrowDown],['h','Строка',ArrowRight]] as const).map(([k,l,I])=><button key={k} className={c.d===k?'on':''} onClick={()=>set({d:k})}><I size={14}/>{l}</button>)}</div>
 <label className="num wide"><span>Отступ</span><input type="number" min={0} max={200} step={4} value={c.gap} onChange={e=>set({gap:Math.max(0,Math.min(200,+e.target.value||0))})}/></label>
-<div className="btnrow">{[8,16,24,32,48].map(n=><button key={n} className={'btn'+(c.gap===n?' on':'')} onClick={()=>set({gap:n})}>{n}</button>)}</div>
+<div className="btnrow">{[4,8,12,16,24,32,48,64].map(n=><button key={n} className={'btn'+(c.gap===n?' on':'')} onClick={()=>set({gap:n})}>{n}</button>)}</div>
 <div className="seg">{(['s','c','e'] as const).map((k,i)=><button key={k} className={c.al===k?'on':''} onClick={()=>set({al:k})}>{AL[i]}</button>)}</div>
 <label className="lchk"><input type="checkbox" checked={!!c.mx} onChange={e=>set({mx:e.target.checked})}/>Центр по ширине блока</label>
 <label className="lchk"><input type="checkbox" checked={!!c.fl} onChange={e=>set({fl:e.target.checked})}/>{v?'Одинаковая ширина':'Одинаковая высота'}</label>

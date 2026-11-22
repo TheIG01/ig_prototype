@@ -6,7 +6,7 @@ import {FW,DEVS,onDev} from './lib/dev';import {defStyle} from './lib/art';impor
 export {FW,DEVS,onDev};export type {Dev};
 export type Kind='page'|'popup';
 export type ET='text'|'rect'|'btn'|'input'|'img'|'line'|'shape'|'icon'|'mock'|'list';
-export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h';qa?:string;tg?:string;sk?:string}
+export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h';mh?:number;lh?:number;ls?:number;va?:'t'|'m'|'b';qa?:string;tg?:string;sk?:string}
 /** авто-лейаут группы: d направление, gap отступ, al выравнивание поперёк, x y начало, mx центр по ширине блока, fl одинаковый поперечный размер */
 export interface Lay{d:'h'|'v';gap:number;al:'s'|'c'|'e';x:number;y:number;mx?:boolean;fl?:boolean}
 /** этапы: v вариант, g группа, i номер вкладки, n число этапов, tab вкладки переключаются в просмотре, x доп. блок этапа */
@@ -42,7 +42,7 @@ addBlock:(title:string,o?:{after?:string;tpl?:string;dev?:Dev})=>void;delBlock:(
 setQuiz:(id:string,f:(c:QuizCfg)=>void)=>void;unlinkQuiz:(id:string)=>void;editBlock:(id:string,patch:Partial<Pick<Block,'title'|'text'>>)=>void;setH:(dev:Dev,id:string,h:number)=>void;setGuides:(id:string,dev:Dev,g:{x:number[];y:number[]})=>void;saveBlockTpl:(id:string,name:string,cat?:string)=>void;delBlockTpl:(id:string)=>void;importTpls:(l:{name:string;cat?:string;quiz?:QuizCfg;text:string;h:Record<Dev,number>;els:Record<Dev,El[]>}[])=>void;
 addEl:(dev:Dev,t:ET,x:number,y:number,bid?:string,extra?:Partial<El>)=>void;setStyle:(patch:Partial<PStyle>)=>void;setRole:(r:Role,p:Partial<PStyle['roles'][Role]>)=>void;updEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dragEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dropEl:(dev:Dev,id:string,stay?:boolean)=>void;
 delEl:(dev:Dev,id:string)=>void;dupEl:(dev:Dev,id:string)=>void;moveEl:(dev:Dev,id:string,dir:number)=>void;copyEl:(dev:Dev,id:string)=>void;
-clipSet:(dev:Dev,id:string)=>void;clipPaste:(dev:Dev)=>void;setEl:(id:string|null)=>void;setMulti:(ids:string[])=>void;dragMany:(dev:Dev,ps:{id:string;x:number;y:number}[])=>void;delEls:(dev:Dev,ids:string[])=>void;dupEls:(dev:Dev,ids:string[],off:number,nid:string[],k?:string)=>void;alignEls:(dev:Dev,ids:string[],m:'l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv')=>void;groupEls:(dev:Dev,ids:string[],on:boolean)=>void;autoLay:(dev:Dev,ids:string[])=>void;setLay:(dev:Dev,gid:string,p:Partial<Lay>)=>void;delLay:(dev:Dev,gid:string)=>void;clipSetMany:(dev:Dev,ids:string[])=>void;clipPasteMany:(dev:Dev)=>void;setBlock:(id:string|null)=>void;
+clipSet:(dev:Dev,id:string)=>void;clipPaste:(dev:Dev)=>void;setEl:(id:string|null)=>void;setMulti:(ids:string[])=>void;dragMany:(dev:Dev,ps:{id:string;x:number;y:number}[])=>void;delEls:(dev:Dev,ids:string[])=>void;dupEls:(dev:Dev,ids:string[],off:number,nid:string[],k?:string)=>void;alignEls:(dev:Dev,ids:string[],m:'l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv'|'ew'|'eh')=>void;gapEls:(dev:Dev,ids:string[],gap:number)=>void;groupEls:(dev:Dev,ids:string[],on:boolean)=>void;autoLay:(dev:Dev,ids:string[])=>void;setLay:(dev:Dev,gid:string,p:Partial<Lay>)=>void;delLay:(dev:Dev,gid:string)=>void;clipSetMany:(dev:Dev,ids:string[])=>void;clipPasteMany:(dev:Dev)=>void;setBlock:(id:string|null)=>void;
 undo:()=>void;redo:()=>void;saveType:(name:string)=>void}
 const EL_DEF:Record<ET,[number,number,string]>={text:[240,40,'Заголовок'],rect:[320,200,''],btn:[180,48,'Кнопка'],input:[280,44,'Поле ввода'],img:[320,220,'Изображение'],line:[300,0,''],shape:[200,140,''],icon:[48,48,''],mock:[260,420,''],list:[320,120,'Первый пункт\nВторой пункт\nТретий пункт']};
 type Ctx={data:Data|null;projectId:string|null;sheetId:string|null};
@@ -56,7 +56,8 @@ const LDV:Dev[]=['desktop','tablet','mobile'];const lh=(e:El)=>e.t==='line'?0:e.
 const reflow=(b:Block,dev:Dev)=>{const L=b.lay?.[dev];if(!L)return;const W=FW[dev];
 for(const gid of Object.keys(L)){const c=L[gid];const m=b.els[dev].filter(e=>e.g===gid);if(m.length<2){delete L[gid];continue}
 const v=c.d==='v';const ord=[...m].sort((a,q)=>v?a.y+lh(a)/2-(q.y+lh(q)/2):a.x+a.w/2-(q.x+q.w/2));
-const cs=(e:El)=>v?e.w:lh(e);const cross=Math.max(...m.map(cs));
+if(c.fl&&!v)for(const e of m)if(e.t!=='line'&&e.hug!=='h'&&e.mh===undefined)e.mh=e.h;
+const cs=(e:El)=>v?e.w:lh(e);const nat=(e:El)=>v?e.w:e.t==='line'?0:e.hug==='h'?e.h:(e.mh??e.h);const cross=Math.max(...m.map(c.fl?nat:cs));
 if(c.fl)for(const e of m){if(v)e.w=cross;else if(e.t!=='line')e.h=cross}
 const main=ord.reduce((a,e)=>a+(v?lh(e):e.w),0)+c.gap*(ord.length-1);
 let ox=c.x,oy=c.y;if(c.mx){if(v)ox=Math.round((W-cross)/2);else ox=Math.round((W-main)/2)}
@@ -112,9 +113,9 @@ setStyle:(patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);i
 setRole:(r,patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);if(p)Object.assign(p.style.roles[r],patch)},'prole'+r),
 addEl:(dev,tp,x,y,bid,extra)=>mut(s=>{const sh=curSheet(s);if(!sh)return;if(!sh.blocks.some(q=>onDev(q,dev))){const nb=mkBlock('Блок');nb.dv=[dev];sh.blocks.push(nb)}let i:number,ry:number;if(bid){i=Math.max(0,sh.blocks.findIndex(q=>q.id===bid));ry=y}else{i=y<0?Math.max(0,sh.blocks.findIndex(q=>onDev(q,dev))):blockAt(sh.blocks,dev,y);ry=y-blockTops(sh.blocks,dev)[i]}const b=sh.blocks[i];const [w,h,text]=EL_DEF[tp];const e:El={id:uid(),t:tp,x:Math.max(0,x),y:Math.max(0,Math.round(ry)),w,h,text,...extra};b.els[dev].push(e);grow(b,dev);s.elId=e.id;s.blockId=b.id}),
 updEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(!f)return;const e=f.e;
-if(e.hug&&!('hug' in patch)){const cw=patch.w!==undefined&&patch.w!==e.w,chh=patch.h!==undefined&&patch.h!==e.h;if((e.hug==='w'&&(cw||chh))||(e.hug==='h'&&chh))delete e.hug}
-Object.assign(e,patch);if(e.hug===undefined)delete e.hug;if(patch.text!==undefined&&e.tg)syncTabText(sh.blocks,f.b,dev,e);grow(f.b,dev)},'u'+id),
-dragEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(f)Object.assign(f.e,patch)},'u'+id),
+if(e.hug&&!('hug' in patch)){const cw=patch.w!==undefined&&patch.w!==e.w,chh=patch.h!==undefined&&patch.h!==e.h;if((e.hug==='w'&&(cw||chh))||(e.hug==='h'&&chh)){delete e.hug;delete e.mh}}
+if(patch.h!==undefined&&patch.h!==e.h&&e.hug!=='h'&&e.mh!==undefined&&!('mh' in patch))delete e.mh;Object.assign(e,patch);if(e.hug===undefined)delete e.hug;if(patch.text!==undefined&&e.tg)syncTabText(sh.blocks,f.b,dev,e);grow(f.b,dev)},'u'+id),
+dragEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(f){const e=f.e;if(patch.h!==undefined&&patch.h!==e.h){if(e.hug==='h'&&e.t!=='text')patch={...patch,mh:patch.h};else if(e.mh!==undefined)delete e.mh}Object.assign(e,patch)}},'u'+id),
 dropEl:(dev,id,stay)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(!sh||!f)return;const tops=blockTops(sh.blocks,dev);const i0=sh.blocks.findIndex(b=>b.id===f.b.id);const absTop=tops[i0]+f.e.y;const j=stay?i0:blockAt(sh.blocks,dev,absTop+f.e.h/2);let tb=f.b;
 if(j>=0&&j!==i0){tb=sh.blocks[j];f.b.els[dev]=f.b.els[dev].filter(x=>x.id!==id);f.e.y=Math.round(absTop-tops[j]);tb.els[dev].push(f.e);s.blockId=tb.id}
 const el=tb.els[dev].find(x=>x.id===id);if(el){el.y=Math.max(0,el.y)}grow(tb,dev)},'u'+id),
@@ -131,7 +132,8 @@ delEls:(dev,ids)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const q=new Set(ids
 dupEls:(dev,ids,off,nid,k)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const out:string[]=[];const gm:Record<string,string>={};ids.forEach((id,i)=>{const f=findEl(sh,dev,id);if(!f)return;const c:El={...f.e,id:nid[i]??uid(),x:f.e.x+off,y:f.e.y+off};if(c.g)c.g=gm[c.g]??=uid();f.b.els[dev].push(c);grow(f.b,dev);out.push(c.id)});s.multi=out;s.elId=out[out.length-1]??null},k??''),
 alignEls:(dev,ids,m)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const fs=ids.map(i=>findEl(sh,dev,i)).filter(Boolean) as {b:Block;e:El}[];if(fs.length<2)return;const es=fs.map(f=>f.e);
 const L=Math.min(...es.map(e=>e.x)),R=Math.max(...es.map(e=>e.x+e.w)),T=Math.min(...es.map(e=>e.y)),B=Math.max(...es.map(e=>e.y+e.h));
-if(m==='dh'||m==='dv'){const h=m==='dh';const a=[...es].sort((p,q)=>h?p.x-q.x:p.y-q.y);const tot=a.reduce((n,e)=>n+(h?e.w:e.h),0);const gap=((h?R-L:B-T)-tot)/(a.length-1);let pos=h?L:T;for(const e of a){if(h)e.x=Math.round(pos);else e.y=Math.round(pos);pos+=(h?e.w:e.h)+gap}}
+if(m==='ew'||m==='eh'){const w=m==='ew';const mx=Math.max(...es.filter(e=>e.t!=='line'||w).map(e=>w?e.w:e.h));for(const e of es){if(w){e.w=mx;if(e.hug==='w')delete e.hug}else if(e.t!=='line'){e.h=mx;if(e.hug==='h')delete e.hug}}}
+else if(m==='dh'||m==='dv'){const h=m==='dh';const a=[...es].sort((p,q)=>h?p.x-q.x:p.y-q.y);const tot=a.reduce((n,e)=>n+(h?e.w:e.h),0);const gap=((h?R-L:B-T)-tot)/(a.length-1);let pos=h?L:T;for(const e of a){if(h)e.x=Math.round(pos);else e.y=Math.round(pos);pos+=(h?e.w:e.h)+gap}}
 else for(const e of es){if(m==='l')e.x=L;else if(m==='r')e.x=R-e.w;else if(m==='c')e.x=Math.round((L+R)/2-e.w/2);else if(m==='t')e.y=T;else if(m==='b')e.y=B-e.h;else e.y=Math.round((T+B)/2-e.h/2)}
 new Set(fs.map(f=>f.b)).forEach(b=>grow(b,dev))}),
 autoLay:(dev,ids)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const fs=ids.map(i=>findEl(sh,dev,i)).filter(Boolean) as {b:Block;e:El}[];if(fs.length<2)return;const b=fs[0].b;if(fs.some(f=>f.b!==b))return;
@@ -143,9 +145,10 @@ const gap=med>0?Math.min(64,Math.max(4,Math.round(med/4)*4)):16;
 const left=Math.max(...m.map(e=>e.x))-Math.min(...m.map(e=>e.x))<=4,mid=Math.max(...cx)-Math.min(...cx)<=4,rt=Math.max(...m.map(e=>e.x+e.w))-Math.min(...m.map(e=>e.x+e.w))<=4;
 const top=Math.max(...m.map(e=>e.y))-Math.min(...m.map(e=>e.y))<=4,vm=Math.max(...cy)-Math.min(...cy)<=4,bt=Math.max(...m.map(e=>e.y+lh(e)))-Math.min(...m.map(e=>e.y+lh(e)))<=4;
 const al:'s'|'c'|'e'=v?(left?'s':mid?'c':rt?'e':'s'):(top?'s':vm?'c':bt?'e':'s');
-const dl=((b.lay??={})[dev]??={});dl[gid]={d,gap,al,x:x0,y:y0};s.multi=ids}),
+const dl=((b.lay??={})[dev]??={});dl[gid]={d,gap,al,x:x0,y:y0,...(d==='h'&&m.every(e=>e.t==='btn'||e.t==='input')?{fl:true}:{})};s.multi=ids}),
 setLay:(dev,gid,p)=>mut(s=>{const sh=curSheet(s);if(!sh)return;for(const b of sh.blocks){const c=b.lay?.[dev]?.[gid];if(c)Object.assign(c,p)}},'lay'+gid),
 delLay:(dev,gid)=>mut(s=>{const sh=curSheet(s);if(!sh)return;for(const b of sh.blocks){const L=b.lay?.[dev];if(L)delete L[gid]}}),
+gapEls:(dev,ids,gap)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const fs=ids.map(i=>findEl(sh,dev,i)).filter(Boolean) as {b:Block;e:El}[];if(fs.length<2)return;const es=fs.map(f=>f.e);const L=Math.min(...es.map(e=>e.x)),R=Math.max(...es.map(e=>e.x+e.w)),T=Math.min(...es.map(e=>e.y)),B=Math.max(...es.map(e=>e.y+lh(e)));const h=R-L>B-T;const a=[...es].sort((p,q)=>h?p.x-q.x:p.y-q.y);let pos=h?L:T;for(const e of a){if(h)e.x=Math.round(pos);else e.y=Math.round(pos);pos+=(h?e.w:lh(e))+gap}new Set(fs.map(f=>f.b)).forEach(b=>grow(b,dev))}),
 groupEls:(dev,ids,on)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const g=on?uid():undefined;for(const id of ids){const f=findEl(sh,dev,id);if(!f)continue;if(g)f.e.g=g;else delete f.e.g}}),
 clipSetMany:(dev,ids)=>{const sh=curSheet(get());if(!sh)return;const es=ids.map(i=>findEl(sh,dev,i)?.e).filter(Boolean).map(e=>({...e!}));set({clipM:{es,dev,n:0},clip:null})},
 clipPasteMany:dev=>mut(s=>{const c=s.clipM;const sh=curSheet(s);if(!c||!sh||!sh.blocks.length)return;const b=sh.blocks.find(x=>x.id===s.editId)??sh.blocks.find(x=>x.id===s.blockId)??sh.blocks[sh.blocks.length-1];const k=FW[dev]/FW[c.dev];c.n+=1;const o=16*c.n;const gm:Record<string,string>={};const out:string[]=[];

@@ -32,8 +32,8 @@ const s=useStore();const set=(p:Partial<El>)=>s.updEl(dev,e.id,p);const [q,setQ]
 const icons=useMemo(()=>{const f=q.trim().toLowerCase();return ICON_LIST.filter(([id,ru,c])=>!f||id.includes(f)||ru.toLowerCase().includes(f)||c.toLowerCase().includes(f))},[q]);
 const num=(k:'x'|'y'|'w'|'h',l:string)=><label className="num"><span>{l}</span><input type="number" value={Math.round(e[k])} disabled={k==='h'&&t==='line'} onChange={ev=>set({[k]:+ev.target.value||0} as Partial<El>)}/></label>;
 const canHug=t==='text'||t==='btn'||t==='input';
-const HUGS:{k:'w'|'h'|undefined;l:string}[]=[{k:'w',l:'По ширине'},...(t==='text'?[{k:'h' as const,l:'По высоте'}]:[]),{k:undefined,l:'Фиксир.'}];
-const hugRow=canHug?<div className="seg hug" title="Двойной клик по ручке размера делает то же самое">{HUGS.map(o=><button key={o.l} className={e.hug===o.k?'on':''} onClick={()=>set({hug:o.k})}>{o.l}</button>)}</div>:null;
+const HUGS:{k:'w'|'h'|undefined;l:string}[]=[{k:'w',l:'По ширине'},...(canHug?[{k:'h' as const,l:'По высоте'}]:[]),{k:undefined,l:'Фиксир.'}];
+const hugRow=canHug?<div className="seg hug" title="По высоте: ширина остаётся, текст переносится, элемент растёт, соседи в ряду с авто-лейаутом подтягиваются до той же высоты">{HUGS.map(o=><button key={o.l} className={e.hug===o.k?'on':''} onClick={()=>set({hug:o.k,mh:o.k==='h'&&t!=='text'?e.h:undefined})}>{o.l}</button>)}</div>:null;
 const hasFill=t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock'||t==='img';
 const hasStroke=t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock';
 const hasR=t==='rect'||t==='btn'||t==='input'||t==='img'||(t==='shape'&&['rect','round','bubble'].includes(e.sh??'rect'));
@@ -45,7 +45,8 @@ const sizes=[...new Set([12,13,14,16,18,20,24,32,40,48,56,72,r.fs??16])].sort((a
 return<aside className="panel ep"><div className="ph"><b>{NM[t]}</b><span>Элемент</span><button className="btn ic" onClick={()=>s.setBlock(b.id)} aria-label="Снять выделение"><X size={14}/></button></div>
 <div className="sec"><button className="up" title="Выбрать весь блок (Esc)" onClick={()=>s.setBlock(b.id)}><LayoutTemplate size={14}/>Блок: {b.title}</button>
 <h4>Положение и размер</h4><div className="grid2">{num('x','X')}{num('y','Y')}{num('w','Ш')}{num('h','В')}</div>
-<div className="btnrow">{(['Влево','Центр','Вправо'] as const).map((l,i)=><button key={l} className="btn" title="Выровнять по фрейму" onClick={()=>set({x:Math.max(0,[0,Math.round((FW[dev]-e.w)/2),FW[dev]-e.w][i])})}>{l}</button>)}</div>{hugRow}</div>
+<div className="btnrow">{(['Влево','Центр','Вправо'] as const).map((l,i)=><button key={l} className="btn" title="Выровнять по фрейму" onClick={()=>set({x:Math.max(0,[0,Math.round((FW[dev]-e.w)/2),FW[dev]-e.w][i])})}>{l}</button>)}</div>{hugRow}
+<button className="btn" title="Привязать положение и размер к шкале 4 px: отступы 4, 8, 12, 16, 24, 32, 48, 64 складываются из неё" onClick={()=>{const q=(v:number)=>Math.round(v/4)*4;set({x:q(e.x),y:q(e.y),...(e.hug?{}:{w:Math.max(4,q(e.w)),...(t==='line'?{}:{h:Math.max(4,q(e.h))})})})}}>К шкале 4 px</button></div>
 
 <LayPanel dev={dev} ids={[e.id]} single/>
 {hasText&&<div className="sec"><h4>{t==='list'?'Пункты (каждый с новой строки)':'Текст'}</h4><textarea id="el-text" className="inp" placeholder="Проще: двойной клик по элементу на холсте" value={e.text} onChange={ev=>set({text:ev.target.value})} onKeyDown={ev=>{if(ev.key==='Escape')(ev.target as HTMLElement).blur()}}/>
@@ -53,7 +54,10 @@ return<aside className="panel ep"><div className="ph"><b>{NM[t]}</b><span>Эле
 <div className="btnrow fmt"><select className="inp" value={r.fs??16} onChange={ev=>set({fs:+ev.target.value})}>{sizes.map(n=><option key={n} value={n}>{n} px</option>)}</select>
 <button className={'btn ic'+(r.b?' on':'')} title="Жирный (Ctrl+B)" onClick={()=>set({b:!r.b})}><Bold size={15}/></button>
 {(['l','c','r'] as const).map(a=><button key={a} className={'btn ic'+((e.al??(t==='shape'?'c':'l'))===a?' on':'')} title="Выравнивание текста" onClick={()=>set({al:a})}>{a==='l'?<AlignLeft size={15}/>:a==='c'?<AlignCenter size={15}/>:<AlignRight size={15}/>}</button>)}</div>
-<Color label="Цвет текста" value={e.c} def="#0F172A" pal={pal} onChange={v=>set({c:v})}/></div>}
+<Color label="Цвет текста" value={e.c} def="#0F172A" pal={pal} onChange={v=>set({c:v})}/>
+<Range label="Интервал строк" value={e.lh??1.3} min={1} max={2} step={.05} onChange={v=>set({lh:v===1.3?undefined:v})}/>
+<Range label="Интервал букв" value={e.ls??0} min={-1} max={8} step={.5} unit=" px" onChange={v=>set({ls:v||undefined})}/>
+{(t==='text'||t==='rect'||t==='list'||t==='shape')&&<div className="seg" title="Положение текста по вертикали">{([['t','Сверху'],['m','Центр'],['b','Снизу']] as const).map(([k,l])=><button key={k} className={(e.va??'m')===k?'on':''} onClick={()=>set({va:k==='m'?undefined:k})}>{l}</button>)}</div>}</div>}
 {t==='shape'&&<Sec t="Фигура"><div className="ins-g c5 mini">{SHAPES.map(([k,l])=><button key={k} className={'cell'+((e.sh??'rect')===k?' on':'')} title={l} onClick={()=>set({sh:k})}><Prev e={{...e,sh:k,w:30,h:k==='arrow'||k==='tag'||k==='ribbon'||k==='pill'?18:26,fill:'#EAF0FF',stroke:'#2F6BFF',sw:1.5,text:''}}/></button>)}</div>
 {(e.sh==='poly'||e.sh==='star')&&<Range label={e.sh==='star'?'Лучей':'Углов'} value={e.n??(e.sh==='star'?5:6)} min={3} max={12} onChange={v=>set({n:v})}/>}</Sec>}
 {t==='icon'&&<Sec t="Иконка"><label className="search"><Search size={14}/><input placeholder="Найти иконку" value={q} onChange={ev=>setQ(ev.target.value)}/></label><div className="ins-g c7 sc mini">{icons.map(([id,ru])=><button key={id} className={'cell ic'+(e.ic===id?' on':'')} title={ru} onClick={()=>set({ic:id})}><Prev e={{...e,ic:id,w:22,h:22,c:'#0F172A'}}/></button>)}</div></Sec>}
