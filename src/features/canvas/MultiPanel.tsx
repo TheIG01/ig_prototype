@@ -1,4 +1,4 @@
-import {AlignStartVertical,AlignCenterVertical,AlignEndVertical,AlignStartHorizontal,AlignCenterHorizontal,AlignEndHorizontal,AlignHorizontalSpaceBetween,AlignVerticalSpaceBetween,Group,Ungroup,Copy,Trash2,X,ArrowLeftRight,ArrowUpDown} from 'lucide-react';
+import {AlignStartVertical,AlignCenterVertical,AlignEndVertical,AlignStartHorizontal,AlignCenterHorizontal,AlignEndHorizontal,AlignHorizontalSpaceBetween,AlignVerticalSpaceBetween,Group,Ungroup,Copy,Trash2,X,ArrowLeftRight,ArrowUpDown,FlipHorizontal,FlipVertical,Replace} from 'lucide-react';
 import {useStore} from '../../store';
 import type {Dev} from '../../store';
 import {uid} from '../../lib/uid';
@@ -9,7 +9,7 @@ const AL:[M,string,typeof AlignStartVertical][]=[['l','Влево (Alt+A)',Align
 /** right panel for several selected elements: align, distribute, group, copy, delete */
 export function MultiPanel({dev,ids}:{dev:Dev;ids:string[]}){
 const s=useStore();const sh=s.data?.projects.find(p=>p.id===s.projectId)?.sheets.find(x=>x.id===s.sheetId);
-const els=(sh?.blocks??[]).flatMap(b=>b.els[dev]).filter(e=>ids.includes(e.id));const grouped=els.some(e=>e.g);
+const els=(sh?.blocks??[]).flatMap(b=>b.els[dev]).filter(e=>ids.includes(e.id));const grouped=els.some(e=>e.g);const units=new Set(els.map(e=>e.g??e.id));const pair=units.size===2?[...units].map(u=>els.filter(e=>(e.g??e.id)===u).map(e=>e.id)):null;
 return<aside className="panel"><div className="ph"><b>Выбрано {ids.length}</b><span>Несколько элементов</span><button className="btn ic" onClick={()=>s.setMulti([])} aria-label="Снять выделение"><X size={14}/></button></div>
 <div className="sec"><h4>Выравнивание</h4><div className="algrid">{AL.map(([m,t,I])=><button key={m} className="btn ic" title={t} onClick={()=>s.alignEls(dev,ids,m)}><I size={16}/></button>)}</div>
 <div className="btnrow"><button className="btn" disabled={ids.length<3} title="Равные промежутки по горизонтали (Ctrl+Alt+Shift+H)" onClick={()=>s.alignEls(dev,ids,'dh')}><AlignHorizontalSpaceBetween size={16}/>По горизонтали</button><button className="btn" disabled={ids.length<3} title="Равные промежутки по вертикали (Ctrl+Alt+Shift+V)" onClick={()=>s.alignEls(dev,ids,'dv')}><AlignVerticalSpaceBetween size={16}/>По вертикали</button></div></div>
@@ -18,6 +18,9 @@ return<aside className="panel"><div className="ph"><b>Выбрано {ids.length
 <p className="hint">Цифры это отступ между элементами по шкале 4, 8, 12, 16, 24, 32, 48, 64</p></div>
 <div className="sec"><h4>Группа</h4><div className="btnrow"><button className="btn" title="Сгруппировать (Ctrl+G)" onClick={()=>s.groupEls(dev,ids,true)}><Group size={16}/>Сгруппировать</button><button className="btn" disabled={!grouped} title="Разгруппировать (Ctrl+Shift+G)" onClick={()=>s.groupEls(dev,ids,false)}><Ungroup size={16}/>Разгруппировать</button></div>
 <p className="hint">Группа двигается и выделяется целиком. Ctrl+клик выбирает элемент внутри группы</p></div>
+<div className="sec"><h4>Отражение и порядок</h4><div className="btnrow"><button className="btn" title="Отразить выбранное слева направо (Shift+H)" onClick={()=>s.flipEls(dev,ids,'x')}><FlipHorizontal size={16}/>Слева направо</button><button className="btn" title="Отразить выбранное сверху вниз (Shift+V)" onClick={()=>s.flipEls(dev,ids,'y')}><FlipVertical size={16}/>Сверху вниз</button></div>
+<div className="btnrow"><button className="btn" title="Перенести выбранное на противоположную сторону блока (Ctrl+Shift+←/→)" onClick={()=>s.flipEls(dev,ids,'x',true)}><ArrowLeftRight size={16}/>Другая сторона</button><button className="btn" disabled={!pair} title="Две группы или два элемента меняются местами" onClick={()=>pair&&s.swapEls(dev,pair[0],pair[1])}><Replace size={16}/>Поменять местами</button></div>
+<p className="hint">Группа отражается целиком, текст меняет выравнивание. «Поменять местами» работает для двух выбранных групп или элементов</p></div>
 <LayPanel dev={dev} ids={ids}/>
 <div className="sec"><div className="btnrow"><button className="btn" title="Дублировать (Ctrl+D)" onClick={()=>s.dupEls(dev,ids,16,ids.map(()=>uid()))}><Copy size={16}/>Дублировать</button><button className="btn danger" title="Удалить (Delete)" onClick={()=>s.delEls(dev,ids)}><Trash2 size={16}/>Удалить</button></div></div>
 <div className="sec"><h4>Слои выделения</h4>{[...els].reverse().map(x=><button key={x.id} className="row sm" onClick={()=>s.setMulti([x.id])}><span>{NM[x.t]}{x.text?` · ${x.text.slice(0,24)}`:''}{x.g?' · группа':''}</span></button>)}</div></aside>}

@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye,Download} from 'lucide-react';
+import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye,Download,FlipHorizontal,FlipVertical} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import {useStore,FW,blockTops,onDev,DEVS} from '../../store';
 import {requestDelBlock,DevIcon} from '../blocks/DelBlock';
@@ -107,7 +107,8 @@ if(e.shiftKey&&e.code==='Digit1'){e.preventDefault();fit();return}
 if(e.code==='KeyA'&&!e.shiftKey){e.preventDefault();if(!editing)onAdd(s.blockId??undefined);return}
 if(e.code==='KeyE'&&!e.shiftKey){e.preventDefault();if(editing)setIns(v=>!v);else if(curB){s.enterEdit(curB.id);setIns(true)}return}
 if(e.code==='KeyO'&&!e.shiftKey){e.preventDefault();if(editing)pick('shape',{sh:'circle',w:120,h:120});else if(curB){s.enterEdit(curB.id);pick('shape',{sh:'circle',w:120,h:120})}return}
-if(e.shiftKey&&e.code==='KeyH'&&editing&&selIds.length){e.preventDefault();const a=els.filter(x=>selSet.has(x.id));const x0=Math.min(...a.map(x=>x.x)),x1=Math.max(...a.map(x=>x.x+x.w));s.dragMany(dev,a.map(x=>({id:x.id,x:x0+x1-x.x-x.w,y:x.y})));return}
+if(e.shiftKey&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&(e.code==='KeyH'||e.code==='KeyV')&&editing&&selIds.length){e.preventDefault();s.flipEls(dev,selIds,e.code==='KeyH'?'x':'y');return}
+if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey&&editing&&selIds.length&&e.key.startsWith('Arrow')){e.preventDefault();s.flipEls(dev,selIds,e.key==='ArrowLeft'||e.key==='ArrowRight'?'x':'y',true);toast('Выбранное перенесено на другую сторону блока');return}
 const tk=e.shiftKey?undefined:KEYS[e.code];if(tk){if(editing)pick(tk);else if(curB){s.enterEdit(curB.id);pick(tk)}return}
 if(e.code==='Equal'||e.code==='NumpadAdd'){setZ(v=>clampZ(v+.1));return}
 if(e.code==='Minus'||e.code==='NumpadSubtract'){setZ(v=>clampZ(v-.1));return}
@@ -240,6 +241,7 @@ return<aside className="panel"><div className="ph"><b>Блок {idx+1}</b><span>
 {editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4>{[...els].reverse().map(x=><button key={x.id} className={'lyr'+(s.elId===x.id?' on':'')} title={NAME[x.t]+(x.text?' · '+x.text:'')} onClick={()=>s.setEl(x.id)}>{(()=>{const I=LI[x.t]??Shapes;return<I size={14}/>})()}<b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>)}</div>}
 {editing&&((b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0))>0&&<div className="sec"><h4>Направляющие · {(b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0)}</h4><button className="btn" onClick={()=>s.setGuides(b.id,dev,{x:[],y:[]})}><X size={14}/>Очистить направляющие</button></div>}
 {!editing&&<div className="sec"><h4>Положение</h4><div className="btnrow"><button className="btn" title="Блок выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1,dev)}><ArrowUp size={16}/>Выше</button><button className="btn" title="Блок ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1,dev)}><ArrowDown size={16}/>Ниже</button></div></div>}
+{!editing&&els.length>0&&<div className="sec"><h4>Отразить блок</h4><div className="btnrow"><button className="btn" title="Левая часть уезжает вправо, правая влево, на всех устройствах" onClick={()=>{s.flipBlock(b.id,'x');toast('Блок отражён по горизонтали',{label:'Отменить',run:()=>s.undo()},5000)}}><FlipHorizontal size={16}/>Слева направо</button><button className="btn" title="Верх и низ блока меняются местами, на всех устройствах" onClick={()=>{s.flipBlock(b.id,'y');toast('Блок отражён по вертикали',{label:'Отменить',run:()=>s.undo()},5000)}}><FlipVertical size={16}/>Сверху вниз</button></div><p className="hint">Тексты и сетка подстраиваются. Для части блока выдели элементы и нажми Shift+H или Shift+V</p></div>}
 <div className="sec"><button className="btn" onClick={onTpl}><LayoutTemplate size={16}/>Сохранить как шаблон</button>
 {!editing&&<div className="btnrow"><button className="btn" title="Дублировать (Ctrl+D)" onClick={()=>s.dupBlock(b.id)}><Copy size={16}/>Дублировать</button><button className="btn danger" title="Удалить (Delete)" onClick={del}><Trash2 size={16}/>Удалить</button></div>}</div></aside>}
 
