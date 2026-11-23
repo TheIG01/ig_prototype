@@ -142,7 +142,7 @@ const pr:Pr=[['Задача',r[3]],['Что сделали',r[4].split('|').map(
 let y=head(c,d,`Сдали 120 объектов для компаний из ${n} ${n<5?'отраслей':'отраслей'}`,'Выбери отрасль и посмотри объект, задачу и кто его принял',`Сдали 120 объектов для ${n} отраслей`,null);
 y=navH(c,d,y,T4,n,i,g);const p=m?16:24,iw=w-2*p,top=y;y+=p;
 if(d==='desktop'){const rx=X+p+592,rw=iw-592;let ry=tx(c,r[1],rx,y,rw,26,{b:true,sk:'pt'})+12;c.add('rect',rx,ry,rw,44,'',{r:8});ct(c,'Адрес объекта: '+r[2],rx+16,ry,rw-32,44,15);ry+=44+12;
-ry=pairs(c,rx,ry,rw,pr,15,16,12)+12;tx(c,'Объект принял',rx,ry,rw,15,{b:true,c:GR});ry+=22;ry=who(c,rx,ry,rw,56,r[5],r[6])+16;btn(c,rx,ry,rw,60,'Рассчитать смету для вашего объекта',17);ry+=60;
+ry=pairs(c,rx,ry,rw,pr,15,16,12)+12;tx(c,'Объект принял',rx,ry,rw,15,{b:true,c:GR});ry+=22;ry=who(c,rx,ry,rw,56,r[5],r[6])+16;btn(c,rx,ry,rw,60,'Рассчитать смету объекта',17);ry+=60;
 c.add('img',X+p,y,576,Math.max(340,ry-y),'Фото: '+r[1]);y=Math.max(ry,y+340)+p;bgc(c,X,top,w,y-top);return fin(c,d,y+16,'')}
 if(d==='tablet'){c.add('img',X+p,y,iw,150,'Фото: '+r[1]);y+=150+12;y=tx(c,r[1],X+p,y,iw,22,{b:true,sk:'pt'})+8;
 c.add('rect',X+p,y,iw,40,'',{r:8});ct(c,'Адрес объекта: '+r[2],X+p+16,y,iw-32,40,15);y+=40+10;y=pairs(c,X+p,y,iw,pr,15,16,8)+10;

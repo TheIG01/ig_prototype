@@ -1,5 +1,5 @@
 import {create} from 'zustand';import {immer} from 'zustand/middleware/immer';
-import {save} from './lib/vault';import {migrate,mkBlock,mkFromTpl} from './lib/migrate';import {uid} from './lib/uid';
+import {save,reread,isQuota} from './lib/vault';import {isOwner,bindTabs} from './lib/tabs';import {migrate,mkBlock,mkFromTpl} from './lib/migrate';import {uid} from './lib/uid';
 import {fresh} from './lib/tpl';import {stepsBlocks,resizeSteps,stageGroup,syncTabs,syncTabText,dupStage,delStage,bindTplStage} from './lib/tplSteps';import {teamBuild,teamN} from './lib/tplTeam';import {toast} from './lib/toast';import {sheetsFromOutline} from './lib/outline';
 import {applyQuiz,normalizeQuiz} from './lib/quiz';import type {QuizCfg} from './lib/quiz';
 import {FW,DEVS,onDev} from './lib/dev';import {defStyle} from './lib/art';import type {PStyle,Role} from './lib/art';import type {Dev} from './lib/dev';
@@ -40,7 +40,7 @@ else if(/(звонок|перезвон|заявк|расч[её]т|подроб
 if(to)e.go=to}};
 /** top (y) of every block for a device */
 export const blockTops=(bs:Block[],dev:Dev)=>{let y=0;return bs.map(b=>{const t=y;if(onDev(b,dev))y+=b.h[dev];return t})};
-interface S{data:Data|null;projectId:string|null;sheetId:string|null;blockId:string|null;elId:string|null;status:'saved'|'saving';clip:{e:El;dev:Dev;n:number}|null;clipM:{es:El[];dev:Dev;n:number}|null;multi:string[];editId:string|null;snap:Block|null;
+interface S{data:Data|null;projectId:string|null;sheetId:string|null;blockId:string|null;elId:string|null;status:'saved'|'saving';saveErr:'quota'|'other'|null;clip:{e:El;dev:Dev;n:number}|null;clipM:{es:El[];dev:Dev;n:number}|null;multi:string[];editId:string|null;snap:Block|null;
 enterEdit:(id:string)=>void;exitEdit:(save:boolean)=>void;
 load:(d:Data)=>void;addProject:(name:string,typeId:string)=>void;importOutline:(name:string,text:string)=>void;delProject:(id:string)=>void;openProject:(id:string)=>void;renameProject:(id:string,n:string)=>void;
 addSheet:(name:string,kind:Kind)=>void;renameSheet:(id:string,n:string)=>void;delSheet:(id:string)=>void;setSheet:(id:string)=>void;
@@ -49,7 +49,7 @@ setQuiz:(id:string,f:(c:QuizCfg)=>void)=>void;unlinkQuiz:(id:string)=>void;editB
 addEl:(dev:Dev,t:ET,x:number,y:number,bid?:string,extra?:Partial<El>)=>void;setStyle:(patch:Partial<PStyle>)=>void;setRole:(r:Role,p:Partial<PStyle['roles'][Role]>)=>void;updEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dragEl:(dev:Dev,id:string,patch:Partial<El>)=>void;dropEl:(dev:Dev,id:string,stay?:boolean)=>void;
 delEl:(dev:Dev,id:string)=>void;dupEl:(dev:Dev,id:string)=>void;moveEl:(dev:Dev,id:string,dir:number)=>void;copyEl:(dev:Dev,id:string)=>void;
 clipSet:(dev:Dev,id:string)=>void;clipPaste:(dev:Dev)=>void;setEl:(id:string|null)=>void;setMulti:(ids:string[])=>void;dragMany:(dev:Dev,ps:{id:string;x:number;y:number}[])=>void;delEls:(dev:Dev,ids:string[])=>void;dupEls:(dev:Dev,ids:string[],off:number,nid:string[],k?:string)=>void;alignEls:(dev:Dev,ids:string[],m:'l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv'|'ew'|'eh')=>void;gapEls:(dev:Dev,ids:string[],gap:number)=>void;flipEls:(dev:Dev,ids:string[],axis:'x'|'y',side?:boolean)=>void;flipBlock:(id:string,axis:'x'|'y')=>void;padBlock:(id:string,dev:Dev,top?:number,bottom?:number)=>void;alignBlock:(id:string,dev:Dev,a:'l'|'c'|'r')=>void;swapEls:(dev:Dev,a:string[],b:string[])=>void;groupEls:(dev:Dev,ids:string[],on:boolean)=>void;patchEls:(dev:Dev,ids:string[],patch:Partial<El>)=>void;autoLay:(dev:Dev,ids:string[])=>void;setLay:(dev:Dev,gid:string,p:Partial<Lay>)=>void;delLay:(dev:Dev,gid:string)=>void;clipSetMany:(dev:Dev,ids:string[])=>void;clipPasteMany:(dev:Dev)=>void;setBlock:(id:string|null)=>void;
-undo:()=>void;redo:()=>void;saveType:(name:string)=>void}
+retryNow:()=>void;undo:()=>void;redo:()=>void;saveType:(name:string)=>void}
 const EL_DEF:Record<ET,[number,number,string]>={text:[240,40,'Заголовок'],rect:[320,200,''],btn:[180,48,'Кнопка'],input:[280,44,'Поле ввода'],img:[320,220,'Изображение'],line:[300,0,''],shape:[200,140,''],icon:[48,48,''],mock:[260,420,''],list:[320,120,'Первый пункт\nВторой пункт\nТретий пункт']};
 type Ctx={data:Data|null;projectId:string|null;sheetId:string|null};
 const curSheet=(s:Ctx)=>s.data?.projects.find(p=>p.id===s.projectId)?.sheets.find(x=>x.id===s.sheetId);
@@ -87,10 +87,19 @@ const blockAt=(bs:Block[],dev:Dev,y:number)=>{const t=blockTops(bs,dev);let last
 const addDevTo=(b:Block,d:Dev,from?:Dev)=>{const was=b.dv??[...DEVS];if(was.includes(d))return false;let copied=false;if(from&&from!==d&&!b.els[d].length&&b.els[from].length){const r=FW[d]/FW[from];b.els[d]=b.els[from].map(e=>{const w=Math.max(8,Math.round(e.w*r));return{...e,id:uid(),w,x:Math.max(0,Math.min(FW[d]-w,Math.round(e.x*r)))}});b.h[d]=Math.max(b.h[d],b.h[from]);copied=true}const nx=[...was,d];if(nx.length>=DEVS.length)delete b.dv;else b.dv=DEVS.filter(x=>nx.includes(x));return copied};
 let t:ReturnType<typeof setTimeout>;let past:Data[]=[],fut:Data[]=[],lastK='',lastT=0;
 export const useStore=create<S>()(immer((set,get)=>{
-const persist=()=>{clearTimeout(t);t=setTimeout(async()=>{await save(get().data);set({status:'saved'})},400)};
-const restore=(d:Data)=>{set(s=>{s.data=d;const p=d.projects.find(x=>x.id===s.projectId)??d.projects[0];s.projectId=p?.id??null;const h=p?.sheets.find(x=>x.id===s.sheetId)??p?.sheets[0];s.sheetId=h?.id??null;if(!h?.blocks.some(b=>b.id===s.blockId))s.blockId=null;if(!h?.blocks.some(b=>b.id===s.editId)){s.editId=null;s.snap=null}if(!hasEl(h,s.elId))s.elId=null;s.status='saving'});persist()};
-const mut=(f:(s:S,p?:Project)=>void,k='')=>{const now=Date.now();if(!(k&&k===lastK&&now-lastT<1200)){past.push(get().data!);if(past.length>60)past.shift();fut=[]}lastK=k;lastT=now;set(s=>{f(s,s.data?.projects.find(p=>p.id===s.projectId));hugAll(curSheet(s),s.data?.projects.find(p=>p.id===s.projectId)?.style);syncTabs(curSheet(s)?.blocks);reflowAll(curSheet(s));const p=s.data?.projects.find(p=>p.id===s.projectId);if(p)p.updatedAt=Date.now();s.status='saving'});persist()};
-return{data:null,projectId:null,sheetId:null,blockId:null,elId:null,status:'saved',clip:null,clipM:null,multi:[],editId:null,snap:null,delAsk:null,
+let ver=0,retryN=0,chain:Promise<void>=Promise.resolve();let rt:ReturnType<typeof setTimeout>;
+/** одна запись за раз; при ошибке статус «Не сохранено» и повтор с нарастающей паузой 2, 4, 8 … до 60 с */
+const run=async()=>{clearTimeout(rt);const d=get().data;if(!d||!isOwner())return;const my=ver;
+try{await save(d);retryN=0;if(my===ver)set({status:'saved',saveErr:null});else set({saveErr:null})}
+catch(e){set({saveErr:isQuota(e)?'quota':'other'});rt=setTimeout(()=>{void write()},Math.min(60000,2000*2**retryN++))}};
+const write=()=>{chain=chain.then(run);return chain};
+const persist=()=>{ver++;clearTimeout(t);t=setTimeout(()=>{void write()},400)};
+const flush=async()=>{clearTimeout(t);if(get().status!=='saved'||get().saveErr)await write()};
+const ro=()=>{toast('Проект открыт в другой вкладке: забери управление, чтобы править');};
+bindTabs({flush,lost:()=>{clearTimeout(t);clearTimeout(rt);set({status:'saved'})},adopt:async()=>{const d=await reread();if(d){past=[];fut=[];const m=migrate(d);set(s=>{s.data=m;const p=m.projects.find(x=>x.id===s.projectId)??m.projects[0];s.projectId=p?.id??null;const h=p?.sheets.find(x=>x.id===s.sheetId)??p?.sheets[0];s.sheetId=h?.id??null;s.editId=null;s.snap=null;s.multi=[];if(!h?.blocks.some(b=>b.id===s.blockId))s.blockId=null;if(!hasEl(h,s.elId))s.elId=null;s.status='saved';s.saveErr=null})}}});
+const restore=(d:Data)=>{if(!isOwner()){ro();return}set(s=>{s.data=d;const p=d.projects.find(x=>x.id===s.projectId)??d.projects[0];s.projectId=p?.id??null;const h=p?.sheets.find(x=>x.id===s.sheetId)??p?.sheets[0];s.sheetId=h?.id??null;if(!h?.blocks.some(b=>b.id===s.blockId))s.blockId=null;if(!h?.blocks.some(b=>b.id===s.editId)){s.editId=null;s.snap=null}if(!hasEl(h,s.elId))s.elId=null;s.status='saving'});persist()};
+const mut=(f:(s:S,p?:Project)=>void,k='')=>{if(!isOwner()){ro();return}const now=Date.now();if(!(k&&k===lastK&&now-lastT<1200)){past.push(get().data!);if(past.length>60)past.shift();fut=[]}lastK=k;lastT=now;set(s=>{f(s,s.data?.projects.find(p=>p.id===s.projectId));hugAll(curSheet(s),s.data?.projects.find(p=>p.id===s.projectId)?.style);syncTabs(curSheet(s)?.blocks);reflowAll(curSheet(s));const p=s.data?.projects.find(p=>p.id===s.projectId);if(p)p.updatedAt=Date.now();s.status='saving'});persist()};
+return{data:null,projectId:null,sheetId:null,blockId:null,elId:null,status:'saved',saveErr:null,clip:null,clipM:null,multi:[],editId:null,snap:null,delAsk:null,
 load:d0=>{past=[];fut=[];const d=migrate(d0);set({data:d,editId:null,snap:null,blockId:null,elId:null,projectId:d.projects[0]?.id??null,sheetId:d.projects[0]?.sheets[0]?.id??null})},
 addProject:(name,typeId)=>mut(s=>{const ty=[...PRESETS,...s.data!.siteTypes].find(x=>x.id===typeId)!;const sheets:Sheet[]=ty.pages.map(p=>({id:uid(),name:p.name,kind:p.kind,blocks:p.blocks.map(b=>mkBlock(b))}));autoLink(sheets);const pr:Project={id:uid(),name,typeId,style:defStyle(),sheets,createdAt:Date.now(),updatedAt:Date.now()};s.data!.projects.unshift(pr);s.projectId=pr.id;s.sheetId=sheets[0]?.id??null;s.blockId=null;s.elId=null}),
 importOutline:(name,text)=>mut(s=>{const sheets=sheetsFromOutline(text);autoLink(sheets);const pr:Project={id:uid(),name,typeId:'import',style:defStyle(),sheets,createdAt:Date.now(),updatedAt:Date.now()};s.data!.projects.unshift(pr);s.projectId=pr.id;s.sheetId=sheets[0]?.id??null;s.blockId=null;s.elId=null}),
@@ -180,6 +189,6 @@ clipPasteMany:dev=>mut(s=>{const c=s.clipM;const sh=curSheet(s);if(!c||!sh||!sh.
 for(const q of c.es){const w=Math.max(16,Math.round(q.w*k));const e:El={...q,id:uid(),w,x:Math.max(0,Math.min(FW[dev]-w,Math.round(q.x*k)+o)),y:q.y+o};if(e.g)e.g=gm[e.g]??=uid();b.els[dev].push(e);out.push(e.id)}
 grow(b,dev);s.multi=out;s.elId=out[out.length-1]??null;s.blockId=b.id}),
 setBlock:id=>set(s=>{const tgt=s.editId&&!id?s.editId:id;if(s.editId&&tgt!==s.editId){s.editId=null;s.snap=null}s.blockId=tgt;s.elId=null}),
-undo:()=>{const d=past.pop();if(!d)return;fut.push(get().data!);restore(d)},
+retryNow:()=>{retryN=0;clearTimeout(rt);set({status:'saving'});void write()},undo:()=>{const d=past.pop();if(!d)return;fut.push(get().data!);restore(d)},
 redo:()=>{const d=fut.pop();if(!d)return;past.push(get().data!);restore(d)},
 saveType:name=>mut((s,p)=>{if(!p)return;s.data!.siteTypes.push({id:uid(),name,pages:p.sheets.map(h=>({name:h.name,kind:h.kind,blocks:h.blocks.map(b=>b.title)}))})})}}));

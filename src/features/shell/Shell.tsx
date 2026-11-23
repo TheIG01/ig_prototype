@@ -5,7 +5,7 @@ import {useStore,PRESETS,FW,onDev} from '../../store';
 import {DEVS_SHORT} from '../../lib/dev';
 import {DelDialog,requestDelBlock} from '../blocks/DelBlock';
 import type {Kind,Dev,Project,Sheet,Block} from '../../store';
-import {exportBackup,importBackup} from '../../lib/vault';
+import {importBackup} from '../../lib/vault';import {SaveBar,downloadCopy} from './SaveBar';import {useTab} from '../../lib/tabs';
 const ReportDialog=lazy(()=>import('./ReportDialog').then(m=>({default:m.ReportDialog})));
 const SettingsBody=lazy(()=>import('./Settings').then(m=>({default:m.SettingsBody})));
 import {briefMd,specJson,download} from '../../lib/export';
@@ -27,7 +27,7 @@ const HELP:[string,[string,string][]][]=[
 function Ask({title,children,onClose,wide,xl}:{title:string;children:React.ReactNode;onClose:()=>void;wide?:boolean;xl?:boolean}){return<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><div className={'sheet'+(wide?' wide':'')+(xl?' wide xl':'')}><h2>{title}</h2>{children}</div></div>}
 
 export function Shell(){
-const s=useStore();const d=s.data!;const pr=d.projects.find(p=>p.id===s.projectId);const sh=pr?.sheets.find(x=>x.id===s.sheetId);const tt=useToast(x=>x.t);const curBlk=sh?.blocks.find(x=>x.id===s.blockId);
+const s=useStore();const tabMode=useTab(x=>x.mode);const d=s.data!;const pr=d.projects.find(p=>p.id===s.projectId);const sh=pr?.sheets.find(x=>x.id===s.sheetId);const tt=useToast(x=>x.t);const curBlk=sh?.blocks.find(x=>x.id===s.blockId);
 const [fr,setFr]=useState<Dev>('desktop');const [view,setView]=useState<'struct'|'canvas'>('canvas');const [open,setOpen]=useState(false);const [hide,setHide]=useState(false);
 const [modal,setModal]=useState<Modal>('');const [name,setName]=useState('');const [typeId,setTypeId]=useState('landing');const [kind,setKind]=useState<Kind>('page');
 const [ren,setRen]=useState<{k:'proj'|'sheet';id:string}|null>(null);const [q,setQ]=useState('');const [ci,setCi]=useState(0);const [pend,setPend]=useState<File|null>(null);const [outline,setOutline]=useState('');const [after,setAfter]=useState<string|undefined>(undefined);const [pv,setPv]=useState('');const [group,setGroup]=useState('');const [whole,setWhole]=useState(false);
@@ -54,7 +54,7 @@ const tName=(p:Project)=>types.find(t=>t.id===p.typeId)?.name??'Сайт';
 const aiPack=(p:Project)=>{download('brief.md',briefMd(p,tName(p)),'text/markdown');setTimeout(()=>download('spec.json',specJson(p,tName(p)),'application/json'),300);setTimeout(()=>download('project.json',JSON.stringify(p,null,2),'application/json'),600)};
 const saveMd=(p:Project)=>{download(slug(p.name)+'_tz.md',briefMd(p,tName(p)),'text/markdown');toast('ТЗ скачано (Markdown)')};
 const saveSpec=(p:Project)=>{download(slug(p.name)+'_spec.json',specJson(p,tName(p)),'application/json');toast('Спецификация скачана (JSON)')};
-const backup=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([exportBackup()],{type:'application/json'}));a.download='ig_prototype_backup.json';a.click()};
+const backup=()=>{void downloadCopy()};
 const restore=async()=>{const f=pend;close();if(!f)return;try{importBackup(await f.text());toast('Копия загружена. Введи ПИН из этой копии');setTimeout(()=>location.reload(),1500)}catch{toast('Это не файл копии IG prototype')}};
 const submit=(e:React.FormEvent)=>{e.preventDefault();const n=name.trim();if(!n)return;
 if(modal==='proj')s.addProject(n,typeId);if(modal==='sheet')s.addSheet(n,kind);if(modal==='block')addAndEdit(n);if(modal==='type')s.saveType(n);if(modal==='tpl'&&s.blockId){s.saveBlockTpl(s.blockId,n,group.trim(),whole);toast(whole?`Набор этапов «${n}» в библиотеке блоков`:`Шаблон «${n}» в библиотеке блоков`)}
@@ -66,7 +66,7 @@ const cmds:Cmd[]=[{l:'Новый проект',run:()=>openForm('proj')},{l:'И�
 {l:'Вид: холст',run:()=>setView('canvas')},{l:'Вид: структура',run:()=>setView('struct')},
 {l:'Размер: Desktop 1440',k:'Alt+1',run:()=>setFr('desktop')},{l:'Размер: Tablet 768',k:'Alt+2',run:()=>setFr('tablet')},{l:'Размер: Mobile 390',k:'Alt+3',run:()=>setFr('mobile')},
 {l:'Отменить',k:'Ctrl+Z',run:()=>s.undo()},{l:'Повторить',k:'Ctrl+Shift+Z',run:()=>s.redo()},
-{l:'Скачать копию',run:backup},{l:'Загрузить копию',run:()=>file.current?.click()},
+{l:'Скачать копию',run:backup},{l:'Загрузить копию',run:()=>tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):file.current?.click()},
 {l:'Показать или скрыть панель проектов',k:'Ctrl+\\',run:()=>setHide(v=>!v)},{l:'Горячие клавиши',k:'?',run:()=>setModal('keys')},{l:'Настройки',run:()=>setModal('set')},
 ...d.projects.map(p=>({l:`Проект: ${p.name}`,run:()=>s.openProject(p.id)})),
 ...(pr?pr.sheets.map(x=>({l:`Лист: ${x.name}`,run:()=>s.setSheet(x.id)})):[])];
@@ -116,12 +116,12 @@ return<div className={'app'+(hide?' nosb':'')}>
 <i className="vr"/>
 {!ed&&pr&&<button className="btn ic sec2" onClick={()=>openForm('type')} title="Сохранить структуру как тип сайта"><BookmarkPlus size={16}/></button>}
 {!ed&&<><button className="btn ic sec2" onClick={backup} title="Скачать копию"><Download size={16}/></button></>}
-{!ed&&<><button className="btn ic sec2" onClick={()=>file.current?.click()} title="Загрузить копию"><Upload size={16}/></button><input ref={file} type="file" accept=".json" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f){setPend(f);setModal('rst')}}}/></>}
+{!ed&&<><button className="btn ic sec2" onClick={()=>tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):file.current?.click()} title="Загрузить копию"><Upload size={16}/></button><input ref={file} type="file" accept=".json" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f){setPend(f);setModal('rst')}}}/></>}
 {!ed&&pr&&<button className="btn pri" onClick={openPreview} title="Просмотр для заказчика (P)"><Eye size={16}/>Просмотр</button>}{!ed&&pr&&<button className="btn" onClick={()=>setModal('share')} title="Отдать заказчику"><Share2 size={16}/><span className="tl">Экспорт</span></button>}{!ed&&pr&&<button className="btn" onClick={()=>aiPack(pr)} title="Скачать brief.md и project.json"><Sparkles size={16}/><span className="tl">Для ИИ</span></button>}
 <button className="btn ic mobonly" onClick={()=>setModal('set')} title="Настройки"><Settings size={16}/></button>
 {ed&&<><i className="vr"/><button className="btn" onClick={cancelEdit} title="Откатить все правки в этом блоке">Не сохранять</button><button className="btn pri" onClick={()=>s.exitEdit(true)} title="Ctrl+Enter">Сохранить</button></>}
-<span className={'status'+(s.status==='saving'?' s':'')}><i/>{s.status==='saving'?'Сохраняю':'Сохранено'}</span></div>
-<div className="work"><div className="stage">{!sh?<div className="empty"><h2>{pr?'Добавь лист':'Создай проект'}</h2><p>{pr?'В проекте нет листов':'Выбери тип сайта: проект начнётся с пустого листа, без готовой структуры'}</p><button className="btn pri" onClick={()=>openForm(pr?'sheet':'proj')}><Plus size={16}/>{pr?'Добавить лист':'Новый проект'}</button><p style={{marginTop:14}}>Ctrl+K открывает команды, «?» горячие клавиши</p></div>:
+<span className={'status'+(s.saveErr?' e':tabMode==='ro'?' r':s.status==='saving'?' s':'')}><i/>{s.saveErr?'Не сохранено':tabMode==='ro'?'Только чтение':s.status==='saving'?'Сохраняю':'Сохранено'}</span></div>
+<SaveBar/><div className="work"><div className="stage">{!sh?<div className="empty"><h2>{pr?'Добавь лист':'Создай проект'}</h2><p>{pr?'В проекте нет листов':'Выбери тип сайта: проект начнётся с пустого листа, без готовой структуры'}</p><button className="btn pri" onClick={()=>openForm(pr?'sheet':'proj')}><Plus size={16}/>{pr?'Добавить лист':'Новый проект'}</button><p style={{marginTop:14}}>Ctrl+K открывает команды, «?» горячие клавиши</p></div>:
 view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="frame" style={{maxWidth:FW[fr]*.6+120}}>{sh.blocks.filter(b=>onDev(b,fr)).map(b=><div className={'blk'+(b.id===s.blockId?' sel':'')} key={b.id} onClick={()=>s.setBlock(b.id)}><Thumb els={b.els[fr]} h={b.h[fr]} dev={fr} tw={120}/><b>{b.title}</b>{b.text&&<small>{b.text}</small>}<span className="acts" onClick={e=>e.stopPropagation()}><button className="btn ic" title="Выше" onClick={()=>s.moveBlock(b.id,-1,fr)}><ArrowUp size={14}/></button><button className="btn ic" title="Ниже" onClick={()=>s.moveBlock(b.id,1,fr)}><ArrowDown size={14}/></button><button className="btn ic" title="Дублировать" onClick={()=>s.dupBlock(b.id)}><Copy size={14}/></button><button className="btn ic" title="Удалить" onClick={()=>dropBlock(b)}><X size={14}/></button></span></div>)}
 <button className="blk" style={{width:'100%',border:0}} onClick={()=>openAdd(lastOn(sh.blocks))}><Plus size={16}/>Добавить блок</button></div>}</div>{sh&&(view==='canvas'?<RightPanel dev={fr} onTpl={()=>openForm('tpl')}/>:<ContentPanel/>)}</div></main>
 <DelDialog/>{modal==='set'&&<Ask title="Настройки" onClose={close}><Suspense fallback={<p className="hint">Загрузка настроек…</p>}><SettingsBody onBackup={backup}/></Suspense></Ask>}

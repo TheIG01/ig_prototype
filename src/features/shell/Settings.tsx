@@ -1,7 +1,7 @@
 import {useState,useRef} from 'react';
 import {useStore} from '../../store';import {tplsFile,parseTpls,download} from '../../lib/export';import {toast} from '../../lib/toast';
 import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,useUi,saveUi,liteOn,weakDevice} from '../../lib/ui';import type {Ui} from '../../lib/ui';
-import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';import {typo,TY_RULES,TY_DEMO,TY0} from '../../lib/typo';import type {TyKey} from '../../lib/typo';
+import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';import {isOwner} from '../../lib/tabs';import {typo,TY_RULES,TY_DEMO,TY0} from '../../lib/typo';import type {TyKey} from '../../lib/typo';
 export function SettingsBody({onBackup}:{onBackup:()=>void}){
 const tpls=useStore(x=>x.data?.blockTpls);const importTpls=useStore(x=>x.importTpls);const tf=useRef<HTMLInputElement>(null);const nTpl=tpls?.length??0;
 const dlTpls=()=>{download('ig_templates.json',tplsFile(tpls??[]),'application/json');toast('Шаблоны скачаны')};
@@ -16,7 +16,7 @@ const tyOut=typo(demo,u.ty).split('\u00A0').flatMap((x,i)=>i?[<span key={i} clas
 const lf=useRef<HTMLInputElement>(null);const setAg=(k:'n'|'r'|'l',v:string)=>up({ag:{...u.ag,[k]:v}});
 const pickLogo=(fl:FileList|null)=>{const f=fl?.[0];if(!f)return;if(lf.current)lf.current.value='';const fr=new FileReader();fr.onerror=()=>toast('Файл не прочитался');fr.onload=()=>{const src=String(fr.result);if(f.type==='image/svg+xml'){if(src.length>240000){toast('SVG больше 240 КБ. Возьми файл меньше');return}setAg('l',src);return}
 const im=new Image();im.onerror=()=>toast('Не получилось открыть картинку');im.onload=()=>{const k=Math.min(1,320/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d')!.drawImage(im,0,0,c.width,c.height);setAg('l',c.toDataURL('image/png'));toast('Логотип сохранён')};im.src=src};fr.readAsDataURL(f)};
-const kill=async()=>{await wipe();location.reload()};
+const kill=async()=>{if(!isOwner()){toast('Проект открыт в другой вкладке: забери управление');return}await wipe();location.reload()};
 return<div>
 <h4 className="set-h">Вид</h4>
 <div className="set-row"><div><b>Акцентный цвет</b><p>Кнопки, выделение, направляющие</p></div><div className="swatches">{ACCENTS.map(([c,n])=><button key={c} className={'swt'+(u.accent===c?' on':'')} style={{background:c}} title={n} aria-label={n} aria-pressed={u.accent===c} onClick={()=>up({accent:c})}/>)}</div></div>

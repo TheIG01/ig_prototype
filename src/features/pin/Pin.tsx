@@ -1,14 +1,14 @@
 import {useEffect,useState} from 'react';
 import {Delete} from 'lucide-react';
 import type {Data} from '../../store';
-import {createVault,unlockVault,hasVault,rememberDevice,forgetDevice} from '../../lib/vault';
+import {isOwner} from '../../lib/tabs';import {createVault,unlockVault,hasVault,rememberDevice,forgetDevice} from '../../lib/vault';
 const empty:Data={schemaVersion:5,projects:[],siteTypes:[],blockTpls:[]};
 export function Pin({onOk}:{onOk:(d:Data)=>void}){
 const setup=!hasVault();const [rem,setRem]=useState(true);const remember=async()=>{if(rem){await rememberDevice();localStorage.setItem('igp.rem','1')}else{await forgetDevice();localStorage.removeItem('igp.rem')}};const [pin,setPin]=useState('');const [first,setFirst]=useState('');const [err,setErr]=useState(false);const [msg,setMsg]=useState('');
 const press=(d:string)=>{if(pin.length<6)setPin(pin+d)};
 const fail=(m:string)=>{setErr(true);setMsg(m);setPin('');setTimeout(()=>setErr(false),350)};
 const go=async()=>{if(pin.length<4)return fail('Минимум 4 цифры');
-if(setup){if(!first){setFirst(pin);setPin('');return}if(first!==pin){setFirst('');return fail('ПИН не совпал, начните заново')}await createVault(pin,empty);await remember();onOk(empty)}
+if(setup){if(!first){setFirst(pin);setPin('');return}if(first!==pin){setFirst('');return fail('ПИН не совпал, начните заново')}if(!isOwner())return fail('Проект открыт в другой вкладке: закрой её и обнови эту');await createVault(pin,empty);await remember();onOk(empty)}
 else{const d=await unlockVault(pin);if(d){await remember();onOk(d)}else fail('Неверный ПИН')}};
 useEffect(()=>{const h=(e:KeyboardEvent)=>{if(/^\d$/.test(e.key))press(e.key);else if(e.key==='Backspace')setPin(p=>p.slice(0,-1));else if(e.key==='Enter')go()};addEventListener('keydown',h);return()=>removeEventListener('keydown',h)});
 return<div className="pin"><div className="pin-card"><div className="logo">IG</div>
