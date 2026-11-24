@@ -6,7 +6,7 @@ import {FW,DEVS,onDev} from './lib/dev';import {defStyle} from './lib/art';impor
 export {FW,DEVS,onDev};export type {Dev};
 export type Kind='page'|'popup';
 export type ET='text'|'rect'|'btn'|'input'|'img'|'line'|'shape'|'icon'|'mock'|'list';
-export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h';mh?:number;lh?:number;ls?:number;va?:'t'|'m'|'b';qa?:string;tg?:string;sk?:string}
+export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h';mh?:number;lh?:number;ls?:number;va?:'t'|'m'|'b';qa?:string;tg?:string;sk?:string;hid?:1;lk?:1}
 /** авто-лейаут группы: d направление, gap отступ, al выравнивание поперёк, x y начало, mx центр по ширине блока, fl одинаковый поперечный размер */
 export interface Lay{d:'h'|'v';gap:number;al:'s'|'c'|'e';x:number;y:number;mx?:boolean;fl?:boolean}
 /** этапы: v вариант, g группа, i номер вкладки, n число этапов, tab вкладки переключаются в просмотре, x доп. блок этапа */

@@ -1,5 +1,5 @@
 import {useState,useRef,useEffect,lazy,Suspense} from 'react';
-import {pickIds,modsOf,curSel} from '../../lib/select';import {VList} from '../canvas/VList';
+import {LayersTab} from './LayersTab';
 import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2} from 'lucide-react';
 import {useStore,PRESETS,FW,onDev} from '../../store';
 import {DEVS_SHORT} from '../../lib/dev';
@@ -28,7 +28,7 @@ function Ask({title,children,onClose,wide,xl}:{title:string;children:React.React
 
 export function Shell(){
 const s=useStore();const tabMode=useTab(x=>x.mode);const d=s.data!;const pr=d.projects.find(p=>p.id===s.projectId);const sh=pr?.sheets.find(x=>x.id===s.sheetId);const tt=useToast(x=>x.t);const curBlk=sh?.blocks.find(x=>x.id===s.blockId);
-const [fr,setFr]=useState<Dev>('desktop');const [view,setView]=useState<'struct'|'canvas'>('canvas');const [open,setOpen]=useState(false);const [hide,setHide]=useState(false);
+const [fr,setFr]=useState<Dev>('desktop');const [view,setView]=useState<'struct'|'canvas'>('canvas');const [open,setOpen]=useState(false);const [lt,setLt]=useState<'blocks'|'layers'>('blocks');const [hide,setHide]=useState(false);
 const [modal,setModal]=useState<Modal>('');const [name,setName]=useState('');const [typeId,setTypeId]=useState('landing');const [kind,setKind]=useState<Kind>('page');
 const [ren,setRen]=useState<{k:'proj'|'sheet';id:string}|null>(null);const [q,setQ]=useState('');const [ci,setCi]=useState(0);const [pend,setPend]=useState<File|null>(null);const [outline,setOutline]=useState('');const [after,setAfter]=useState<string|undefined>(undefined);const [pv,setPv]=useState('');const [group,setGroup]=useState('');const [whole,setWhole]=useState(false);
 const file=useRef<HTMLInputElement>(null);
@@ -83,6 +83,7 @@ if(typing||modal)return;
 if(e.code==='KeyP'&&!mod&&!e.altKey&&!e.shiftKey){e.preventDefault();openPreview();return}
 if(mod&&e.code==='KeyZ'){e.preventDefault();e.shiftKey?s.redo():s.undo();return}
 if(mod&&e.code==='KeyY'){e.preventDefault();s.redo();return}
+if(e.altKey&&!mod&&!e.shiftKey&&e.code==='KeyL'){e.preventDefault();setLt(v=>v==='layers'?'blocks':'layers');setHide(false);setOpen(true);return}
 if(e.altKey&&!mod){const i=['Digit1','Digit2','Digit3'].indexOf(e.code);if(i>=0){e.preventDefault();setFr(DEVS[i]);return}}
 if(e.key==='?'&&!mod)setModal('keys')};
 addEventListener('keydown',h);return()=>removeEventListener('keydown',h)});
@@ -97,14 +98,16 @@ return<div className={'app'+(hide?' nosb':'')}>
 <aside className={'side'+(open?' open':'')} onClick={()=>setOpen(false)}>
 <button className="btn pri" onClick={e=>{e.stopPropagation();openForm('proj')}}><Plus size={16}/>Новый проект</button>
 <button className="btn" onClick={e=>{e.stopPropagation();openForm('imp')}} title="Вставить структуру из майнд-карты"><FileText size={16}/>Из майнд-карты</button>
+<div className="seg lt-tabs">{([['blocks','Блоки'],['layers','Слои']] as const).map(([k,l])=><button key={k} className={lt===k?'on':''} title={k==='layers'?'Слои листа (Alt+L)':'Проекты, листы и блоки'} onClick={e=>{e.stopPropagation();setLt(k)}}>{l}</button>)}</div>
+{lt==='layers'?(sh?<><h3>Слои <small>блок › группа › элемент</small></h3><div onClick={e=>e.stopPropagation()}><LayersTab sheet={sh} dev={fr}/></div></>:<p className="hint">Открой лист, чтобы увидеть слои.</p>):<>
 <h3>Структура <small>проект › лист › блок</small></h3>
 {d.projects.map(p=>{const curP=p.id===s.projectId;return<div key={p.id}>
 <button className={'row'+(curP?' on':'')} title={p.name+' · двойной клик: переименовать'} onClick={()=>s.openProject(p.id)} onDoubleClick={e=>{e.stopPropagation();startRen('proj',p.id,p.name)}}><i className="av">{p.name.trim().slice(0,1)||'·'}</i><span>{p.name}</span><small>{p.sheets.length}</small><i className="x" title="Удалить проект" onClick={e=>{e.stopPropagation();dropProject(p)}}><X size={14}/></i></button>
 {curP&&<div className="tc">{p.sheets.map(x=>{const act=x.id===s.sheetId;return<div key={x.id}>
 <button className={'row'+(act?' on':'')} title={x.name+' · двойной клик: переименовать'} onClick={()=>s.setSheet(x.id)} onDoubleClick={e=>{e.stopPropagation();startRen('sheet',x.id,x.name)}}>{x.kind==='popup'?<AppWindow size={16}/>:<FileText size={16}/>}<span>{x.name}</span><em className="tag">{x.kind==='popup'?'попап':'страница'}</em><i className="x" title="Удалить лист" onClick={e=>{e.stopPropagation();dropSheet(x)}}><X size={14}/></i></button>
-{act&&<div className="tc">{x.blocks.filter(q=>onDev(q,fr)).map((b,i)=><div key={b.id}><button className={'row sm'+(b.id===s.blockId?' on':'')} title={`${i+1}. ${b.title}`} onClick={()=>s.setBlock(b.id)}><b className="no">{i+1}</b><span>{b.title}</span>{b.dv&&<em className="dvt" title="Блок есть только на этих устройствах">{b.dv.map(d=>DEVS_SHORT[d]).join(' · ')}</em>}<span className="ra"><i title="Редактировать блок" onClick={e=>{e.stopPropagation();s.enterEdit(b.id)}}><Pencil size={13}/></i><i title="Выше" onClick={e=>{e.stopPropagation();s.moveBlock(b.id,-1,fr)}}><ArrowUp size={13}/></i><i title="Ниже" onClick={e=>{e.stopPropagation();s.moveBlock(b.id,1,fr)}}><ArrowDown size={13}/></i><i title="Удалить блок" onClick={e=>{e.stopPropagation();dropBlock(b)}}><X size={13}/></i></span></button>{s.editId===b.id&&b.els[fr].length>0&&<div className="tc layers"><VList rh={28} items={[...b.els[fr]].reverse()} row={el=><button className={'row sm'+(curSel(s.multi,s.elId).includes(el.id)?' on':'')} onClick={e=>{e.stopPropagation();s.setMulti(pickIds(b.els[fr],curSel(s.multi,s.elId),s.elId,el.id,modsOf(e)))}}><span>{({text:'Текст',rect:'Рамка',btn:'Кнопка',input:'Поле',img:'Картинка',line:'Линия',shape:'Фигура',icon:'Иконка',mock:'Мокап',list:'Список'} as Record<string,string>)[el.t]}{el.text?' · '+el.text:''}</span></button>}/></div>}</div>)}
+{act&&<div className="tc">{x.blocks.filter(q=>onDev(q,fr)).map((b,i)=><div key={b.id}><button className={'row sm'+(b.id===s.blockId?' on':'')} title={`${i+1}. ${b.title}`} onClick={()=>s.setBlock(b.id)}><b className="no">{i+1}</b><span>{b.title}</span>{b.dv&&<em className="dvt" title="Блок есть только на этих устройствах">{b.dv.map(d=>DEVS_SHORT[d]).join(' · ')}</em>}<span className="ra"><i title="Редактировать блок" onClick={e=>{e.stopPropagation();s.enterEdit(b.id)}}><Pencil size={13}/></i><i title="Выше" onClick={e=>{e.stopPropagation();s.moveBlock(b.id,-1,fr)}}><ArrowUp size={13}/></i><i title="Ниже" onClick={e=>{e.stopPropagation();s.moveBlock(b.id,1,fr)}}><ArrowDown size={13}/></i><i title="Удалить блок" onClick={e=>{e.stopPropagation();dropBlock(b)}}><X size={13}/></i></span></button></div>)}
 <button className="row sm mute" onClick={e=>{e.stopPropagation();openAdd(lastOn(x.blocks))}}><Plus size={14}/><span>Добавить блок</span></button></div>}</div>})}
-<button className="row mute" onClick={e=>{e.stopPropagation();openForm('sheet')}}><Plus size={16}/><span>Добавить лист</span></button></div>}</div>})}
+<button className="row mute" onClick={e=>{e.stopPropagation();openForm('sheet')}}><Plus size={16}/><span>Добавить лист</span></button></div>}</div>})}</>}
 </aside>
 <main className="main"><div className="top">
 <button className="btn ic menu" onClick={()=>setOpen(true)} aria-label="Меню"><Menu size={18}/></button>

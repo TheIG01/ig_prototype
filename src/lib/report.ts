@@ -19,7 +19,7 @@ const typeName=(e:El)=>e.t==='text'&&e.role&&RN[e.role]?RN[e.role]:TN[e.t]||e.t;
 const reqTxt=(b:Block)=>b.req==='opt'?'опционально':'обязательно';
 
 /** элементы блока на устройстве; квиз берётся из настроек квиза */
-const geo=(b:Block,d:Dev):{h:number;els:El[]}=>{if(b.quiz){const o=quizFrame(b.quiz,{pos:0,ans:[],phone:'',consent:true,err:'',li:0},d);return{h:o.h,els:o.els}}return{h:b.h[d],els:b.els[d]}};
+const geo=(b:Block,d:Dev):{h:number;els:El[]}=>{if(b.quiz){const o=quizFrame(b.quiz,{pos:0,ans:[],phone:'',consent:true,err:'',li:0},d);return{h:o.h,els:o.els}}return{h:b.h[d],els:b.els[d].filter(e=>!e.hid)}};
 
 const elHtml=(e0:El,p:Project,ty:ReturnType<typeof getUi>['ty'])=>{const e=e0.text?{...e0,text:typo(e0.text,ty)}:e0;const r=resolve(e,p.style);const a=e.t==='line'?'':artHtml(e);
 const st='left:'+e.x+'px;top:'+(e.t==='line'?e.y-6:e.y)+'px;width:'+e.w+'px;height:'+(e.t==='line'?12:e.h)+'px;'+(r.fs?'font-size:'+r.fs+'px;':'')+(r.b?'font-weight:700;':'')+(e.al==='c'?'text-align:center;justify-content:center;':e.al==='r'?'text-align:right;justify-content:flex-end;':'')+styleCss(e0,p.style);

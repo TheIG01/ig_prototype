@@ -9,7 +9,7 @@ type E={id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:n
 type B={id:string;title:string;text:string;sv?:{g:string;i:number;tab:boolean};dv?:string[];h:Record<string,number>;els:Record<string,E[]>;quiz?:{auto:boolean;steps:{multi?:boolean;skip?:boolean}[];phone:{mins:number};load:{lines:string[]}}};
 type QS={pos:number;ans:number[][];phone:string;consent:boolean;err:string;li:number;t0:number};
 const qs:Record<string,QS>={};const qst=(b:B):QS=>qs[b.id]||(qs[b.id]={pos:0,ans:[],phone:'',consent:true,err:'',li:0,t0:0});
-const geo=(b:B)=>{if(b.quiz){const o=QF(b.quiz,qst(b),dev);return{h:o.h,els:o.els as unknown as E[]}}return{h:b.h[dev],els:b.els[dev]}};
+const geo=(b:B)=>{if(b.quiz){const o=QF(b.quiz,qst(b),dev);return{h:o.h,els:o.els as unknown as E[]}}return{h:b.h[dev],els:b.els[dev].filter(e=>!e.hid)}};
 type S={id:string;name:string;kind:string;blocks:B[]};
 const P=JSON.parse(document.getElementById('d')!.textContent||'{}') as {name:string;sheets:S[]};
 const app=document.getElementById('app') as HTMLElement;

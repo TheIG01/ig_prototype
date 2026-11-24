@@ -9,7 +9,7 @@ import {download,blockMd,blockFile} from '../../lib/export';
 import type {El,ET,Dev,Block} from '../../store';
 import {toast} from '../../lib/toast';
 import {TIPS} from '../../lib/tpl';import {checkBlock} from '../../lib/textcheck';
-import {VList} from './VList';const QuizEditor=lazy(()=>import('../quiz/QuizEditor').then(m=>({default:m.QuizEditor})));import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel,Color} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
+import {VList} from './VList';import {LayerBtns} from './LayerBtns';const QuizEditor=lazy(()=>import('../quiz/QuizEditor').then(m=>({default:m.QuizEditor})));import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel,Color} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
 const STY=['fs','b','al','acc','fill','stroke','sw','r','op','c'] as const;let styClip:Partial<El>|null=null;
@@ -31,7 +31,7 @@ const panRef=useRef<{sx:number;sy:number;l:number;t:number}|null>(null);
 const raw=sh?.blocks??[];const all=raw.filter(b=>onDev(b,dev));const editB=raw.find(b=>b.id===s.editId);const editing=!!editB;
 const vis=editB?[editB]:all;const tops=blockTops(vis,dev);
 const total=vis.length?tops[tops.length-1]+vis[vis.length-1].h[dev]:0;
-const flat=vis.flatMap((b,i)=>(b.els?.[dev]??[]).map(e=>({e,b,top:tops[i]})));const els=flat.map(f=>f.e);
+const flat=vis.flatMap((b,i)=>(b.els?.[dev]??[]).filter(e=>!e.hid).map(e=>({e,b,top:tops[i]})));const els=flat.map(f=>f.e);
 const selIds=editing?(s.multi.includes(s.elId??'')?s.multi:s.elId?[s.elId]:[]).filter(id=>els.some(x=>x.id===id)):[];const selSet=new Set(selIds);
 const sel=selIds.length===1?flat.find(f=>f.e.id===selIds[0]):undefined;
 const sb=selIds.length>1?(()=>{const a=flat.filter(f=>selSet.has(f.e.id));const x=Math.min(...a.map(f=>f.e.x)),y=Math.min(...a.map(f=>f.e.y));return{x,y,w:Math.max(...a.map(f=>f.e.x+f.e.w))-x,h:Math.max(...a.map(f=>f.e.y+(f.e.t==='line'?0:f.e.h)))-y,top:a[0].top}})():undefined;
@@ -85,7 +85,8 @@ if(e.code==='Space'&&!mod){e.preventDefault();if(!space.current){space.current=t
 const cur=editing?els.find(x=>x.id===s.elId):undefined;const curB=all.find(b=>b.id===s.blockId);
 if(mod){
 if(e.code==='Quote'&&!e.altKey){e.preventDefault();saveUi(e.shiftKey?{cols:!ui.cols}:{grid:!ui.grid});return}if(e.code==='Semicolon'){e.preventDefault();saveUi({guides:!ui.guides});return}
-if(e.code==='KeyA'&&editing){e.preventDefault();s.setMulti(els.map(x=>x.id));return}
+if(e.shiftKey&&!e.altKey&&editing&&(e.code==='KeyH'||e.code==='KeyL')){e.preventDefault();if(!selIds.length){toast('Выдели элемент, чтобы '+(e.code==='KeyH'?'скрыть':'заблокировать')+' его');return}const k=e.code==='KeyH'?'hid':'lk';const sel=els.filter(x=>selIds.includes(x.id));const on=sel.some(x=>!x[k]);s.patchEls(dev,selIds,k==='hid'?{hid:on?1 as const:undefined}:{lk:on?1 as const:undefined});toast(e.code==='KeyH'?(on?'Скрыто. Вернуть можно глазом в слоях':'Показано'):(on?'Заблокировано. Разблокируй замком в слоях':'Разблокировано'));return}
+if(e.code==='KeyA'&&editing){e.preventDefault();s.setMulti(els.filter(x=>!x.lk).map(x=>x.id));return}
 if(e.code==='KeyG'&&editing&&e.shiftKey&&selIds.length){e.preventDefault();s.groupEls(dev,selIds,false);return}
 if(e.code==='KeyG'&&editing&&selIds.length>1){e.preventDefault();s.groupEls(dev,selIds,true);return}
 if(e.altKey&&e.shiftKey&&editing&&selIds.length>2&&(e.code==='KeyH'||e.code==='KeyV')){e.preventDefault();s.alignEls(dev,selIds,e.code==='KeyH'?'dh':'dv');return}
@@ -131,7 +132,7 @@ addEventListener('keydown',kd);addEventListener('keyup',ku);addEventListener('bl
 return()=>{removeEventListener('keydown',kd);removeEventListener('keyup',ku);removeEventListener('blur',off)}});
 const pt=(e:{clientX:number;clientY:number})=>{const r=wrap.current!.getBoundingClientRect();return{x:(e.clientX-r.left)/z,y:(e.clientY-r.top)/z}};
 const grp=(id:string,mod:boolean)=>{const x=els.find(q=>q.id===id);return!mod&&x?.g?els.filter(q=>q.g===x.g).map(q=>q.id):[id]};
-const down=(e:React.PointerEvent,el:El)=>{if(!editing||tool!=='sel'||space.current||e.button!==0)return;e.stopPropagation();if(ied===el.id)return;const mod=e.ctrlKey||e.metaKey;let ids=selIds;
+const down=(e:React.PointerEvent,el:El)=>{if(!editing||tool!=='sel'||space.current||e.button!==0||el.lk)return;e.stopPropagation();if(ied===el.id)return;const mod=e.ctrlKey||e.metaKey;let ids=selIds;
 if(e.shiftKey||mod){s.setMulti(pickIds(els,selIds,s.elId,el.id,modsOf(e)));return}
 if(!ids.includes(el.id)){ids=ing&&el.g===ing?[el.id]:grp(el.id,mod);s.setMulti(ids)}
 const src=ids.map(i=>els.find(q=>q.id===i)).filter(Boolean) as El[];let tid=src.map(q=>q.id);
@@ -158,7 +159,7 @@ if(R-L<16){if(D.includes('w'))L=R-16;else R=L+16}if(!ln&&B-T<16){if(D.includes('
 if(e.shiftKey&&!ln&&D.length===2&&d.h){const nh=Math.round((R-L)/(d.w/d.h));if(D.includes('n'))T=B-nh;else B=T+nh}
 s.updEl(dev,d.id,{x:L,y:Math.max(0,T),w:R-L,h:ln?0:B-T})}
 else if(d.m==='box'){if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<3&&!d.w)return;d.w=1;const q=pt(e);const L=Math.min(d.x,q.x),T=Math.min(d.y,q.y),R=Math.max(d.x,q.x),B=Math.max(d.y,q.y);setMq({x:L,y:T,w:R-L,h:B-T});
-const all=new Set<string>(d.base);for(const o of els){const oy=o.t==='line'?o.y-6:o.y,oh=o.t==='line'?12:o.h;if(o.x<R&&o.x+o.w>L&&oy<B&&oy+oh>T)grp(o.id,false).forEach(i=>all.add(i))}
+const all=new Set<string>(d.base);for(const o of els){if(o.lk)continue;const oy=o.t==='line'?o.y-6:o.y,oh=o.t==='line'?12:o.h;if(o.x<R&&o.x+o.w>L&&oy<B&&oy+oh>T)grp(o.id,false).forEach(i=>all.add(i))}
 const arr=[...all];if(arr.join()!==selIds.join())s.setMulti(arr)}
 else if(d.m==='move'){let nx=snap(d.x+dx,raw),ny=snap(d.y+dy,raw);const g={v:[] as number[],h:[] as number[]};
 if(!raw&&editB){const T=6/z,bh=editB.h[dev],o=editB.els[dev].filter(q=>!d.items?.some(i=>i.id===q.id));
@@ -263,7 +264,7 @@ return<aside className="panel"><div className="stk"><div className="ph"><b>Бл�
 <details className="fold2" open={!!b.text}><summary>Тексты и заметки</summary><textarea className="inp" placeholder="Тексты блока, пожелания дизайнеру, как работает: переходы, раскрытия, кнопки" value={b.text} onChange={e=>s.editBlock(b.id,{text:e.target.value})}/></details>
 <details className="fold2"><summary>Передать нейросети</summary><div className="stack"><button className="btn" onClick={copyAi}><Copy size={15}/>Скопировать описание</button><button className="btn" onClick={dlBlock}><Download size={15}/>Скачать блок (JSON)</button></div><p className="hint">Описание: тексты, заметки и элементы с координатами для каждого устройства. JSON загружается в Настройках как шаблон</p></details>
 {tips.length>0&&<details className="fold2"><summary>Из твоих конспектов</summary><ul className="tipl">{tips.map(t=><li key={t}>{t}</li>)}</ul></details>}
-{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4><VList items={[...els].reverse()} row={x=><button className={'lyr'+(lsel.includes(x.id)?' on':'')} title={NAME[x.t]+(x.text?' · '+x.text:'')+' (Shift: диапазон, Ctrl: добавить или убрать)'} onClick={e=>s.setMulti(pickIds(els,lsel,s.elId,x.id,modsOf(e)))}>{(()=>{const I=LI[x.t]??Shapes;return<I size={14}/>})()}<b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}</button>}/></div>}
+{editing&&els.length>0&&<div className="sec"><h4>Слои блока · {els.length}</h4><VList items={[...els].reverse()} row={x=><button className={'lyr'+(lsel.includes(x.id)?' on':'')+(x.hid?' off':'')} title={NAME[x.t]+(x.text?' · '+x.text:'')+' (Shift: диапазон, Ctrl: добавить или убрать)'} onClick={e=>s.setMulti(pickIds(els,lsel,s.elId,x.id,modsOf(e)))}>{(()=>{const I=LI[x.t]??Shapes;return<I size={14}/>})()}<b>{NAME[x.t]}</b>{x.text&&<em>{x.text}</em>}<LayerBtns dev={dev} els={[x]}/></button>}/></div>}
 {editing&&((b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0))>0&&<div className="sec"><h4>Направляющие · {(b.guides?.[dev]?.x.length??0)+(b.guides?.[dev]?.y.length??0)}</h4><button className="btn" onClick={()=>s.setGuides(b.id,dev,{x:[],y:[]})}><X size={14}/>Очистить направляющие</button></div>}
 {!editing&&<div className="sec"><h4>Положение</h4><div className="btnrow"><button className="btn" title="Блок выше (Alt+↑)" onClick={()=>s.moveBlock(b.id,-1,dev)}><ArrowUp size={16}/>Выше</button><button className="btn" title="Блок ниже (Alt+↓)" onClick={()=>s.moveBlock(b.id,1,dev)}><ArrowDown size={16}/>Ниже</button></div></div>}
 {!editing&&els.length>0&&<div className="sec"><h4>Отразить блок</h4><div className="btnrow"><button className="btn" title="Левая часть уезжает вправо, правая влево, на всех устройствах" onClick={()=>{s.flipBlock(b.id,'x');toast('Блок отражён по горизонтали',{label:'Отменить',run:()=>s.undo()},5000)}}><FlipHorizontal size={16}/>Слева направо</button><button className="btn" title="Верх и низ блока меняются местами, на всех устройствах" onClick={()=>{s.flipBlock(b.id,'y');toast('Блок отражён по вертикали',{label:'Отменить',run:()=>s.undo()},5000)}}><FlipVertical size={16}/>Сверху вниз</button></div><p className="hint">Тексты и сетка подстраиваются. Для части блока выдели элементы и нажми Shift+H или Shift+V</p></div>}
