@@ -22,11 +22,11 @@ return<div className="corners"><button className={'btn'+(rc?' on':'')} title="З
 {rc&&<div className="grid2">{rc.map((v,i)=><label key={i} className="num" title={names[i]}><span>{['↖','↗','↘','↙'][i]}</span><input type="number" min={0} max={200} value={v} onChange={ev=>{const n=rc.slice() as [number,number,number,number];n[i]=Math.max(0,+ev.target.value||0);set({rc:n})}}/></label>)}</div>}</div>}
 /** Обводка: цвет, толщина, вид линии, положение */
 export function StrokeSec({e,pal,set}:{e:El;pal:string[];set:SetFn}){
-const t=e.t;const box=BOX.has(t);const dash=e.dash??'solid';
+const t=e.t;const box=BOX.has(t)||t==='line'||t==='shape';const dash=e.dash??'solid';
 return<Sec t="Обводка"><Color label="Цвет" value={e.stroke} def="#0F172A" pal={pal} none onChange={v=>set({stroke:v})}/>
-<Range label="Толщина" value={e.sw??(t==='mock'?2:1.5)} min={0} max={12} step={.5} unit=" px" onChange={v=>set({sw:v})}/>
+<Range label="Толщина" value={e.sw??(t==='mock'||t==='line'||(t==='shape'&&['arr1','arr2','elbow','arc'].includes(e.sh??''))?2:1.5)} min={t==='line'||(t==='shape'&&(e.sh??'').startsWith('arr'))?1:0} max={12} step={.5} unit=" px" onChange={v=>set({sw:v})}/>
 {box&&<><div className="seg" title="Вид линии обводки">{([['solid','Сплошная'],['dashed','Пунктир'],['dotted','Точки']] as const).map(([k,l])=><button key={k} className={dash===k?'on':''} onClick={()=>set({dash:k==='solid'?undefined:k,...(k!=='solid'?{sp:undefined}:{})})}>{l}</button>)}</div>
-{dash==='solid'&&<div className="seg" title="Где проходит обводка относительно края">{([['in','Внутри'],['mid','По центру'],['out','Снаружи']] as const).map(([k,l])=><button key={k} className={(e.sp??'in')===k?'on':''} onClick={()=>set({sp:k==='in'?undefined:k})}>{l}</button>)}</div>}</>}</Sec>}
+{dash==='solid'&&BOX.has(t)&&<div className="seg" title="Где проходит обводка относительно края">{([['in','Внутри'],['mid','По центру'],['out','Снаружи']] as const).map(([k,l])=><button key={k} className={(e.sp??'in')===k?'on':''} onClick={()=>set({sp:k==='in'?undefined:k})}>{l}</button>)}</div>}</>}</Sec>}
 /** Эффекты: тень и размытие */
 export function FxSec({e,set}:{e:El;set:SetFn}){
 const sd=e.shadow;const hex=sd&&HEX6.test(sd.c)?sd.c.slice(0,7):'#0F172A';const al=sd&&sd.c.length>=9?Math.round(parseInt(sd.c.slice(7,9),16)/2.55):sd?100:18;

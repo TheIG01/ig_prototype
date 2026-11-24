@@ -38,10 +38,11 @@ const num=(k:'x'|'y'|'w'|'h',l:string)=><label className="num"><span>{l}</span><
 const canHug=t==='text'||t==='btn'||t==='input';
 const HUGS:{k:'w'|'h'|undefined;l:string}[]=[{k:'w',l:'По ширине'},...(canHug?[{k:'h' as const,l:'По высоте'}]:[]),{k:undefined,l:'Фиксир.'}];
 const hugRow=canHug?<div className="seg hug" title="По высоте: ширина остаётся, текст переносится, элемент растёт, соседи в ряду с авто-лейаутом подтягиваются до той же высоты">{HUGS.map(o=><button key={o.l} className={e.hug===o.k?'on':''} onClick={()=>set({hug:o.k,mh:o.k==='h'&&t!=='text'?e.h:undefined})}>{o.l}</button>)}</div>:null;
-const hasFill=t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock'||t==='img';
-const hasStroke=t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock';
+const ARR=t==='shape'&&['arr1','arr2','elbow','arc'].includes(e.sh??'');
+const hasFill=!ARR&&(t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock'||t==='img');
+const hasStroke=t==='line'||t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock';
 const hasR=t==='rect'||t==='btn'||t==='input'||t==='img'||(t==='shape'&&['rect','round','bubble'].includes(e.sh??'rect'));
-const hasText=t!=='line'&&t!=='icon'&&t!=='mock';
+const hasText=!ARR&&t!=='line'&&t!=='icon'&&t!=='mock';
 const defFill=t==='btn'?'#0F172A':t==='input'?'#FFFFFF':t==='rect'?'#FFFFFF':t==='shape'?'#F1F5F9':'#FFFFFF';
 const defR=t==='btn'?10:t==='input'?8:t==='shape'&&e.sh==='round'?16:t==='shape'&&e.sh==='bubble'?14:0;
 const pal=st.palette;

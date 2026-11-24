@@ -1,6 +1,6 @@
 // One renderer for everything the client sees: in-app preview (iframe), downloadable HTML, PDF report (print).
 import type {Project} from '../store';
-import type {Dev} from './dev';import {artHtml,resolve,styleCss} from './art';import type {El} from '../store';import {quizFrame} from './quiz';import {typo} from './typo';import {isRich,richHtml,parseLink,hrefOf,escH,RICH_CSS} from './rich';import {getUi} from './ui';
+import type {Dev} from './dev';import {artHtml,resolve,styleCss,lineAttr} from './art';import type {El} from '../store';import {quizFrame} from './quiz';import {typo} from './typo';import {isRich,richHtml,parseLink,hrefOf,escH,RICH_CSS} from './rich';import {getUi} from './ui';
 /** quizFrame вставляется в страницу как QF (см. buildHtml) */
 declare const QF:(c:unknown,s:unknown,d:string)=>{h:number;els:{id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;c?:string;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;role?:string;qa?:string}[];kinds:string[]};
 /** Runs inside the generated page, so it must not reference anything outside itself. */
@@ -29,7 +29,7 @@ const at=(qa?' data-qa="'+qa+'" data-qb="'+bid+'"':'');if(qa==='phone')return '<
 return '<div class="el '+e.t+(clk?' qk':'')+'" style="'+st+'"'+at+'>'+esc(e.text)+'</div>'};
 const el=(e:E,dy:number)=>{const go=!!(e.go&&ids[e.go])||!!e.lk;const tp=e.tg?e.tg.split(':'):null;const on=!!tp&&(tabs[tp[0]]||0)===+tp[1];
 const st='left:'+e.x+'px;top:'+((e.t==='line'?e.y-6:e.y)+dy)+'px;width:'+e.w+'px;height:'+(e.t==='line'?12:e.h)+'px;'+(e.fs?'font-size:'+e.fs+'px;':'')+(e.b?'font-weight:700;':'')+(e.al==='c'?'text-align:center;justify-content:center;':e.al==='r'?'text-align:right;justify-content:flex-end;':'')+(e.k||'');
-const big=e.t==='btn'&&!tp&&e.w>=180&&e.h>=44;return '<div class="el '+e.t+(go?' go':'')+(big?' big':'')+(tp?' tg'+(on?' tgon':''):'')+'" style="'+st+'"'+(e.go&&ids[e.go]?' data-go="'+e.go+'"':'')+(e.lk||'')+(tp?' data-tg="'+esc(e.tg||'')+'"':'')+'>'+(e.t==='line'?'<i></i>':e.a?e.a:esc(e.text))+'</div>'};
+const big=e.t==='btn'&&!tp&&e.w>=180&&e.h>=44;return '<div class="el '+e.t+(go?' go':'')+(big?' big':'')+(tp?' tg'+(on?' tgon':''):'')+'" style="'+st+'"'+(e.go&&ids[e.go]?' data-go="'+e.go+'"':'')+(e.lk||'')+(tp?' data-tg="'+esc(e.tg||'')+'"':'')+'>'+(e.t==='line'?'<i'+(e.a||'')+'></i>':e.a?e.a:esc(e.text))+'</div>'};
 const box=(blocks:B[])=>{let y=0,x0=1e9,x1=0,y0=1e9,y1=0;for(const b of blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;const g=geo(b);for(const e of g.els){x0=Math.min(x0,e.x);x1=Math.max(x1,e.x+e.w);y0=Math.min(y0,y+e.y);y1=Math.max(y1,y+e.y+e.h)}y+=g.h}return x1>x0?{x0:x0-24,x1:x1+24,y0:y0-24,y1:y1+24}:{x0:0,x1:FW[dev],y0:0,y1:y}};
 const frame=(blocks:B[],k:number,lines:boolean,c?:{x0:number;x1:number;y0:number;y1:number})=>{let y=0,inner='';
 for(const b of blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;const g=geo(b);const h=g.h;inner+=g.els.map(e=>b.quiz?qel(e,y,b.id):el(e,y)).join('');y+=h;if(lines)inner+='<i class="bd" style="top:'+y+'px"></i>'}
@@ -135,7 +135,7 @@ export function buildHtml(p:Project,mode:'proto'|'report',o:{dev?:Dev;notes?:boo
 const ty=getUi().ty;const sheetIds=new Set(p.sheets.map(x=>x.id));const blkIds=new Set(p.sheets.flatMap(x=>x.blocks.map(b=>b.id)));
 const attr=(h:string):string=>{const l=parseLink(h);if(!l||!l.v.trim())return'';const v=l.v.trim();if(l.k==='sheet')return sheetIds.has(v)?' data-go="'+escH(v)+'"':'';if(l.k==='block')return blkIds.has(v)?' data-blk="'+escH(v)+'"':'';return' data-x="'+escH(hrefOf(l))+'"'};
 const ex=(a:El[])=>a.map(e0=>{const e=e0.text?{...e0,text:typo(e0.text,ty)}:e0;const l=parseLink(e0.ln);const go=l?(l.k==='sheet'&&sheetIds.has(l.v)?l.v:undefined):e0.go;const lk=l&&l.k!=='sheet'?attr(e0.ln as string):'';
-return{...resolve(e,p.style),go,...(lk?{lk}:{}),a:isRich(e0)?richHtml(e0,{tf:q=>typo(q,ty),link:attr}):artHtml(e),k:styleCss(e0,p.style)}});
+return{...resolve(e,p.style),go,...(lk?{lk}:{}),a:e0.t==='line'?lineAttr(e0):isRich(e0)?richHtml(e0,{tf:q=>typo(q,ty),link:attr}):artHtml(e),k:styleCss(e0,p.style)}});
 const data={name:p.name,sheets:p.sheets.map(s=>({id:s.id,name:s.name,kind:s.kind,blocks:s.blocks.map(b=>({id:b.id,dv:b.dv,sv:b.sv?{g:b.sv.g,i:b.sv.i,tab:b.sv.tab}:undefined,title:b.title,quiz:b.quiz,text:mode==='report'&&o.notes?b.text:'',h:b.h,els:b.quiz?{desktop:[],tablet:[],mobile:[]}:{desktop:ex(b.els.desktop),tablet:ex(b.els.tablet),mobile:ex(b.els.mobile)}}))}))};
 const json=JSON.stringify(data).replace(/</g,'\\u003c');
 const esc=p.name.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'} as Record<string,string>)[c]);

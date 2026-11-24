@@ -7,7 +7,7 @@ import {ICON_LIST} from '../../lib/icons';
 type Pick=(t:El['t'],x:Partial<El>)=>void;
 const TABS=['Фигуры','Иконки','Мокапы','Списки'] as const;
 /** default size of a new element by kind: circle stays round, arrow stays wide */
-export const SIZE:Record<string,[number,number]>={circle:[160,160],star:[160,160],poly:[160,160],cross:[120,120],tri:[160,140],diamond:[160,160],arrow:[220,100],tag:[220,64],ribbon:[240,64],pill:[220,64],para:[220,100],fold:[200,160],bubble:[240,140],
+export const SIZE:Record<string,[number,number]>={circle:[160,160],star:[160,160],poly:[160,160],cross:[120,120],ellipse:[200,120],capsule:[200,64],arr1:[200,40],arr2:[200,40],elbow:[200,120],arc:[200,120],tri:[160,140],diamond:[160,160],arrow:[220,100],tag:[220,64],ribbon:[240,64],pill:[220,64],para:[220,100],fold:[200,160],bubble:[240,140],
 phone:[220,440],browser:[480,320],laptop:[460,300],tablet:[340,440]};
 const sz=(k:string):[number,number]=>SIZE[k]??[200,140];
 const mk=(p:Partial<El>):El=>({id:'p',t:'shape',x:0,y:0,w:44,h:34,text:'',...p});

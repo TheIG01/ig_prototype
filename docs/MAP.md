@@ -609,3 +609,5 @@
 ### `src/features/canvas/RichEdit.tsx` — `RichEdit`: правка текста на месте с мини-панелью (Ctrl+B/I/U, Ctrl+Shift+X, Ctrl+K), запись в `El.rt`, `El.lt`
 ### `src/features/canvas/LinkEditor.tsx` — `LinkEditor`: выбор ссылки (страница, блок, адрес, телефон, почта); `El.ln`, старый `El.go` читается как ссылка на лист
 
+### `src/lib/frame.ts` (1.53)
+`FRAME` (настройки нового фрейма), `wrapInFrame` (Ctrl+Alt+G). Стрелки `arr1/arr2/elbow/arc` и `lineCss/lineAttr` лежат в `src/lib/art.ts`.

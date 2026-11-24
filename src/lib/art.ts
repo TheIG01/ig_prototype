@@ -12,7 +12,7 @@ export const defStyle=():PStyle=>({palette:['#0F172A','#2F6BFF','#64748B','#CBD5
 roles:{h1:{fs:56,b:true},h2:{fs:40,b:true},h3:{fs:24,b:true},p:{fs:16,b:false},sm:{fs:13,b:false}}});
 const stack=(f:string)=>`'${f}',${f==='Playfair Display'?'Georgia,serif':f==='JetBrains Mono'?'ui-monospace,monospace':'system-ui,sans-serif'}`;
 
-export const SHAPES:[string,string][]=[['rect','Квадрат'],['round','Скруглённая'],['pill','Пилюля'],['circle','Круг'],['tri','Треугольник'],['diamond','Ромб'],['poly','Многоугольник'],['star','Звезда'],['arrow','Стрелка'],['bubble','Облачко'],['tag','Плашка-указатель'],['ribbon','Лента'],['fold','Уголок'],['para','Параллелограмм'],['cross','Крест']];
+export const SHAPES:[string,string][]=[['rect','Квадрат'],['round','Скруглённая'],['pill','Пилюля'],['circle','Круг'],['tri','Треугольник'],['diamond','Ромб'],['poly','Многоугольник'],['star','Звезда'],['arrow','Стрелка'],['bubble','Облачко'],['tag','Плашка-указатель'],['ribbon','Лента'],['fold','Уголок'],['para','Параллелограмм'],['cross','Крест'],['ellipse','Эллипс'],['capsule','Капсула'],['arr1','Стрелка'],['arr2','Двойная стрелка'],['elbow','Стрелка с изломом'],['arc','Стрелка дугой']];
 export const MOCKS:[string,string][]=[['phone','Телефон'],['browser','Окно браузера'],['laptop','Ноутбук'],['tablet','Планшет']];
 export const BULLETS:[string,string][]=[['dot','Точки'],['dash','Тире'],['num','Номера'],['check','Галочки']];
 export const NAME_NEW:Record<string,string>={shape:'Фигура',icon:'Иконка',mock:'Мокап',list:'Список'};
@@ -26,10 +26,20 @@ for(let k=0;k<m;k++){const t=-Math.PI/2+k*2*Math.PI/m;const f=star&&k%2?.45:1;a.
 
 function shapeSvg(e:El):string{
 const w=Math.max(1,e.w),h=Math.max(1,e.h),sw=e.sw??1.5,i=sw/2,fill=e.fill??'#F1F5F9',stroke=e.stroke??'#0F172A';
-const at=`fill="${fill}" stroke="${sw?stroke:'none'}" stroke-width="${sw}" stroke-linejoin="round"`;const m=Math.min(w,h);let body='';const sh=e.sh??'rect';
+const da=e.dash==='dashed'?` stroke-dasharray="${n2(Math.max(4,sw*3))} ${n2(Math.max(3,sw*2))}"`:e.dash==='dotted'?` stroke-dasharray="0 ${n2(Math.max(3,sw*2))}" stroke-linecap="round"`:'';
+const at=`fill="${fill}" stroke="${sw?stroke:'none'}" stroke-width="${sw}" stroke-linejoin="round"${da}`;const m=Math.min(w,h);let body='';const sh=e.sh??'rect';
 const P=(a:[number,number][])=>`<polygon points="${pts(a)}" ${at}/>`;
-if(sh==='rect'||sh==='round'||sh==='pill'){const r=sh==='pill'?m/2:Math.min(e.r??(sh==='round'?16:0),m/2);body=`<rect x="${i}" y="${i}" width="${n2(w-sw)}" height="${n2(h-sw)}" rx="${n2(r)}" ${at}/>`}
-else if(sh==='circle')body=`<ellipse cx="${n2(w/2)}" cy="${n2(h/2)}" rx="${n2(w/2-i)}" ry="${n2(h/2-i)}" ${at}/>`;
+if(sh==='arr1'||sh==='arr2'||sh==='elbow'||sh==='arc'){const s2=e.sw??2,hs=Math.max(10,s2*4.5),x0=s2/2+1,x1=w-s2/2-1,ym=h/2,col=e.stroke&&e.stroke!=='none'?e.stroke:'#0F172A',top=s2/2+1,bot=h-s2/2-1;
+const d2=e.dash==='dashed'?` stroke-dasharray="${n2(Math.max(4,s2*3))} ${n2(Math.max(3,s2*2))}"`:e.dash==='dotted'?` stroke-dasharray="0 ${n2(Math.max(3,s2*2))}"`:'';
+const hd=(x:number,y:number,dir:number)=>`<polygon points="${pts([[x,y],[x-dir*hs,y-hs*.42],[x-dir*hs,y+hs*.42]])}" fill="${col}" stroke="${col}" stroke-width="1" stroke-linejoin="round"/>`;
+let d='',heads='';
+if(sh==='arr1'){d=`M${n2(x0)} ${n2(ym)}H${n2(x1-hs*.8)}`;heads=hd(x1,ym,1)}
+else if(sh==='arr2'){d=`M${n2(x0+hs*.8)} ${n2(ym)}H${n2(x1-hs*.8)}`;heads=hd(x1,ym,1)+hd(x0,ym,-1)}
+else if(sh==='elbow'){d=`M${n2(x0)} ${n2(top)}H${n2(w/2)}V${n2(bot)}H${n2(x1-hs*.8)}`;heads=hd(x1,bot,1)}
+else{d=`M${n2(x0)} ${n2(bot)}Q${n2(x0)} ${n2(top)} ${n2(x1-hs*.8)} ${n2(top)}`;heads=hd(x1,top,1)}
+body=`<path d="${d}" fill="none" stroke="${col}" stroke-width="${s2}" stroke-linecap="round" stroke-linejoin="round"${d2}/>${heads}`}
+else if(sh==='rect'||sh==='round'||sh==='pill'||sh==='capsule'){const r=sh==='pill'||sh==='capsule'?m/2:Math.min(e.r??(sh==='round'?16:0),m/2);body=`<rect x="${i}" y="${i}" width="${n2(w-sw)}" height="${n2(h-sw)}" rx="${n2(r)}" ${at}/>`}
+else if(sh==='circle'||sh==='ellipse')body=`<ellipse cx="${n2(w/2)}" cy="${n2(h/2)}" rx="${n2(w/2-i)}" ry="${n2(h/2-i)}" ${at}/>`;
 else if(sh==='tri')body=P([[w/2,i],[w-i,h-i],[i,h-i]]);
 else if(sh==='diamond')body=P([[w/2,i],[w-i,h/2],[w/2,h-i],[i,h/2]]);
 else if(sh==='poly')body=P(ngon(Math.max(3,Math.min(12,e.n??6)),w,h,i,false));
@@ -64,6 +74,10 @@ return `<svg width="${n2(e.w)}" height="${n2(e.h)}" viewBox="0 0 ${n2(e.w)} ${n2
 if(e.t==='icon'){const col=e.c??'#0F172A';return `<svg width="${n2(e.w)}" height="${n2(e.h)}" viewBox="0 0 24 24" fill="none" stroke="${col}" stroke-width="${e.sw??2}" stroke-linecap="round" stroke-linejoin="round" style="display:block">${ICONS[e.ic??'star']??ICONS.star}</svg>`}
 if(e.t==='mock')return `<svg width="${n2(e.w)}" height="${n2(e.h)}" viewBox="0 0 ${n2(e.w)} ${n2(e.h)}" style="display:block;overflow:visible">${mockSvg(e)}</svg>`;
 if(e.t==='list')return listHtml(e);return ''}
+
+/** вид линии (тип `line`): толщина, цвет, сплошная, пунктир или точки */
+export const lineCss=(e:El):Record<string,string>=>{const w=e.sw??2;return{borderTop:`${w}px ${e.dash==='dashed'?'dashed':e.dash==='dotted'?'dotted':'solid'} ${e.stroke&&e.stroke!=='none'?e.stroke:'#0F172A'}`,marginTop:`${-w/2}px`}};
+export const lineAttr=(e:El):string=>{if(e.sw===undefined&&!e.stroke&&!e.dash)return'';const o=lineCss(e);return` style="border-top:${o.borderTop};margin-top:${o.marginTop}"`};
 
 /** text styles of the project resolved into the element (role gives size and weight unless the element has its own) */
 export const resolve=(e:El,st?:PStyle):El=>{if(!e.role||!st)return e;const r=st.roles[e.role];return r?{...e,fs:e.fs??r.fs,b:e.b??r.b}:e};

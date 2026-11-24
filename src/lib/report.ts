@@ -3,7 +3,7 @@
 import {isRich,richHtml,linkOf,linkInfo,RICH_CSS} from './rich';
 import type {Project,Block,El} from '../store';
 import {FW,DEVN} from './dev';import type {Dev} from './dev';
-import {artHtml,resolve,styleCss,ROLES} from './art';import {quizFrame} from './quiz';import {typo} from './typo';import {getUi} from './ui';import {BASE_CSS} from './share';
+import {artHtml,resolve,styleCss,ROLES,lineAttr} from './art';import {quizFrame} from './quiz';import {typo} from './typo';import {getUi} from './ui';import {BASE_CSS} from './share';
 
 export type PageSize='a4'|'letter';
 export interface ReportOpts{size:PageSize;dev:Dev;notes:boolean;sheets?:string[];ver:string}
@@ -24,7 +24,7 @@ const geo=(b:Block,d:Dev):{h:number;els:El[]}=>{if(b.quiz){const o=quizFrame(b.q
 
 const elHtml=(e0:El,p:Project,ty:ReturnType<typeof getUi>['ty'])=>{const rich=isRich(e0);const e=e0.text?{...e0,text:typo(e0.text,ty)}:e0;const r=resolve(e,p.style);const a=e.t==='line'?'':artHtml(e);
 const st='left:'+e.x+'px;top:'+(e.t==='line'?e.y-6:e.y)+'px;width:'+e.w+'px;height:'+(e.t==='line'?12:e.h)+'px;'+(r.fs?'font-size:'+r.fs+'px;':'')+(r.b?'font-weight:700;':'')+(e.al==='c'?'text-align:center;justify-content:center;':e.al==='r'?'text-align:right;justify-content:flex-end;':'')+styleCss(e0,p.style);
-return'<div class="el '+e.t+'" style="'+st+'">'+(e.t==='line'?'<i></i>':rich?richHtml(e0,{tf:q=>typo(q,ty)}):a||esc(r.text))+'</div>'};
+return'<div class="el '+e.t+'" style="'+st+'">'+(e.t==='line'?'<i'+lineAttr(e)+'></i>':rich?richHtml(e0,{tf:q=>typo(q,ty)}):a||esc(r.text))+'</div>'};
 /** снимок блока или нескольких блоков подряд, масштаб k */
 const shot=(bs:Block[],d:Dev,k:number,p:Project,w=FW[d])=>{const ty=getUi().ty;let y=0;let inner='';const ys:number[]=[];for(const b of bs){const g=geo(b,d);ys.push(y);inner+=g.els.map(e=>elHtml({...e,y:e.y+y},p,ty)).join('');y+=g.h}
 return{h:y*k,ys,html:'<div class="fw" style="width:'+w*k+'px;height:'+y*k+'px"><div class="fi" style="width:'+w+'px;height:'+y+'px;transform:scale('+k+')">'+inner+'</div></div>'}};

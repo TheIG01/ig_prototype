@@ -1,7 +1,7 @@
 import {normRot} from '../../lib/elFx';
 import {useEffect,useRef,useState,lazy,Suspense} from 'react';
 import {pickIds,modsOf,curSel} from '../../lib/select';import {matchingIds,invertIds,wholeGroup} from '../../lib/layerKeys';import {useLayerUi} from '../../lib/layerUi';
-import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye,Download,FlipHorizontal,FlipVertical,Link2} from 'lucide-react';
+import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye,Download,FlipHorizontal,FlipVertical,Link2,Frame as FrameI} from 'lucide-react';import {FRAME,wrapInFrame} from '../../lib/frame';
 import type {LucideIcon} from 'lucide-react';
 import {useStore,FW,blockTops,onDev,DEVS} from '../../store';
 import {requestDelBlock,DevIcon} from '../blocks/DelBlock';
@@ -14,8 +14,8 @@ import {VList} from './VList';import {LayerBtns} from './LayerBtns';const QuizEd
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
 const STY=['fs','b','al','acc','fill','stroke','sw','r','op','c'] as const;let styClip:Partial<El>|null=null;
-const KEYS:Record<string,ET|'sel'>={KeyV:'sel',KeyT:'text',KeyR:'rect',KeyB:'btn',KeyF:'input',KeyI:'img',KeyL:'line'};
-const HK:Record<string,string>={sel:'V',text:'T',rect:'R',btn:'B',input:'F',img:'I',line:'L'};
+const KEYS:Record<string,ET|'sel'>={KeyV:'sel',KeyT:'text',KeyR:'rect',KeyB:'btn',KeyU:'input',KeyI:'img',KeyL:'line'};
+const HK:Record<string,string>={sel:'V',text:'T',rect:'R',btn:'B',input:'U',img:'I',line:'L'};
 const snap=(v:number,raw:boolean)=>{const u=getUi();return raw||!u.snap?Math.round(v):Math.round(v/u.gs)*u.gs};
 const LI:Record<string,LucideIcon>={text:Type,rect:Square,btn:RectangleHorizontal,input:TextCursorInput,img:Img,line:Minus};
 type Rg={x:[number,number];y:[number,number]};
@@ -91,6 +91,7 @@ if(e.code==='KeyA'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();if(!selId
 if(e.code==='KeyA'&&editing&&e.shiftKey&&!e.altKey){e.preventDefault();if(!selIds.length){toast('Выдели элемент, чтобы выделить остальные');return}s.setMulti(invertIds(els,selIds));return}
 if(e.code==='KeyR'&&editing&&!e.shiftKey&&!e.altKey){e.preventDefault();if(!cur){toast('Выдели элемент, чтобы переименовать слой');return}useLayerUi.getState().setRen(cur.id);return}
 if(e.code==='KeyA'&&editing){e.preventDefault();s.setMulti(els.filter(x=>!x.lk).map(x=>x.id));return}
+if(e.code==='KeyG'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();if(!selIds.length){toast('Выдели элементы, чтобы собрать их во фрейм');return}if(wrapInFrame(dev,selIds,els,s.editId??undefined))toast('Фрейм создан, элементы сгруппированы');return}
 if(e.code==='KeyG'&&editing&&e.shiftKey&&selIds.length){e.preventDefault();s.groupEls(dev,selIds,false);return}
 if(e.code==='KeyG'&&editing&&selIds.length>1){e.preventDefault();s.groupEls(dev,selIds,true);return}
 if(e.altKey&&e.shiftKey&&editing&&selIds.length>2&&(e.code==='KeyH'||e.code==='KeyV')){e.preventDefault();s.alignEls(dev,selIds,e.code==='KeyH'?'dh':'dv');return}
@@ -125,6 +126,7 @@ if(e.code==='KeyE'&&!e.shiftKey){e.preventDefault();if(editing)setIns(v=>!v);els
 if(e.code==='KeyO'&&!e.shiftKey){e.preventDefault();if(editing)pick('shape',{sh:'circle',w:120,h:120});else if(curB){s.enterEdit(curB.id);pick('shape',{sh:'circle',w:120,h:120})}return}
 if(e.shiftKey&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&(e.code==='KeyH'||e.code==='KeyV')&&editing&&selIds.length){e.preventDefault();const one=selIds.length===1?els.find(x=>x.id===selIds[0]):undefined;if(one&&!one.g){const k=e.code==='KeyH'?'flipX':'flipY';s.updEl(dev,one.id,{[k]:one[k]?undefined:1} as Partial<El>);return}s.flipEls(dev,selIds,e.code==='KeyH'?'x':'y');return}
 if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey&&editing&&selIds.length&&e.key.startsWith('Arrow')){e.preventDefault();s.flipEls(dev,selIds,e.key==='ArrowLeft'||e.key==='ArrowRight'?'x':'y',true);toast('Выбранное перенесено на другую сторону блока');return}
+if(e.code==='KeyF'&&!e.shiftKey&&!e.altKey){if(editing)pick('rect',FRAME);else if(curB){s.enterEdit(curB.id);pick('rect',FRAME)}return}
 const tk=e.shiftKey?undefined:KEYS[e.code];if(tk){if(editing)pick(tk);else if(curB){s.enterEdit(curB.id);pick(tk)}return}
 if(e.code==='Equal'||e.code==='NumpadAdd'){setZ(v=>clampZ(v+.1));return}
 if(e.code==='Minus'||e.code==='NumpadSubtract'){setZ(v=>clampZ(v-.1));return}
@@ -220,7 +222,7 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 {vm&&<ViewMenu onClose={()=>setVm(false)}/>}
 {editing&&ins&&<InsertPanel onPick={place} onClose={()=>setIns(false)}/>}
 {editing&&tool!=='sel'&&<div className="armhint">{tool==='line'?'Потяни, чтобы провести линию':'Потяни на холсте, чтобы нарисовать'} · клик — размер по умолчанию · Shift — пропорции · Alt — без сетки · Esc — отмена</div>}
-<div className="tools">{editing&&<>{TOOLS.map(([k,l,I])=><button key={k} data-k={HK[k]} className={tool===k?'on':''} title={`${l} (${HK[k]})`} onClick={()=>pick(k)}><I size={18}/></button>)}<button data-k="E" className={ins||['shape','icon','mock','list'].includes(tool)?'on':''} title="Элементы: фигуры, иконки, мокапы (E)" onClick={()=>setIns(v=>!v)}><Shapes size={18}/></button><i className="vr"/></>}
+<div className="tools">{editing&&<>{TOOLS.map(([k,l,I])=><button key={k} data-k={HK[k]} className={tool===k?'on':''} title={`${l} (${HK[k]})`} onClick={()=>pick(k)}><I size={18}/></button>)}<button data-k="F" className={tool==='rect'&&arm.nm==='Фрейм'?'on':''} title="Фрейм (F). Выдели элементы и нажми Ctrl+Alt+G, чтобы собрать их во фрейм" onClick={()=>pick('rect',FRAME)}><FrameI size={18}/></button><button data-k="E" className={ins||['shape','icon','mock','list'].includes(tool)?'on':''} title="Элементы: фигуры, иконки, мокапы (E)" onClick={()=>setIns(v=>!v)}><Shapes size={18}/></button><i className="vr"/></>}
 <button title="Уменьшить (−)" onClick={()=>setZ(clampZ(z-.1))}><Minus size={16}/></button><button className="zv" title="100% (Shift+0)" onClick={()=>setZ(1)}>{Math.round(z*100)}%</button><button title="Увеличить (+)" onClick={()=>setZ(clampZ(z+.1))}><Plus size={16}/></button><button title="Вписать (Shift+1)" onClick={fit}><Maximize size={16}/></button><i className="vr"/><button className={vm?'on':''} title="Вид: линейки, сетка, направляющие, колонки" onClick={()=>setVm(v=>!v)}><Eye size={18}/></button></div></>}
 
 /** этапы: число 3–7 и доп. блок в этап */
