@@ -13,3 +13,7 @@
 .lt .row.sm span:not(.lyb):not(.lyb-i){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .lt-tabs{display:flex;margin-bottom:6px}
 .lt-tabs button{flex:1}
+.lt .row[draggable=true]{cursor:grab}
+.lt .dv-above{box-shadow:inset 0 2px 0 var(--accent,#2F6BFF)}
+.lt .dv-below{box-shadow:inset 0 -2px 0 var(--accent,#2F6BFF)}
+.lt .dv-into{background:rgba(47,107,255,.12)}

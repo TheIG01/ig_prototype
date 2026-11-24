@@ -90,7 +90,7 @@
 - `elInner` — стр. 18
 - `ElInner` — стр. 19
 
-### `src/features/canvas/layers.css` — 15 строк
+### `src/features/canvas/layers.css` — 19 строк
 
 ### `src/features/pin/Pin.tsx` — 21 строк
 - `Pin` — стр. 6
@@ -110,9 +110,10 @@
 ### `src/features/shell/ErrorGate.tsx` — 21 строк
 - `ErrorGate` — стр. 8
 
-### `src/features/shell/LayersTab.tsx` — 29 строк
+### `src/features/shell/LayersTab.tsx` — 33 строк
 - `IC` — стр. 8
 - `NM` — стр. 9
+- `dnd` — стр. 20 (перетаскивание слоя: выше, ниже, в папку)
 - `LayersTab` — стр. 11
 
 ### `src/features/shell/ReportDialog.tsx` — 34 строк
@@ -586,6 +587,7 @@
 - `L` — стр. 80
 - `useStore` — стр. 89
 - `L` — стр. 162
+- `moveLayer`, `toggleFold` — действия внутри `useStore` (стр. 185, рядом с `groupEls`); поле `Block.fo` (открытые папки)
 
 ### `src/styles.css` — 666 строк
 
