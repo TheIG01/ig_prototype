@@ -5,7 +5,7 @@ import type {Dev} from './dev';import {artHtml,resolve,styleCss} from './art';im
 declare const QF:(c:unknown,s:unknown,d:string)=>{h:number;els:{id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;c?:string;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;role?:string;qa?:string}[];kinds:string[]};
 /** Runs inside the generated page, so it must not reference anything outside itself. */
 function runtime(){
-type E={id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;acc?:boolean;go?:string;a?:string;k?:string;tg?:string};
+type E={id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;acc?:boolean;go?:string;a?:string;k?:string;tg?:string;hid?:1};
 type B={id:string;title:string;text:string;sv?:{g:string;i:number;tab:boolean};dv?:string[];h:Record<string,number>;els:Record<string,E[]>;quiz?:{auto:boolean;steps:{multi?:boolean;skip?:boolean}[];phone:{mins:number};load:{lines:string[]}}};
 type QS={pos:number;ans:number[][];phone:string;consent:boolean;err:string;li:number;t0:number};
 const qs:Record<string,QS>={};const qst=(b:B):QS=>qs[b.id]||(qs[b.id]={pos:0,ans:[],phone:'',consent:true,err:'',li:0,t0:0});
