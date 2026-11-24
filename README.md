@@ -1,5 +1,8 @@
 # ig_prototype
 
-Личный сервис прототипов сайтов. Только статика, GitHub Pages, без серверов.
+Личный сервис прототипов сайтов. Только статика, GitHub Pages, без серверов. Все данные хранятся в браузере.
 
-Разработка идёт через ИИ-чаты. Порядок работы: `docs/prompts/PROMPT.md`. Текущее состояние: `docs/PROGRESS.md`. План: `docs/prompts/roadmap.md`.
+- Гайд для новичка: `docs/GUIDE.md`
+- Текущее состояние: `docs/PROGRESS.md`
+- План: `docs/prompts/roadmap.md`
+- Порядок работы ИИ: `docs/prompts/PROMPT.md`

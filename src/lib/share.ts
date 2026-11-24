@@ -1,11 +1,11 @@
 // One renderer for everything the client sees: in-app preview (iframe), downloadable HTML, PDF report (print).
 import type {Project} from '../store';
-import type {Dev} from './dev';import {artHtml,resolve,styleCss} from './art';import type {El} from '../store';import {quizFrame} from './quiz';import {typo} from './typo';import {getUi} from './ui';
+import type {Dev} from './dev';import {artHtml,resolve,styleCss} from './art';import type {El} from '../store';import {quizFrame} from './quiz';import {typo} from './typo';import {isRich,richHtml,parseLink,hrefOf,escH,RICH_CSS} from './rich';import {getUi} from './ui';
 /** quizFrame вставляется в страницу как QF (см. buildHtml) */
 declare const QF:(c:unknown,s:unknown,d:string)=>{h:number;els:{id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;c?:string;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;role?:string;qa?:string}[];kinds:string[]};
 /** Runs inside the generated page, so it must not reference anything outside itself. */
 function runtime(){
-type E={id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;acc?:boolean;go?:string;a?:string;k?:string;tg?:string;hid?:1};
+type E={id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;acc?:boolean;go?:string;lk?:string;a?:string;k?:string;tg?:string;hid?:1};
 type B={id:string;title:string;text:string;sv?:{g:string;i:number;tab:boolean};dv?:string[];h:Record<string,number>;els:Record<string,E[]>;quiz?:{auto:boolean;steps:{multi?:boolean;skip?:boolean}[];phone:{mins:number};load:{lines:string[]}}};
 type QS={pos:number;ans:number[][];phone:string;consent:boolean;err:string;li:number;t0:number};
 const qs:Record<string,QS>={};const qst=(b:B):QS=>qs[b.id]||(qs[b.id]={pos:0,ans:[],phone:'',consent:true,err:'',li:0,t0:0});
@@ -27,9 +27,9 @@ const qel=(e0:E,dy:number,bid:string)=>{const e=e0 as E&{qa?:string;fill?:string
 const st='left:'+e.x+'px;top:'+(e.y+dy)+'px;width:'+e.w+'px;height:'+e.h+'px;'+(e.fs?'font-size:'+e.fs+'px;':'')+(e.b?'font-weight:700;':'')+(e.al==='c'?'text-align:center;justify-content:center;':e.al==='r'?'text-align:right;justify-content:flex-end;':'')+kq(e);
 const at=(qa?' data-qa="'+qa+'" data-qb="'+bid+'"':'');if(qa==='phone')return '<input class="el input qin" type="tel" inputmode="tel" autocomplete="tel" style="'+st+'"'+at+' placeholder="'+esc(e.text)+'" value="'+esc(qfind(bid)?qst(qfind(bid) as B).phone:'')+'">';
 return '<div class="el '+e.t+(clk?' qk':'')+'" style="'+st+'"'+at+'>'+esc(e.text)+'</div>'};
-const el=(e:E,dy:number)=>{const go=!!(e.go&&ids[e.go]);const tp=e.tg?e.tg.split(':'):null;const on=!!tp&&(tabs[tp[0]]||0)===+tp[1];
+const el=(e:E,dy:number)=>{const go=!!(e.go&&ids[e.go])||!!e.lk;const tp=e.tg?e.tg.split(':'):null;const on=!!tp&&(tabs[tp[0]]||0)===+tp[1];
 const st='left:'+e.x+'px;top:'+((e.t==='line'?e.y-6:e.y)+dy)+'px;width:'+e.w+'px;height:'+(e.t==='line'?12:e.h)+'px;'+(e.fs?'font-size:'+e.fs+'px;':'')+(e.b?'font-weight:700;':'')+(e.al==='c'?'text-align:center;justify-content:center;':e.al==='r'?'text-align:right;justify-content:flex-end;':'')+(e.k||'');
-const big=e.t==='btn'&&!tp&&e.w>=180&&e.h>=44;return '<div class="el '+e.t+(go?' go':'')+(big?' big':'')+(tp?' tg'+(on?' tgon':''):'')+'" style="'+st+'"'+(go?' data-go="'+e.go+'"':'')+(tp?' data-tg="'+esc(e.tg||'')+'"':'')+'>'+(e.t==='line'?'<i></i>':e.a?e.a:esc(e.text))+'</div>'};
+const big=e.t==='btn'&&!tp&&e.w>=180&&e.h>=44;return '<div class="el '+e.t+(go?' go':'')+(big?' big':'')+(tp?' tg'+(on?' tgon':''):'')+'" style="'+st+'"'+(e.go&&ids[e.go]?' data-go="'+e.go+'"':'')+(e.lk||'')+(tp?' data-tg="'+esc(e.tg||'')+'"':'')+'>'+(e.t==='line'?'<i></i>':e.a?e.a:esc(e.text))+'</div>'};
 const box=(blocks:B[])=>{let y=0,x0=1e9,x1=0,y0=1e9,y1=0;for(const b of blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;const g=geo(b);for(const e of g.els){x0=Math.min(x0,e.x);x1=Math.max(x1,e.x+e.w);y0=Math.min(y0,y+e.y);y1=Math.max(y1,y+e.y+e.h)}y+=g.h}return x1>x0?{x0:x0-24,x1:x1+24,y0:y0-24,y1:y1+24}:{x0:0,x1:FW[dev],y0:0,y1:y}};
 const frame=(blocks:B[],k:number,lines:boolean,c?:{x0:number;x1:number;y0:number;y1:number})=>{let y=0,inner='';
 for(const b of blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;const g=geo(b);const h=g.h;inner+=g.els.map(e=>b.quiz?qel(e,y,b.id):el(e,y)).join('');y+=h;if(lines)inner+='<i class="bd" style="top:'+y+'px"></i>'}
@@ -50,7 +50,7 @@ const r=fi.getBoundingClientRect();const k=r.width/FW[dev];const vb=innerHeight;
 for(const p of pins){const t=r.top+p.y0*k,b=r.top+p.y1*k;if(t<mid&&b>mid){hit=p;break}}
 if(!hit){pn.className='pin';return}
 const bt=r.top+(hit.y0+hit.e.y)*k,bb=bt+hit.e.h*k;const seen=bt>=0&&bb<=vb-8;
-const key=hit.e.text+'|'+(hit.e.go||'')+'|'+(hit.e.tg||'');if(pn.getAttribute('data-k')!==key){pn.setAttribute('data-k',key);pn.innerHTML='<button class="pb"'+(hit.e.go&&ids[hit.e.go]?' data-go="'+hit.e.go+'"':'')+(hit.e.tg?' data-tg="'+esc(hit.e.tg)+'"':'')+'>'+esc(hit.e.text)+'</button>'}
+const key=hit.e.text+'|'+(hit.e.go||'')+'|'+(hit.e.lk||'')+'|'+(hit.e.tg||'');if(pn.getAttribute('data-k')!==key){pn.setAttribute('data-k',key);pn.innerHTML='<button class="pb"'+(hit.e.go&&ids[hit.e.go]?' data-go="'+hit.e.go+'"':'')+(hit.e.lk||'')+(hit.e.tg?' data-tg="'+esc(hit.e.tg)+'"':'')+'>'+esc(hit.e.text)+'</button>'}
 pn.className='pin'+(seen&&hit!==pins[0]?'':' on')};
 const render=()=>{if(mode==='report')report();else{proto();fade=false;pinUpd()}};
 let raf=0;const tick=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;if(mode!=='report')pinUpd()})};
@@ -72,11 +72,18 @@ if(act==='restart'){delete qs[bid];render()}};
 setInterval(()=>{document.querySelectorAll('[data-qa^="timer:"]').forEach(n=>{const b=qfind(n.getAttribute('data-qb')||'');if(!b||!b.quiz)return;const S=qst(b);if(!S.t0)S.t0=Date.now();const left=Math.max(0,b.quiz.phone.mins*60-Math.floor((Date.now()-S.t0)/1000));const v=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');n.textContent=(n.textContent||'').replace(/\d\d:\d\d/,v)})},1000);
 document.addEventListener('input',e=>{const t=e.target as HTMLInputElement;if(t&&t.getAttribute&&t.getAttribute('data-qa')==='phone'){const b=qfind(t.getAttribute('data-qb')||'');if(b)qst(b).phone=t.value}});
 const go=(id:string)=>{const s=P.sheets.find(x=>x.id===id);if(!s)return;fade=true;if(s.kind==='popup')pop=id;else{sc[sid]=scrollY;if(sid!==id)hist.push(sid);sid=id;pop='';scrollTo(0,0)}render()};
+const goBlk=(bid:string)=>{const s=P.sheets.find(x=>x.blocks.some(b=>b.id===bid));if(!s)return;if(s.kind==='popup'){go(s.id);return}if(sid!==s.id||pop)go(s.id);
+setTimeout(()=>{let y=0;for(const b of s.blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;if(!vis(b))continue;if(b.id===bid)break;y+=geo(b).h}
+const fi=document.querySelector('.fi') as HTMLElement|null;if(!fi)return;const q=fi.getBoundingClientRect();const k=fi.offsetHeight?q.height/fi.offsetHeight:1;scrollTo({top:Math.max(0,scrollY+q.top+y*k-56),behavior:'smooth'})},60)};
+const ext=(u:string)=>{if(parent!==window){toast('Адрес откроется в готовом сайте: '+u.replace(/^mailto:|^tel:/,''));return}if(/^(tel|mailto):/.test(u))location.href=u;else open(u,'_blank','noopener')};
 const back=()=>{if(pop){pop='';render();return}const p=hist.pop();if(p){sc[sid]=scrollY;sid=p;fade=true;render();scrollTo(0,sc[p]||0);tick()}else if(parent!==window)parent.postMessage('igp-close','*')};
 document.addEventListener('click',e=>{if(mode==='report')return;const t=e.target as HTMLElement;
 const qa=t.closest('[data-qa]');if(qa&&qa.tagName!=='INPUT'){qact(qa.getAttribute('data-qb')||'',qa.getAttribute('data-qa')||'');return}if(qa)return;
 const tb=t.closest('[data-tg]');if(tb){const q=(tb.getAttribute('data-tg')||'').split(':');tabs[q[0]]=+q[1];fade=true;render();return}
+const bk=t.closest('[data-blk]');if(bk){goBlk(bk.getAttribute('data-blk')||'');return}
+const xx=t.closest('[data-x]');if(xx){ext(xx.getAttribute('data-x')||'');return}
 const g=t.closest('[data-go]');if(g){go(g.getAttribute('data-go')||'');return}
+const ck=t.closest('.rtx.ck .rl');if(ck){ck.classList.toggle('on');return}
 const bn=t.closest('.el.btn,.pb');if(bn&&!bn.hasAttribute('data-tg')){toast('Кнопка без перехода: ссылку задают в редакторе');return}
 const d=t.closest('[data-dev]');if(d){dev=d.getAttribute('data-dev')||dev;render();return}
 const a=t.closest('[data-act]');if(!a)return;const act=a.getAttribute('data-act');
@@ -123,9 +130,12 @@ body[data-mode=report] .pin,body[data-mode=report] .el.btn::after{display:none}
 body[data-mode=report]{background:#fff;padding:0 4px}.cover{padding:36px 0 12px}.cover h1{margin:0 0 6px;font:700 30px Inter,system-ui,sans-serif}.cover p{margin:0;color:#64748B}
 section h2{font:700 18px Inter,sans-serif;margin:28px 0 12px;break-after:avoid}figure{margin:0 0 20px;break-inside:avoid}figcaption{font:600 12px Inter,sans-serif;color:#64748B;margin-bottom:6px}
 body[data-mode=report] .fw{margin:0;box-shadow:none;border:1px solid #CBD5E1}.nt{white-space:pre-wrap;font-size:12px;color:#334155;margin:8px 0 0}
-@page{size:A4 landscape;margin:12mm}`;
+@page{size:A4 landscape;margin:12mm}`+RICH_CSS+`.rtl{cursor:pointer}.hint .rtl{outline:2px dashed #2F6BFF;outline-offset:2px}`;
 export function buildHtml(p:Project,mode:'proto'|'report',o:{dev?:Dev;notes?:boolean}={}){
-const ty=getUi().ty;const ex=(a:El[])=>a.map(e0=>{const e=e0.text?{...e0,text:typo(e0.text,ty)}:e0;return{...resolve(e,p.style),a:artHtml(e),k:styleCss(e0,p.style)}});
+const ty=getUi().ty;const sheetIds=new Set(p.sheets.map(x=>x.id));const blkIds=new Set(p.sheets.flatMap(x=>x.blocks.map(b=>b.id)));
+const attr=(h:string):string=>{const l=parseLink(h);if(!l||!l.v.trim())return'';const v=l.v.trim();if(l.k==='sheet')return sheetIds.has(v)?' data-go="'+escH(v)+'"':'';if(l.k==='block')return blkIds.has(v)?' data-blk="'+escH(v)+'"':'';return' data-x="'+escH(hrefOf(l))+'"'};
+const ex=(a:El[])=>a.map(e0=>{const e=e0.text?{...e0,text:typo(e0.text,ty)}:e0;const l=parseLink(e0.ln);const go=l?(l.k==='sheet'&&sheetIds.has(l.v)?l.v:undefined):e0.go;const lk=l&&l.k!=='sheet'?attr(e0.ln as string):'';
+return{...resolve(e,p.style),go,...(lk?{lk}:{}),a:isRich(e0)?richHtml(e0,{tf:q=>typo(q,ty),link:attr}):artHtml(e),k:styleCss(e0,p.style)}});
 const data={name:p.name,sheets:p.sheets.map(s=>({id:s.id,name:s.name,kind:s.kind,blocks:s.blocks.map(b=>({id:b.id,dv:b.dv,sv:b.sv?{g:b.sv.g,i:b.sv.i,tab:b.sv.tab}:undefined,title:b.title,quiz:b.quiz,text:mode==='report'&&o.notes?b.text:'',h:b.h,els:b.quiz?{desktop:[],tablet:[],mobile:[]}:{desktop:ex(b.els.desktop),tablet:ex(b.els.tablet),mobile:ex(b.els.mobile)}}))}))};
 const json=JSON.stringify(data).replace(/</g,'\\u003c');
 const esc=p.name.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'} as Record<string,string>)[c]);

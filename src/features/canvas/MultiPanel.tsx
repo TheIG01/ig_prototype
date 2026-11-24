@@ -1,6 +1,6 @@
 import {AlignStartVertical,AlignCenterVertical,AlignEndVertical,AlignStartHorizontal,AlignCenterHorizontal,AlignEndHorizontal,AlignHorizontalSpaceBetween,AlignVerticalSpaceBetween,Group,Ungroup,Copy,Trash2,X,ArrowLeftRight,ArrowUpDown,FlipHorizontal,FlipVertical,Replace,Bold,AlignLeft,AlignCenter,AlignRight} from 'lucide-react';
 import {useStore} from '../../store';import {useLive} from '../../lib/live';import {VList} from './VList';
-import type {Dev,El} from '../../store';import {Color} from './ElPanel';
+import type {Dev,El} from '../../store';import {Color} from './ElPanel';import {SelColors} from './FxSecs';
 import {uid} from '../../lib/uid';
 import {NAME_NEW} from '../../lib/art';import {LayPanel} from './LayPanel';
 const NM:Record<string,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW};
@@ -34,6 +34,6 @@ return<aside className="panel"><div className="ph"><b>Выбрано {ids.length
 <div className="sec"><h4>Отражение и порядок</h4><div className="btnrow"><button className="btn" title="Отразить выбранное слева направо (Shift+H)" onClick={()=>s.flipEls(dev,ids,'x')}><FlipHorizontal size={16}/>Слева направо</button><button className="btn" title="Отразить выбранное сверху вниз (Shift+V)" onClick={()=>s.flipEls(dev,ids,'y')}><FlipVertical size={16}/>Сверху вниз</button></div>
 <div className="btnrow"><button className="btn" title="Перенести выбранное на противоположную сторону блока (Ctrl+Shift+←/→)" onClick={()=>s.flipEls(dev,ids,'x',true)}><ArrowLeftRight size={16}/>Другая сторона</button><button className="btn" disabled={!pair} title="Две группы или два элемента меняются местами" onClick={()=>pair&&s.swapEls(dev,pair[0],pair[1])}><Replace size={16}/>Поменять местами</button></div>
 <p className="hint">Группа отражается целиком, текст меняет выравнивание. «Поменять местами» работает для двух выбранных групп или элементов</p></div>
-<LayPanel dev={dev} ids={ids}/>
+<LayPanel dev={dev} ids={ids}/><SelColors dev={dev} ids={ids}/>
 <div className="sec"><div className="btnrow"><button className="btn" title="Дублировать (Ctrl+D)" onClick={()=>s.dupEls(dev,ids,16,ids.map(()=>uid()))}><Copy size={16}/>Дублировать</button><button className="btn danger" title="Удалить (Delete)" onClick={()=>s.delEls(dev,ids)}><Trash2 size={16}/>Удалить</button></div></div>
 <div className="sec"><h4>Слои выделения</h4><VList items={[...els].reverse()} row={x=><button className="row sm" title="Ctrl: убрать из выделения" onClick={e=>s.setMulti(e.ctrlKey||e.metaKey?ids.filter(i=>i!==x.id):[x.id])}><span>{NM[x.t]}{x.text?` · ${x.text.slice(0,24)}`:''}{x.g?' · группа':''}</span></button>}/></div></aside>}

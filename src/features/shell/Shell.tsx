@@ -1,5 +1,5 @@
 import {useState,useRef,useEffect,lazy,Suspense} from 'react';
-import {LayersTab} from './LayersTab';
+import {LayersTab} from './LayersTab';import {useLayerUi} from '../../lib/layerUi';
 import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2} from 'lucide-react';
 import {useStore,PRESETS,FW,onDev} from '../../store';
 import {DEVS_SHORT} from '../../lib/dev';
@@ -20,10 +20,11 @@ const TITLE:Record<string,string>={proj:'Новый проект',sheet:'Нов�
 const DEVS:Dev[]=['desktop','tablet','mobile'];
 const HELP:[string,[string,string][]][]=[
 ['Инструменты',[['V','Выбор'],['T','Текст'],['R','Прямоугольник'],['B','Кнопка'],['F','Поле ввода'],['I','Изображение'],['L','Линия'],['O','Круг']]],
-['Правка',[['Ctrl+Z','Отменить'],['Ctrl+Shift+Z','Повторить'],['Ctrl+C / X / V','Копировать, вырезать, вставить'],['Ctrl+D','Дублировать'],['Ctrl+Alt+C / V','Копировать и вставить стиль'],['Shift+H / V','Отразить выбранное слева направо / сверху вниз'],['Ctrl+Shift+стрелки','Перенести выбранное на другую сторону блока'],['Ctrl+Alt+Shift+H / V','Равные промежутки (от трёх элементов)'],['Delete','Удалить'],['Двойной клик / Enter','Править текст прямо на элементе'],['Esc / Ctrl+Enter','Закончить правку текста'],['Tab','Следующий элемент'],['Esc','Снять выделение'],['Shift+клик','Добавить в выделение или убрать'],['Рамка по пустому месту','Выделить несколько'],['Ctrl+A','Выделить всё в блоке'],['Ctrl+G / Ctrl+Shift+G','Сгруппировать / разгруппировать'],['Ctrl+клик','Элемент внутри группы'],['Alt+перетаскивание','Копия элемента'],['Shift+A','Авто-лейаут: включить или убрать'],['Ctrl+перетаскивание','Переставить элемент внутри авто-лейаута'],['Удерживать Alt','Расстояния до соседних элементов и краёв блока'],['Alt+A / D / W / S','Выровнять влево / вправо / вверх / вниз'],['Alt+H / V','Выровнять по центру'],['Ctrl+Alt+H / V','Равные промежутки'],['Shift+угол','Менять размер с пропорциями']]],
+['Правка',[['Ctrl+Z','Отменить'],['Ctrl+Shift+Z','Повторить'],['Ctrl+C / X / V','Копировать, вырезать, вставить'],['Ctrl+D','Дублировать'],['Ctrl+Alt+C / V','Копировать и вставить стиль'],['Shift+H / V','Отразить выбранное слева направо / сверху вниз'],['Ctrl+Shift+стрелки','Перенести выбранное на другую сторону блока'],['Alt+Shift+H / V','Равные промежутки (от трёх элементов)'],['Alt+A / D / W / S / H / V','Выровнять влево, вправо, вверх, вниз, по центру'],['Shift+X','Поменять заливку и обводку'],['Alt+/','Убрать заливку'],['Shift+/','Убрать обводку'],['1 … 9, 0','Прозрачность 10% … 90%, 0 это 100%'],['Shift при масштабе','Сохранять пропорции'],['Alt при масштабе','Менять размер от центра'],['Alt + перетаскивание','Скопировать элемент'],['Ctrl+Alt+Shift+H / V','Равные промежутки (от трёх элементов)'],['Delete','Удалить'],['Двойной клик / Enter','Править текст прямо на элементе'],['Esc / Ctrl+Enter','Закончить правку текста'],['Tab','Следующий элемент'],['Esc','Снять выделение'],['Shift+клик','Добавить в выделение или убрать'],['Рамка по пустому месту','Выделить несколько'],['Ctrl+A','Выделить всё в блоке'],['Ctrl+G / Ctrl+Shift+G','Сгруппировать / разгруппировать'],['Ctrl+клик','Элемент внутри группы'],['Alt+перетаскивание','Копия элемента'],['Shift+A','Авто-лейаут: включить или убрать'],['Ctrl+перетаскивание','Переставить элемент внутри авто-лейаута'],['Удерживать Alt','Расстояния до соседних элементов и краёв блока'],['Alt+A / D / W / S','Выровнять влево / вправо / вверх / вниз'],['Alt+H / V','Выровнять по центру'],['Ctrl+Alt+H / V','Равные промежутки'],['Shift+угол','Менять размер с пропорциями'],['Ctrl+R','Переименовать слой'],['Enter / Shift+Enter','В группу / на уровень выше'],['Ctrl+Alt+A','Выделить такие же'],['Ctrl+Shift+A','Выделить всё, кроме выбранного']]],
 ['Блоки',[['A','Добавить блок: с нуля или из библиотеки'],['Enter','Войти в блок (редактировать)'],['Ctrl+Enter','Сохранить и выйти из блока'],['Alt+↑ / ↓','Блок выше / ниже'],['Ctrl+D','Дублировать блок или элемент'],['Esc','Шаг вверх: элемент → блок → ничего']]],
-['Положение',[['Ctrl+B','Жирный текст'],['Стрелки','Сдвиг на 1 px'],['Shift+стрелки','Сдвиг на 8 px'],['Alt при перетаскивании','Без привязки'],['Ctrl+]','Слой выше'],['Ctrl+[','Слой ниже'],['Ctrl+Shift+]','На передний план'],['Ctrl+Shift+[','На задний план']]],
-['Вид и команды',[['P','Просмотр для заказчика'],['Пробел + перетаскивание','Панорама'],['Ctrl + колесо','Масштаб'],['+ / −','Масштаб'],['Shift+0','100%'],['Shift+1','Вписать'],['Shift+R','Линейки'],["Ctrl+'",'Точечная сетка'],['Ctrl+;','Направляющие'],["Ctrl+Shift+'",'Колонки'],['Alt+1 / 2 / 3','Desktop, Tablet, Mobile'],['Ctrl+\\','Панель проектов'],['Ctrl+K','Команды'],['?','Горячие клавиши']]]];
+['Текст (двойной клик по тексту)',[['Ctrl+B / I / U','Жирный, курсив, подчёркнутый'],['Ctrl+Shift+X','Зачёркнутый'],['Ctrl+K','Ссылка на выделенное слово'],['Enter','Новая строка'],['Ctrl+Enter или Esc','Закончить правку']]],
+['Положение',[['Ctrl+B','Жирный текст (элемент целиком)'],['Стрелки','Сдвиг на 1 px'],['Shift+стрелки','Сдвиг на 8 px'],['Alt при перетаскивании','Без привязки'],['Ctrl+]','Слой выше'],['Ctrl+[','Слой ниже'],['Ctrl+Shift+]','На передний план'],['Ctrl+Shift+[','На задний план']]],
+['Вид и команды',[['P','Просмотр для заказчика'],['Пробел + перетаскивание','Панорама'],['Ctrl + колесо','Масштаб'],['+ / −','Масштаб'],['Shift+0','100%'],['Shift+1','Вписать'],['Shift+R','Линейки'],["Ctrl+'",'Точечная сетка'],['Ctrl+;','Направляющие'],["Ctrl+Shift+'",'Колонки'],['Alt+Shift+1 / 2 / 3','Desktop, Tablet, Mobile'],['Alt+1 или Alt+L','Панель «Слои»'],['Alt+8','Свойства элемента'],['Shift+H / Shift+V','Отразить элемент или группу'],['Ctrl+\\','Панель проектов'],['Ctrl+K','Команды'],['?','Горячие клавиши']]]];
 function Ask({title,children,onClose,wide,xl}:{title:string;children:React.ReactNode;onClose:()=>void;wide?:boolean;xl?:boolean}){return<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><div className={'sheet'+(wide?' wide':'')+(xl?' wide xl':'')}><h2>{title}</h2>{children}</div></div>}
 
 export function Shell(){
@@ -44,6 +45,7 @@ const saveHtml=()=>{if(!pr)return;download(slug(pr.name)+'.html',buildHtml(pr,'p
 
 const cancelEdit=()=>{s.exitEdit(false);toast('Изменения блока отменены')};
 useEffect(()=>{if(s.editId&&view!=='canvas')setView('canvas')},[s.editId]);
+const renId=useLayerUi(q=>q.renId);useEffect(()=>{if(renId){setLt('layers');setHide(false);setOpen(true)}},[renId]);
 const startRen=(k:'proj'|'sheet',id:string,cur:string)=>{setRen({k,id});setName(cur);setModal('ren')};
 const undoable=(text:string,after:()=>void)=>toast(text,{label:'Отменить',run:()=>{s.undo();after()}},6500);
 const dropProject=(p:Project)=>{s.delProject(p.id);undoable(`Проект «${p.name}» удалён`,()=>s.openProject(p.id))};
@@ -64,7 +66,7 @@ const cmds:Cmd[]=[{l:'Новый проект',run:()=>openForm('proj')},{l:'И�
 ...(pr?[{l:'Новый лист',run:()=>openForm('sheet')},{l:'Добавить блок',k:'A',run:()=>openAdd(s.blockId??undefined)},...(s.blockId?[{l:'Сохранить блок как шаблон',run:()=>{setWhole(false);openForm('tpl')}}]:[]),{l:'Переименовать проект',run:()=>startRen('proj',pr.id,pr.name)},{l:'Для ИИ: скачать brief.md и project.json',run:()=>aiPack(pr)},{l:'Сохранить структуру как тип сайта',run:()=>openForm('type')}]:[]),
 ...(sh?[{l:'Переименовать лист',run:()=>startRen('sheet',sh.id,sh.name)}]:[]),
 {l:'Вид: холст',run:()=>setView('canvas')},{l:'Вид: структура',run:()=>setView('struct')},
-{l:'Размер: Desktop 1440',k:'Alt+1',run:()=>setFr('desktop')},{l:'Размер: Tablet 768',k:'Alt+2',run:()=>setFr('tablet')},{l:'Размер: Mobile 390',k:'Alt+3',run:()=>setFr('mobile')},
+{l:'Размер: Desktop 1440',k:'Alt+Shift+1',run:()=>setFr('desktop')},{l:'Размер: Tablet 768',k:'Alt+Shift+2',run:()=>setFr('tablet')},{l:'Размер: Mobile 390',k:'Alt+Shift+3',run:()=>setFr('mobile')},
 {l:'Отменить',k:'Ctrl+Z',run:()=>s.undo()},{l:'Повторить',k:'Ctrl+Shift+Z',run:()=>s.redo()},
 {l:'Скачать копию',run:backup},{l:'Загрузить копию',run:()=>tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):file.current?.click()},
 {l:'Показать или скрыть панель проектов',k:'Ctrl+\\',run:()=>setHide(v=>!v)},{l:'Горячие клавиши',k:'?',run:()=>setModal('keys')},{l:'Настройки',run:()=>setModal('set')},
@@ -84,7 +86,9 @@ if(e.code==='KeyP'&&!mod&&!e.altKey&&!e.shiftKey){e.preventDefault();openPreview
 if(mod&&e.code==='KeyZ'){e.preventDefault();e.shiftKey?s.redo():s.undo();return}
 if(mod&&e.code==='KeyY'){e.preventDefault();s.redo();return}
 if(e.altKey&&!mod&&!e.shiftKey&&e.code==='KeyL'){e.preventDefault();setLt(v=>v==='layers'?'blocks':'layers');setHide(false);setOpen(true);return}
-if(e.altKey&&!mod){const i=['Digit1','Digit2','Digit3'].indexOf(e.code);if(i>=0){e.preventDefault();setFr(DEVS[i]);return}}
+if(e.altKey&&!mod&&!e.shiftKey&&e.code==='Digit8'){e.preventDefault();setHide(false);setOpen(true);setTimeout(()=>{const i=document.querySelector<HTMLInputElement>('.panel.ep input[type=number]');if(i)i.focus();else toast('Выдели элемент, чтобы открыть его свойства')},60);return}
+if(e.altKey&&!mod&&!e.shiftKey&&e.code==='Digit1'){e.preventDefault();setLt('layers');setHide(false);setOpen(true);return}
+if(e.altKey&&e.shiftKey&&!mod){const i=['Digit1','Digit2','Digit3'].indexOf(e.code);if(i>=0){e.preventDefault();setFr(DEVS[i]);return}}
 if(e.key==='?'&&!mod)setModal('keys')};
 addEventListener('keydown',h);return()=>removeEventListener('keydown',h)});
 const form=FORMS.includes(modal);

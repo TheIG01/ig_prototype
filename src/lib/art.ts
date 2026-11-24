@@ -1,3 +1,4 @@
+import {fxMap} from './elFx';
 // Shared drawing code: the editor, the thumbnails, the preview iframe and the exported HTML/PDF all use these functions,
 // so a shape looks identical everywhere. Pure functions, no DOM.
 import type {El} from '../store';
@@ -79,5 +80,6 @@ if(e.va&&(t==='text'||t==='rect'||t==='list'||t==='shape')){o['align-items']=e.v
 if(e.c&&t!=='icon')o['color']=e.c;
 if(t==='btn'||t==='rect'||t==='input'||t==='img'){if(e.fill)o['background']=e.fill==='none'?'transparent':e.fill;if(e.stroke)o['border-color']=e.stroke==='none'?'transparent':e.stroke;if(e.sw!==undefined){o['border-width']=e.sw+'px';o['border-style']=e.sw?'solid':'none'}if(e.r!==undefined)o['border-radius']=e.r+'px'}
 if(st&&(t==='text'||t==='btn'||t==='input'||t==='rect'||t==='list'||t==='shape')){const f=e.role==='h1'||e.role==='h2'||e.role==='h3'?st.head:st.body;if(f!=='Inter')o['font-family']=stack(f)}
+for(const [k,v] of Object.entries(fxMap(e)))o[k]=v;
 return o}
 export const styleCss=(e:El,st?:PStyle)=>Object.entries(styleMap(e,st)).map(([k,v])=>k+':'+v+';').join('');

@@ -1,5 +1,6 @@
 /** PDF-отчёт для заказчика. Страницы фиксированного размера, поэтому номера в оглавлении точные.
  *  Разметка статическая (без скриптов): открывается в iframe для предпросмотра и печатается в PDF. */
+import {isRich,richHtml,linkOf,linkInfo,RICH_CSS} from './rich';
 import type {Project,Block,El} from '../store';
 import {FW,DEVN} from './dev';import type {Dev} from './dev';
 import {artHtml,resolve,styleCss,ROLES} from './art';import {quizFrame} from './quiz';import {typo} from './typo';import {getUi} from './ui';import {BASE_CSS} from './share';
@@ -21,9 +22,9 @@ const reqTxt=(b:Block)=>b.req==='opt'?'опционально':'обязател
 /** элементы блока на устройстве; квиз берётся из настроек квиза */
 const geo=(b:Block,d:Dev):{h:number;els:El[]}=>{if(b.quiz){const o=quizFrame(b.quiz,{pos:0,ans:[],phone:'',consent:true,err:'',li:0},d);return{h:o.h,els:o.els}}return{h:b.h[d],els:b.els[d].filter(e=>!e.hid)}};
 
-const elHtml=(e0:El,p:Project,ty:ReturnType<typeof getUi>['ty'])=>{const e=e0.text?{...e0,text:typo(e0.text,ty)}:e0;const r=resolve(e,p.style);const a=e.t==='line'?'':artHtml(e);
+const elHtml=(e0:El,p:Project,ty:ReturnType<typeof getUi>['ty'])=>{const rich=isRich(e0);const e=e0.text?{...e0,text:typo(e0.text,ty)}:e0;const r=resolve(e,p.style);const a=e.t==='line'?'':artHtml(e);
 const st='left:'+e.x+'px;top:'+(e.t==='line'?e.y-6:e.y)+'px;width:'+e.w+'px;height:'+(e.t==='line'?12:e.h)+'px;'+(r.fs?'font-size:'+r.fs+'px;':'')+(r.b?'font-weight:700;':'')+(e.al==='c'?'text-align:center;justify-content:center;':e.al==='r'?'text-align:right;justify-content:flex-end;':'')+styleCss(e0,p.style);
-return'<div class="el '+e.t+'" style="'+st+'">'+(e.t==='line'?'<i></i>':a||esc(r.text))+'</div>'};
+return'<div class="el '+e.t+'" style="'+st+'">'+(e.t==='line'?'<i></i>':rich?richHtml(e0,{tf:q=>typo(q,ty)}):a||esc(r.text))+'</div>'};
 /** снимок блока или нескольких блоков подряд, масштаб k */
 const shot=(bs:Block[],d:Dev,k:number,p:Project,w=FW[d])=>{const ty=getUi().ty;let y=0;let inner='';const ys:number[]=[];for(const b of bs){const g=geo(b,d);ys.push(y);inner+=g.els.map(e=>elHtml({...e,y:e.y+y},p,ty)).join('');y+=g.h}
 return{h:y*k,ys,html:'<div class="fw" style="width:'+w*k+'px;height:'+y*k+'px"><div class="fi" style="width:'+w+'px;height:'+y+'px;transform:scale('+k+')">'+inner+'</div></div>'}};
@@ -35,7 +36,7 @@ const tblHead:Atom={h:24,html:'<div class="tr th" style="grid-template-columns:'
 export function buildReport(p:Project,o:ReportOpts):string{
 const S=SIZES[o.size];const ui=getUi();const ty=ui.ty;const ag=ui.ag;const date=new Date().toLocaleDateString('ru-RU');
 const cw=S.w-96,ch=S.h-64-52;const dn=DEVN[o.dev];const T=(t:string)=>typo(t,ty);
-const sheets=p.sheets.filter(s=>!o.sheets||o.sheets.includes(s.id));const sname:Record<string,string>={};for(const s of p.sheets)sname[s.id]=s.name;
+const sheets=p.sheets.filter(s=>!o.sheets||o.sheets.includes(s.id));const sname:Record<string,string>={};for(const s of p.sheets){sname[s.id]=s.name;for(const b of s.blocks)sname[b.id]=b.title}
 const lines=(t:string,n=Math.floor(cw/7.8))=>wrapLines(t,n);
 /** ===== содержимое: атомы, каждый блок с новой страницы ===== */
 const pages:{html:string;pre:string}[]=[];
@@ -48,7 +49,7 @@ a.push({h:58,blk:id,html:'<div class="bh"><span class="bn">'+(i+1)+'</span><div>
 a.push({h:Math.ceil(sh.h)+16,blk:id,html:'<div class="shot">'+sh.html+'</div>'});
 /* параметры блока */
 const kv:[string,string][]=[['Высота блока',(['desktop','tablet','mobile'] as Dev[]).filter(d=>!b.dv||b.dv.includes(d)).map(d=>DEVN[d]+' '+geo(b,d).h+' px').join(' · ')],['Показывается на',b.dv?b.dv.map(d=>DEVN[d]).join(', '):'всех устройствах'],['Статус в ТЗ',reqTxt(b)]];
-if(b.bg)kv.push(['Фон блока',b.bg]);if(b.goal?.trim())kv.push(['Задача текста',T(b.goal.trim())]);
+if(b.bg)kv.push(['Фон блока',b.bg]);if(b.pd)kv.push(['Отступы блока','сверху '+b.pd[0]+' px, снизу '+b.pd[1]+' px']);if(b.goal?.trim())kv.push(['Задача текста',T(b.goal.trim())]);
 if(b.quiz)kv.push(['Тип блока','квиз: '+b.quiz.steps.length+' вопросов, шаги показаны в таблице элементов']);
 a.push(cap('Параметры блока'));
 for(const [kk,v] of kv){const L=lines(v,Math.floor((cw-170)/7.4));a.push({h:L.length*17+7,blk:id,html:'<div class="kv"><b>'+esc(kk)+'</b><span>'+L.map(esc).join('<br>')+'</span></div>'})}
@@ -63,7 +64,7 @@ if(o.notes&&b.text.trim()){a.push(cap('Заметки и пожелания'));f
 /* таблица характеристик */
 if(els.length){a.push(cap('Таблица характеристик элементов'));a.push({...tblHead,blk:id});
 els.slice().sort((q,r)=>q.y-r.y||q.x-r.x).forEach((e0,j)=>{const e=resolve(e0,p.style);const f=[e.fs?e.fs+' px':'',e.b?'жирный':'',e.al==='c'?'центр':e.al==='r'?'справа':'',e.c||e.fill||''].filter(Boolean).join(' · ')||'—';
-const go=e0.go?'→ '+cut(sname[e0.go]||'лист',9):e0.tg?'вкладка':'—';
+const lki=linkInfo(linkOf(e0),sname);const go=lki?'→ '+cut(lki.short,9):e0.tg?'вкладка':'—';
 a.push({h:24,blk:id,grp:'tbl',html:'<div class="tr" style="grid-template-columns:'+TBL_COLS+'"><span>'+(j+1)+'</span><span>'+esc(typeName(e0))+'</span><span>'+esc(cut(T(e0.text||''),44)||'—')+'</span><span>'+Math.round(e0.x)+' · '+Math.round(e0.y)+'</span><span>'+Math.round(e0.w)+' × '+Math.round(e0.h)+'</span><span>'+esc(cut(f,22))+'</span><span>'+esc(go)+'</span></div>'})})}
 return[a]};
 /** раскладка атомов по страницам */
@@ -132,4 +133,4 @@ h1{font:700 40px/48px Inter,Arial,sans-serif;margin:8px 0 28px;color:#0F172A}h2{
 .ovw{display:flex;gap:28px;margin-top:20px}.map{position:relative;flex:none;border:1px solid #CBD5E1;overflow:visible}.map .fw{margin:0;box-shadow:none;border:0}.mb{position:absolute;left:-12px;width:20px;height:20px;border-radius:50%;background:#0F172A;color:#fff;font:700 10px/20px Inter,Arial,sans-serif;text-align:center;font-style:normal}
 .ovl{flex:1;min-width:0}.orow{display:flex;align-items:center;gap:10px;height:30px;overflow:hidden}.orow b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.orow em{font-style:normal;color:#64748B;font-size:11px;flex:none}
 @media print{html,body,body[data-mode=report]{background:#fff}.pg{margin:0;box-shadow:none}}`;
-return`<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${esc(p.name)} · отчёт</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;700&family=Montserrat:wght@500;700&family=Playfair+Display:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap&subset=cyrillic" rel="stylesheet"><style>${BASE_CSS}</style><style>${css}</style></head><body data-mode="report">${out}</body></html>`}
+return`<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${esc(p.name)} · отчёт</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;700&family=Montserrat:wght@500;700&family=Playfair+Display:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap&subset=cyrillic" rel="stylesheet"><style>${BASE_CSS}</style><style>${css}${RICH_CSS}</style></head><body data-mode="report">${out}</body></html>`}

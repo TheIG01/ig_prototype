@@ -110,6 +110,9 @@
 ### `src/features/shell/ErrorGate.tsx` — 21 строк
 - `ErrorGate` — стр. 8
 
+### `src/lib/migrateEl.ts` — новый: `fixEl` чистит новые поля `El` (nm, rot, flipX/Y, rc, dash, sp, shadow, blur, lockRatio)
+### `src/lib/layerUi.ts` — новый: `useLayerUi` (какой слой сейчас переименовывается, Ctrl+R)
+### `src/lib/layerKeys.ts` — новый: `matchingIds` (Ctrl+Alt+A), `invertIds` (Ctrl+Shift+A), `wholeGroup`
 ### `src/features/shell/LayersTab.tsx` — 33 строк
 - `IC` — стр. 8
 - `NM` — стр. 9
@@ -590,4 +593,19 @@
 - `moveLayer`, `toggleFold` — действия внутри `useStore` (стр. 185, рядом с `groupEls`); поле `Block.fo` (открытые папки)
 
 ### `src/styles.css` — 666 строк
+
+
+- 1.49: `Canvas.tsx` — клавиши Ctrl+R, Ctrl+Alt+A, Ctrl+Shift+A, Enter/Shift+Enter (рядом с Ctrl+G, ~стр. 89–125); высота страницы `H` = содержимое + 112. `Shell.tsx` — Alt+1 открывает «Слои», размеры теперь Alt+Shift+1/2/3. `migrate.ts` вызывает `fixEl`.
+
+- 1.50: `src/lib/elFx.ts` (новый) — `fxMap` (CSS для поворота, отражения, радиусов по углам, пунктира, положения обводки, тени, размытия; вызывается из `styleMap` в `art.ts`, поэтому работает в редакторе, просмотре, HTML и PDF), `normRot`.
+- 1.50: `src/features/canvas/FxSecs.tsx` (новый) — секции панели `RotSec`, `CornersRow`, `StrokeSec`, `FxSec`, `SelColors`. `ElPanel.tsx`: секции Положение и размер, Поворот и отражение, Вид, Заливка, Обводка, Эффекты, Цвета выделения; `Sec` и `Range` теперь экспортируются.
+- 1.50: `Canvas.tsx` — ручка поворота `rot-h` в рамке выделения (`downRot`, режим `rot` в `move`), Shift+H / Shift+V отражает один элемент (`flipX/flipY`). `Shell.tsx` — Alt+8 ставит курсор в панель свойств. `store.ts` — действие `recolor`.
+
+### `src/lib/resizeCalc.ts` — `calcResize` (Shift = пропорции, Alt = от центра)
+### `src/lib/quickKeys.ts` — `quickPatch` (Shift+X, Alt+/, Shift+/, цифры = прозрачность)
+### `src/features/canvas/ElSettings.tsx` — `ElSettings` (название, видимость на устройстве, статус в ТЗ `ts`)
+### `src/features/canvas/BlockPad.tsx` — `BlockPad` (отступы блока `pd`, «Подогнать высоту»)
+### `src/lib/rich.ts` — текст с оформлением, списки, ссылки (1.52): `getLines`, `plainOf`, `toPatch`, `richHtml` (HTML для холста, просмотра, PDF), `editHtml`, `parseDom` (редактор → строки), `linkOf`, `linkInfo`, `hrefOf`, `richNotes`/`richJson` (для ТЗ), `RICH_CSS`
+### `src/features/canvas/RichEdit.tsx` — `RichEdit`: правка текста на месте с мини-панелью (Ctrl+B/I/U, Ctrl+Shift+X, Ctrl+K), запись в `El.rt`, `El.lt`
+### `src/features/canvas/LinkEditor.tsx` — `LinkEditor`: выбор ссылки (страница, блок, адрес, телефон, почта); `El.ln`, старый `El.go` читается как ссылка на лист
 

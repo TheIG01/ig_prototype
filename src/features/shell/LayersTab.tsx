@@ -4,12 +4,12 @@ import type {LucideIcon} from 'lucide-react';
 import {useStore,onDev} from '../../store';
 import type {Dev,El,Sheet} from '../../store';
 import {pickIds,modsOf,curSel} from '../../lib/select';
-import {LayerBtns} from '../canvas/LayerBtns';
+import {LayerBtns} from '../canvas/LayerBtns';import {useLayerUi} from '../../lib/layerUi';
 const IC:Record<string,LucideIcon>={text:Type,rect:Square,btn:RectangleHorizontal,input:TextCursorInput,img:ImageIc,line:Minus,shape:Shapes,icon:Sparkles,mock:Smartphone,list:List};
 const NM:Record<string,string>={text:'Текст',rect:'Рамка',btn:'Кнопка',input:'Поле',img:'Картинка',line:'Линия',shape:'Фигура',icon:'Иконка',mock:'Мокап',list:'Список'};
 /** вкладка «Слои» левой панели: блоки → группы → элементы текущего листа. Группа свёрнута одной строкой по умолчанию */
 export function LayersTab({sheet,dev}:{sheet:Sheet;dev:Dev}){
-const s=useStore();const [open,setOpen]=useState<Record<string,boolean>>({});const sel=curSel(s.multi,s.elId);
+const s=useStore();const renId=useLayerUi(q=>q.renId);const setRen=useLayerUi(q=>q.setRen);const [open,setOpen]=useState<Record<string,boolean>>({});const sel=curSel(s.multi,s.elId);
 const [drag,setDrag]=useState<{id:string;pos:'above'|'below'|'into'}|null>(null);const [src,setSrc]=useState<string|null>(null);
 const isOpen=(id:string,def:boolean)=>open[id]??def;const tg=(id:string,def:boolean)=>setOpen(o=>({...o,[id]:!(o[id]??def)}));
 const blocks=sheet.blocks.filter(b=>onDev(b,dev));
@@ -19,7 +19,8 @@ const pickGroup=(bid:string,ms:El[])=>{if(s.editId!==bid)s.enterEdit(bid);s.setM
 /** перетаскивание слоя: верхняя четверть строки ставит выше, нижняя ниже, середина вкладывает в папку */
 const dnd=(bid:string,id:string,all:El[])=>({draggable:true,onDragStart:(e:React.DragEvent)=>{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);setSrc(id)},onDragEnd:()=>{setSrc(null);setDrag(null)},onDragOver:(e:React.DragEvent<HTMLElement>)=>{if(!src||src===id||!all.some(q=>q.id===src))return;e.preventDefault();const r=e.currentTarget.getBoundingClientRect();const y=(e.clientY-r.top)/r.height;const pos=y<0.25?'above':y>0.75?'below':'into';if(drag?.id!==id||drag.pos!==pos)setDrag({id,pos})},onDragLeave:()=>setDrag(null),onDrop:(e:React.DragEvent)=>{e.preventDefault();if(src&&drag?.id===id)s.moveLayer(dev,bid,src,id,drag.pos);setSrc(null);setDrag(null)}});
 const elRow=(b:{id:string},all:El[],x:El,cls:string)=>{const I=IC[x.t]??Shapes;
-return<div key={x.id} {...dnd(b.id,x.id,all)} className={'row sm '+cls+(sel.includes(x.id)?' on':'')+(x.hid?' off':'')+(drag?.id===x.id?' dv-'+drag.pos:'')} role="button" tabIndex={0} title={(NM[x.t]??x.t)+(x.text?' · '+x.text:'')+' (Shift: диапазон, Ctrl: добавить или убрать)'} onClick={e=>pick(b.id,all,e,x.id)}><I size={14}/><span>{NM[x.t]??x.t}{x.text?' · '+x.text:''}</span><LayerBtns dev={dev} els={[x]}/></div>};
+const nm=x.nm??((NM[x.t]??x.t)+(x.text?' · '+x.text:''));const done=(v:string)=>{const n=v.trim();s.updEl(dev,x.id,{nm:n&&n!==nm?n:x.nm});setRen(null)};
+return<div key={x.id} {...dnd(b.id,x.id,all)} className={'row sm '+cls+(sel.includes(x.id)?' on':'')+(x.hid?' off':'')+(drag?.id===x.id?' dv-'+drag.pos:'')} role="button" tabIndex={0} title={nm+' (Shift: диапазон, Ctrl: добавить или убрать, двойной клик или Ctrl+R: переименовать)'} onClick={e=>pick(b.id,all,e,x.id)} onDoubleClick={()=>setRen(x.id)}><I size={14}/>{renId===x.id?<input className="lt-ren" autoFocus defaultValue={nm} onClick={e=>e.stopPropagation()} onDoubleClick={e=>e.stopPropagation()} onFocus={e=>e.currentTarget.select()} onBlur={e=>done(e.currentTarget.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==='Enter')e.currentTarget.blur();if(e.key==='Escape'){e.currentTarget.value=nm;e.currentTarget.blur()}}}/>:<span>{nm}</span>}<LayerBtns dev={dev} els={[x]}/></div>};
 return<div className="lt">{sel.length>1&&<button className="btn" onClick={()=>s.groupEls(dev,sel,true)}>Папка из выбранного</button>}{blocks.map((b,i)=>{const all=b.els[dev];const on=isOpen(b.id,b.id===s.blockId||b.id===s.editId);const rev=[...all].reverse();const seen=new Set<string>();
 const rows:React.ReactNode[]=[];
 if(on)for(const x of rev){
