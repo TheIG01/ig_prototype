@@ -12,14 +12,49 @@
 - `DelDialog` — стр. 21
 - `DelIcon` — стр. 36
 
-### `src/features/blocks/blocks.tsx` — 58 строк
-- `Thumb` — стр. 9
-- `SZ` — стр. 12
-- `DV` — стр. 13
-- `SO` — стр. 18
-- `BlockPicker` — стр. 19
-- `ContentPanel` — стр. 53
-
+### `src/features/blocks/blocks.tsx` — 80 строк
+- `Thumb` — стр. 11
+- `w` — стр. 12
+- `SZ` — стр. 14
+- `DV` — стр. 15
+- `ld` — стр. 16
+- `sv` — стр. 17
+- `cache` — стр. 18
+- `built` — стр. 19
+- `SO` — стр. 20
+- `BlockPicker` — стр. 21
+- `f` — стр. 22
+- `setW` — стр. 27
+- `tgl` — стр. 28
+- `importTpls` — стр. 29
+- `hidePv` — стр. 34
+- `pw` — стр. 35
+- `showPv` — стр. 36
+- `pushR` — стр. 37
+- `pickB` — стр. 38
+- `dlTpls` — стр. 39
+- `ulTpls` — стр. 40
+- `saveEd` — стр. 41
+- `tww` — стр. 42
+- `cat` — стр. 43
+- `ord` — стр. 44
+- `kb` — стр. 45
+- `hit` — стр. 46
+- `tg` — стр. 47
+- `myCats` — стр. 48
+- `lib` — стр. 49
+- `mine` — стр. 50
+- `favB` — стр. 51
+- `favItems` — стр. 52
+- `star` — стр. 53
+- `recItems` — стр. 54
+- `cardU` — стр. 55
+- `cardB` — стр. 56
+- `nav` — стр. 57
+- `showFav` — стр. 58
+- `ContentPanel` — стр. 74
+- `s` — стр. 75
+- `b` — стр. 76
 ### `src/features/canvas/Canvas.tsx` — 283 строк
 - `TOOLS` — стр. 13
 - `NAME` — стр. 14
@@ -54,12 +89,18 @@
 - `INLINE` — стр. 3
 - `InlineEdit` — стр. 6
 
-### `src/features/canvas/Insert.tsx` — 28 строк
-- `TABS` — стр. 8
-- `SIZE` — стр. 10
-- `Prev` — стр. 14
-- `InsertPanel` — стр. 16
-
+### `src/features/canvas/Insert.tsx` — 33 строк
+- `ElLib` — стр. 6
+- `Pick` — стр. 8
+- `TABS` — стр. 9
+- `SIZE` — стр. 11
+- `sz` — стр. 13
+- `mk` — стр. 14
+- `Prev` — стр. 15
+- `LibProps` — стр. 18
+- `InsertPanel` — стр. 19
+- `icons` — стр. 22
+- `pickShape` — стр. 23
 ### `src/features/canvas/LayPanel.tsx` — 22 строк
 - `LayPanel` — стр. 5
 - `AL` — стр. 14
@@ -611,3 +652,70 @@
 
 ### `src/lib/frame.ts` (1.53)
 `FRAME` (настройки нового фрейма), `wrapInFrame` (Ctrl+Alt+G). Стрелки `arr1/arr2/elbow/arc` и `lineCss/lineAttr` лежат в `src/lib/art.ts`.
+
+### `src/features/canvas/ElLib.tsx` — 53 строк
+- `Mini` — стр. 13
+- `handled` — стр. 16
+- `Form` — стр. 17
+- `ElLib` — стр. 20
+- `own` — стр. 21
+- `all` — стр. 25
+- `ownCats` — стр. 26
+- `isOwn` — стр. 27
+- `f` — стр. 28
+- `list` — стр. 29
+- `shown` — стр. 30
+- `put` — стр. 31
+- `submit` — стр. 32
+- `upd` — стр. 36
+- `del` — стр. 37
+- `up` — стр. 38
+- `cats` — стр. 39
+
+### `src/lib/elLib.ts` — 59 строк
+- `LibItem` — стр. 6
+- `KEY` — стр. 7
+- `num` — стр. 8
+- `okEl` — стр. 9
+- `clone` — стр. 10
+- `lh` — стр. 11
+- `pack` — стр. 14
+- `x0` — стр. 16
+- `els` — стр. 17
+- `instantiate` — стр. 21
+- `gm` — стр. 22
+- `tags` — стр. 25
+- `parseTags` — стр. 26
+- `norm` — стр. 27
+- `o` — стр. 28
+- `els` — стр. 29
+- `load` — стр. 32
+- `cache` — стр. 33
+- `read` — стр. 34
+- `write` — стр. 36
+- `useLib` — стр. 37
+- `addItem` — стр. 39
+- `it` — стр. 40
+- `updateItem` — стр. 41
+- `editItem` — стр. 42
+- `removeItem` — стр. 43
+- `restoreItem` — стр. 44
+- `libFile` — стр. 46
+- `importFile` — стр. 48
+- `o` — стр. 49
+- `f` — стр. 50
+- `add` — стр. 54
+- `getRecent` — стр. 57
+- `pushRecent` — стр. 58
+
+### `src/lib/elLibBuiltin.ts` — 51 строк
+- `BUILTIN_CATS` — стр. 7
+- `PH` — стр. 8
+- `box` — стр. 9
+- `field` — стр. 10
+- `Def` — стр. 12
+- `DEFS` — стр. 13
+- `cache` — стр. 48
+- `builtinItems` — стр. 50
+
+_1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера строк сдвинулись на несколько строк; новое в них: `putEls`, `editBlockTpl` (store), клавиши Alt+2, Shift+I, Ctrl+Alt+K, Ctrl+Alt+B и `selEls`, `openLib`, `putLib` (Canvas)._

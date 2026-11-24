@@ -18,7 +18,7 @@ if(d.schemaVersion===4){for(const p of d.projects)p.style??=defStyle();d.schemaV
 d.projects??=[];d.siteTypes??=[];d.blockTpls??=[];
 for(const p of d.projects){p.style??=defStyle();p.sheets??=[];
 for(const sh of p.sheets){sh.blocks??=[];for(const b of sh.blocks)fixBlock(b)}}
-for(const t of d.blockTpls){const n=emptyBuild();t.h={...n.h,...(t.h??{})};t.els={...n.els,...(t.els??{})};for(const dv of DV)t.els[dv]??=[]}
+for(const t of d.blockTpls){if(t.tags!==undefined&&!(Array.isArray(t.tags)&&t.tags.every(x=>typeof x==='string')))delete t.tags;const n=emptyBuild();t.h={...n.h,...(t.h??{})};t.els={...n.els,...(t.els??{})};for(const dv of DV)t.els[dv]??=[]}
 return d as Data}
 const DV:Dev[]=['desktop','tablet','mobile'];
 /** Any block, any schema version: guarantee id, text, h and els for all three sizes. */

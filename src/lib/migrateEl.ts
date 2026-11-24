@@ -14,4 +14,5 @@ if(r.blur!==undefined&&(!num(r.blur)||r.blur<=0))delete r.blur;
 /* 1.52: текст с оформлением, списки, ссылки */
 if(r.lt!==undefined&&r.lt!=='ul'&&r.lt!=='ol'&&r.lt!=='ck')delete r.lt;
 if(r.ln!==undefined&&typeof r.ln!=='string')delete r.ln;
+if(r.cm!==undefined&&(typeof r.cm!=='string'||!r.cm.trim()))delete r.cm;
 if(r.rt!==undefined){const a=r.rt as unknown;const ok=Array.isArray(a)&&a.every(l=>Array.isArray(l)&&l.every(x=>!!x&&typeof x==='object'&&typeof (x as {t?:unknown}).t==='string'));if(!ok)delete r.rt}}

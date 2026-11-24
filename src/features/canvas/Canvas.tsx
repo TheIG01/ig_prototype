@@ -25,7 +25,7 @@ type Drag={id:string;m:'move'|'bh'|'draw'|'rs'|'box'|'rot';items?:{id:string;x:n
 const stop=(e:React.PointerEvent)=>e.stopPropagation();
 
 export function Canvas({dev,W,onAdd}:{dev:Dev;W:number;onAdd:(after?:string)=>void}){
-const {s,sh,st}=useSheet();const ui=useUi();const [vm,setVm]=useState(false);const [ins,setIns]=useState(false);const [tool,setTool]=useState<ET|'sel'>('sel');const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);const [arm,setArm]=useState<Partial<El>>({});const [mq,setMq]=useState<{x:number;y:number;w:number;h:number}|null>(null);const [gd,setGd]=useState<{v:number[];h:number[]}|null>(null);
+const {s,sh,st}=useSheet();const ui=useUi();const [vm,setVm]=useState(false);const [ins,setIns]=useState(false);const [libN,setLibN]=useState(0);const [libSave,setLibSave]=useState(0);const [tool,setTool]=useState<ET|'sel'>('sel');const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);const [arm,setArm]=useState<Partial<El>>({});const [mq,setMq]=useState<{x:number;y:number;w:number;h:number}|null>(null);const [gd,setGd]=useState<{v:number[];h:number[]}|null>(null);
 const pick=(t:ET|'sel',ex:Partial<El>={})=>{setTool(t);setArm(ex)};
 const wrap=useRef<HTMLDivElement>(null);const space=useRef(false);const drag=useRef<Drag|null>(null);
 const panRef=useRef<{sx:number;sy:number;l:number;t:number}|null>(null);
@@ -35,6 +35,10 @@ const total=vis.length?tops[tops.length-1]+vis[vis.length-1].h[dev]:0;
 const flat=vis.flatMap((b,i)=>(b.els?.[dev]??[]).filter(e=>!e.hid).map(e=>({e,b,top:tops[i]})));const els=flat.map(f=>f.e);
 const selIds=editing?(s.multi.includes(s.elId??'')?s.multi:s.elId?[s.elId]:[]).filter(id=>els.some(x=>x.id===id)):[];const selSet=new Set(selIds);
 const sel=selIds.length===1?flat.find(f=>f.e.id===selIds[0]):undefined;
+/** выделение вместе с группами: то, что сохраняется в библиотеку элементов */
+const selEls=(()=>{const gs=new Set(selIds.map(id=>els.find(x=>x.id===id)?.g).filter(Boolean));return els.filter(e=>selSet.has(e.id)||(!!e.g&&gs.has(e.g)))})();
+const openLib=(save=false)=>{setLibN(n=>n+1);if(save)setLibSave(n=>n+1);setIns(true)};
+const putLib=(es:El[],w:number,name:string)=>{if(!editB)return;s.putEls(dev,es,w);setIns(false);toast(`«${name}» добавлен в блок. Ctrl+Alt+B отсоединяет от библиотеки`)};
 const sb=selIds.length>1?(()=>{const a=flat.filter(f=>selSet.has(f.e.id));const x=Math.min(...a.map(f=>f.e.x)),y=Math.min(...a.map(f=>f.e.y));return{x,y,w:Math.max(...a.map(f=>f.e.x+f.e.w))-x,h:Math.max(...a.map(f=>f.e.y+(f.e.t==='line'?0:f.e.h)))-y,top:a[0].top}})():undefined;
 const selBi=selIds.length?-1:vis.findIndex(b=>b.id===s.blockId);const selB=selBi>=0?vis[selBi]:undefined;
 const H=editing?Math.max(720,total+240):vis.length?total+112:300;
@@ -91,6 +95,8 @@ if(e.code==='KeyA'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();if(!selId
 if(e.code==='KeyA'&&editing&&e.shiftKey&&!e.altKey){e.preventDefault();if(!selIds.length){toast('Выдели элемент, чтобы выделить остальные');return}s.setMulti(invertIds(els,selIds));return}
 if(e.code==='KeyR'&&editing&&!e.shiftKey&&!e.altKey){e.preventDefault();if(!cur){toast('Выдели элемент, чтобы переименовать слой');return}useLayerUi.getState().setRen(cur.id);return}
 if(e.code==='KeyA'&&editing){e.preventDefault();s.setMulti(els.filter(x=>!x.lk).map(x=>x.id));return}
+if(e.code==='KeyK'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();openLib(true);return}
+if(e.code==='KeyB'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();const ids=selEls.filter(q=>q.cm).map(q=>q.id);if(!ids.length){toast('У выделенного нет связи с библиотекой');return}s.patchEls(dev,ids,{cm:undefined});toast('Отсоединено от библиотеки: '+ids.length);return}
 if(e.code==='KeyG'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();if(!selIds.length){toast('Выдели элементы, чтобы собрать их во фрейм');return}if(wrapInFrame(dev,selIds,els,s.editId??undefined))toast('Фрейм создан, элементы сгруппированы');return}
 if(e.code==='KeyG'&&editing&&e.shiftKey&&selIds.length){e.preventDefault();s.groupEls(dev,selIds,false);return}
 if(e.code==='KeyG'&&editing&&selIds.length>1){e.preventDefault();s.groupEls(dev,selIds,true);return}
@@ -118,7 +124,9 @@ e.preventDefault();let n=0;for(const q of qs){const qp=quickPatch(e.code,e.shift
 if(e.code==='KeyX'&&!n)toast('У элемента нет заливки и обводки');return}}
 if(e.altKey&&e.shiftKey&&!mod&&editing&&selIds.length>2&&(e.code==='KeyH'||e.code==='KeyV')){e.preventDefault();s.alignEls(dev,selIds,e.code==='KeyH'?'dh':'dv');return}
 if(e.altKey&&editing&&!e.shiftKey&&selIds.length){const m=({KeyA:'l',KeyD:'r',KeyH:'c',KeyW:'t',KeyS:'b',KeyV:'m'} as Record<string,'l'|'r'|'c'|'t'|'b'|'m'>)[e.code];if(m){e.preventDefault();if(selIds.length>1)s.alignEls(dev,selIds,m);else if(cur&&editB){const bh=editB.h[dev];s.updEl(dev,cur.id,m==='l'?{x:0}:m==='r'?{x:Math.max(0,W-cur.w)}:m==='c'?{x:Math.max(0,Math.round((W-cur.w)/2))}:m==='t'?{y:0}:m==='b'?{y:Math.max(0,bh-cur.h)}:{y:Math.max(0,Math.round((bh-cur.h)/2))})}return}}
+if(e.altKey&&!e.shiftKey&&e.code==='Digit2'){e.preventDefault();if(editing)openLib();else if(curB){s.enterEdit(curB.id);openLib()}return}
 if(e.altKey)return;
+if(e.shiftKey&&e.code==='KeyI'){e.preventDefault();if(editing)openLib();else if(curB){s.enterEdit(curB.id);openLib()}return}
 if(e.shiftKey&&e.code==='Digit0'){e.preventDefault();setZ(1);return}
 if(e.shiftKey&&e.code==='Digit1'){e.preventDefault();fit();return}
 if(e.code==='KeyA'&&!e.shiftKey){e.preventDefault();if(!editing)onAdd(s.blockId??undefined);return}
@@ -220,7 +228,7 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 {!editing&&<button className="addblk" style={{left:W/2,top:vis.length?total+(selB&&selBi===vis.length-1?64:28):180}} onPointerDown={stop} onClick={()=>onAdd(vis.length?vis[vis.length-1].id:undefined)}><Plus size={16}/>Добавить блок (A)</button>}
 </div></div></div></div>
 {vm&&<ViewMenu onClose={()=>setVm(false)}/>}
-{editing&&ins&&<InsertPanel onPick={place} onClose={()=>setIns(false)}/>}
+{editing&&ins&&<InsertPanel onPick={place} onClose={()=>setIns(false)} lib={{n:libN,save:libSave,st,sel:selEls,onPut:putLib}}/>}
 {editing&&tool!=='sel'&&<div className="armhint">{tool==='line'?'Потяни, чтобы провести линию':'Потяни на холсте, чтобы нарисовать'} · клик — размер по умолчанию · Shift — пропорции · Alt — без сетки · Esc — отмена</div>}
 <div className="tools">{editing&&<>{TOOLS.map(([k,l,I])=><button key={k} data-k={HK[k]} className={tool===k?'on':''} title={`${l} (${HK[k]})`} onClick={()=>pick(k)}><I size={18}/></button>)}<button data-k="F" className={tool==='rect'&&arm.nm==='Фрейм'?'on':''} title="Фрейм (F). Выдели элементы и нажми Ctrl+Alt+G, чтобы собрать их во фрейм" onClick={()=>pick('rect',FRAME)}><FrameI size={18}/></button><button data-k="E" className={ins||['shape','icon','mock','list'].includes(tool)?'on':''} title="Элементы: фигуры, иконки, мокапы (E)" onClick={()=>setIns(v=>!v)}><Shapes size={18}/></button><i className="vr"/></>}
 <button title="Уменьшить (−)" onClick={()=>setZ(clampZ(z-.1))}><Minus size={16}/></button><button className="zv" title="100% (Shift+0)" onClick={()=>setZ(1)}>{Math.round(z*100)}%</button><button title="Увеличить (+)" onClick={()=>setZ(clampZ(z+.1))}><Plus size={16}/></button><button title="Вписать (Shift+1)" onClick={fit}><Maximize size={16}/></button><i className="vr"/><button className={vm?'on':''} title="Вид: линейки, сетка, направляющие, колонки" onClick={()=>setVm(v=>!v)}><Eye size={18}/></button></div></>}
