@@ -1,6 +1,6 @@
 // Mind-map outline -> project structure. Accepts markdown headings (# page, ## block, rest = text)
 // or indented / bulleted lists (level 0 = page, level 1 = block, deeper = block text).
-import {TPLS,buildTpl,emptyBuild} from './tpl';
+import {TPLS,buildTpl} from './tpl';import {emptyBuild} from './tplCore';
 import {uid} from './uid';
 import type {Block,Kind,Sheet} from '../store';
 const clean=(s:string)=>s.replace(/^\s*(?:[-*•+]|\d+[.)])\s+/,'').replace(/^#+\s*/,'').trim();

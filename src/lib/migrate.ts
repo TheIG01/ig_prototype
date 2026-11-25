@@ -1,4 +1,4 @@
-import {uid} from './uid';import {fixCm} from './comments';import {fixEl} from './migrateEl';import {buildByName,emptyBuild,fresh} from './tpl';import {normalizeQuiz} from './quiz';import {defStyle} from './art';
+import {uid} from './uid';import {fixCm} from './comments';import {fixEl} from './migrateEl';import {buildByName} from './tpl';import {emptyBuild,fresh} from './tplCore';import {normalizeQuiz} from './quiz';import {defStyle} from './art';
 import type {Data,Block,BlockTpl,El} from '../store';import type {Dev} from './dev';
 export {uid};
 export const noEls=():Record<Dev,El[]>=>({desktop:[],tablet:[],mobile:[]});

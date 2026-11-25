@@ -317,6 +317,9 @@
 - `toast` — стр. 5
 - `dismiss` — стр. 6
 
+### `src/lib/tplCore.ts` — 5 строк
+`emptyBuild`, `fresh` (вынесены из tpl.ts, без шаблонов; реэкспорт в tpl.ts).
+
 ### `src/lib/tpl.ts` — 152 строк
 - `Node` — стр. 16
 - `Built` — стр. 28

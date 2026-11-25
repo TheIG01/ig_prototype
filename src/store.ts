@@ -1,7 +1,7 @@
 import {parseCi} from './lib/elLib';
 import {create} from 'zustand';import {immer} from 'zustand/middleware/immer';
 import {save,reread,isQuota} from './lib/vault';import {isOwner,bindTabs} from './lib/tabs';import {migrate,mkBlock,mkFromTpl} from './lib/migrate';import {uid} from './lib/uid';
-import {fresh} from './lib/tpl';import {stepsBlocks,resizeSteps,stageGroup,syncTabs,syncTabText,dupStage,delStage,bindTplStage} from './lib/tplSteps';import {teamBuild,teamN} from './lib/tplTeam';import {toast} from './lib/toast';import {sheetsFromOutline} from './lib/outline';
+import {fresh} from './lib/tplCore';import {stepsBlocks,resizeSteps,stageGroup,syncTabs,syncTabText,dupStage,delStage,bindTplStage} from './lib/tplSteps';import {teamBuild,teamN} from './lib/tplTeam';import {toast} from './lib/toast';import {sheetsFromOutline} from './lib/outline';
 import {applyQuiz,normalizeQuiz} from './lib/quiz';import type {QuizCfg} from './lib/quiz';
 import {FW,DEVS,onDev} from './lib/dev';import {defStyle} from './lib/art';import type {PStyle,Role} from './lib/art';import type {Dev} from './lib/dev';
 import {applyAll} from './lib/findrep';import {fixArrows,fixClips} from './lib/arrowBind';

@@ -148,5 +148,4 @@ export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...STEP
 export function buildTpl(t:Tpl):Built{const h={} as Record<Dev,number>,els={} as Record<Dev,El[]>;
 for(const d of ['desktop','tablet','mobile'] as Dev[]){const r=typeof t.spec==='function'?t.spec(d):render(t.spec,d);h[d]=r.h;els[d]=r.els}return{h,els,quiz:t.quiz?.()}}
 export const buildByName=(name:string):Built|null=>{if(name==='Оффер')name='1 экран';if(name==='Отзывы')name='Отзывы: результат';const t=TPLS.find(x=>x.name===name);return t?buildTpl(t):null};
-export const emptyBuild=():Built=>({h:{desktop:400,tablet:400,mobile:480},els:{desktop:[],tablet:[],mobile:[]}});
-export const fresh=(e:Record<Dev,El[]>):Record<Dev,El[]>=>({desktop:e.desktop.map(x=>({...x,id:uid()})),tablet:e.tablet.map(x=>({...x,id:uid()})),mobile:e.mobile.map(x=>({...x,id:uid()}))});
+export {emptyBuild,fresh} from './tplCore';
