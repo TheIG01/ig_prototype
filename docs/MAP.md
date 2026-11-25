@@ -749,3 +749,9 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 - 1.58 `ElPanel.tsx`: `PanelTabs`, `TAB_OF`, `Sec` фильтрует по вкладке. `ui.ts`: `hp` (отступы Hug). `measure.ts`: `hugSize` берёт `getUi().hp`. `Settings.tsx`: «Отступы Hug».
 
 - 1.59: `src/lib/aiPrompt.ts` (промпт под сервис: `aiPrompt`, `aiFiles`, `AI_SVCS`), `src/features/shell/AiDialog.tsx` (окно «Для нейросети», грузится лениво из `Shell.tsx`). В `Shell.tsx`: меню «Ещё» вместо трёх иконок, модалки `ai` и `more`. Стили в конце `styles.css`.
+
+### `src/lib/snaps.ts` — снимки версий
+- `Snap`, `loadSnaps`, `addSnap`, `delSnap`, `ofProject`, `fmtAt`
+
+### `src/features/shell/SnapDialog.tsx` — окно «Версии проекта»
+- `SnapDialog`; открывается из «Ещё» и Ctrl+K (`modal==='snap'` в `Shell.tsx`); `replaceProject` в `store.ts`

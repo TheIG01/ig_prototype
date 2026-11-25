@@ -5,6 +5,9 @@ export async function createVault(pin:string,data:unknown){const salt=crypto.get
 export async function unlockVault(pin:string){const k=await keyFrom(pin,unb64(localStorage.getItem('igp.salt')!));try{const d=await unseal(k,localStorage.getItem('igp.data')!);key=k;return d}catch{return null}}
 export async function save(data:unknown){if(key)localStorage.setItem('igp.data',await seal(key,data))}
 export const lock=()=>{key=null};
+/** снимки версий: отдельная запись, зашифрована тем же ключом */
+export async function loadSnapsRaw():Promise<unknown>{if(!key)return null;try{const t=localStorage.getItem('igp.snaps');return t?await unseal(key,t):null}catch{return null}}
+export async function saveSnapsRaw(data:unknown){if(!key)throw new Error('locked');localStorage.setItem('igp.snaps',await seal(key,data))}
 /** копия из памяти (свежая, даже если запись в браузер не удалась); без ключа берёт то, что лежит в хранилище */
 export async function exportCurrent(data:unknown){if(!key||!data)return exportBackup();return JSON.stringify({app:'ig_prototype',v:1,salt:localStorage.getItem('igp.salt'),data:await seal(key,data)})}
 /** перечитать данные из хранилища (после захвата управления: другая вкладка могла записать новее) */
@@ -19,4 +22,4 @@ const kv=async(m:IDBTransactionMode,f:(s:IDBObjectStore)=>IDBRequest):Promise<an
 export const rememberDevice=async()=>{if(key)await kv('readwrite',s=>s.put(key,'dev'))};
 export const forgetDevice=()=>kv('readwrite',s=>s.delete('dev')).catch(()=>{});
 export async function autoUnlock(){try{const k=await kv('readonly',s=>s.get('dev'));if(!k||!hasVault())return null;const d=await unseal(k,localStorage.getItem('igp.data')!);key=k;return d}catch{return null}}
-export async function wipe(){await forgetDevice();localStorage.removeItem('igp.data');localStorage.removeItem('igp.salt');localStorage.removeItem('igp.rem');key=null}
+export async function wipe(){await forgetDevice();localStorage.removeItem('igp.data');localStorage.removeItem('igp.salt');localStorage.removeItem('igp.rem');localStorage.removeItem('igp.snaps');key=null}
