@@ -751,3 +751,6 @@ html,body{overflow:hidden}.app,.main,.work{min-height:0;overflow:hidden}
 .snd-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
 .snd-i{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.snd-i b{font:600 13px Inter,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.snd-i span{font:400 12px Inter,sans-serif;color:#64748b}
 @media(max-width:520px){.snd-new{flex-direction:column}.snd-row{flex-wrap:wrap}}
+
+/* 1.61 автобэкап */
+.sbar.bak{background:#eef4ff;border-color:#c9dbff;color:#1d3a78}

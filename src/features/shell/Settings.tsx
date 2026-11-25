@@ -1,4 +1,5 @@
 import {useState,useRef} from 'react';
+import {bakGet,bakSet,pickDir,forgetDir,canDir} from '../../lib/autobak';
 import {useStore} from '../../store';import {tplsFile,parseTpls,download} from '../../lib/export';import {toast} from '../../lib/toast';
 import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,UI0,useUi,saveUi,liteOn,weakDevice} from '../../lib/ui';import type {Ui} from '../../lib/ui';
 import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';import {isOwner} from '../../lib/tabs';import {typo,TY_RULES,TY_DEMO,TY0} from '../../lib/typo';import type {TyKey} from '../../lib/typo';
@@ -60,6 +61,8 @@ return<div>
 <div className="set-row"><div><b>Логотип</b><p>PNG, JPG, WebP или SVG. Сохраняется в браузере, на сервер не уходит</p></div><div className="seg">{u.ag.l&&<img src={u.ag.l} alt="" style={{height:32,maxWidth:120,objectFit:'contain',marginRight:8}}/>}<button type="button" onClick={()=>lf.current?.click()}>{u.ag.l?'Заменить':'Загрузить'}</button>{u.ag.l&&<button type="button" onClick={()=>setAg('l','')}>Убрать</button>}<input ref={lf} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={e=>pickLogo(e.target.files)}/></div></div>
 <h4 className="set-h">Шаблоны блоков</h4>
 <div className="set-row"><div><b>Мои шаблоны</b><p>{nTpl} шт. Скачай файл, чтобы передать блоки нейросети или перенести на другое устройство. Подходит и файл одного блока</p></div><div className="stack"><button className="btn" disabled={!nTpl} onClick={dlTpls}><Download size={16}/>Скачать</button><button className="btn" onClick={()=>tf.current?.click()}><Upload size={16}/>Загрузить</button></div><input ref={tf} type="file" accept=".json,application/json" multiple hidden onChange={e=>ulTpls(e.target.files)}/></div>
+<h4 className="set-h">Автобэкап</h4>
+<BakRow/>
 <h4 className="set-h">Освободить место</h4>
 <FreeSpace onBackup={onBackup}/>
 <h4 className="set-h">Безопасность</h4>
@@ -70,3 +73,10 @@ return<div>
 <button className="btn" onClick={onBackup}><Download size={16}/>Скачать копию перед удалением</button>
 <input className="inp" placeholder="Введите УДАЛИТЬ" value={word} onChange={e=>setWord(e.target.value)}/>
 <button className="btn danger" disabled={word.trim().toUpperCase()!=='УДАЛИТЬ'} onClick={kill}><Trash2 size={16}/>Удалить безвозвратно</button></>}</div></div>}
+
+function BakRow(){
+const [b,setB]=useState(bakGet);const sync=()=>setB(bakGet());
+const pick=async()=>{const n=await pickDir();sync();toast(n?'Копии будут писаться в папку «'+n+'»':'Папка не выбрана')};
+const last=b.last?new Date(b.last).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}):'ещё не было';
+return<><div className="set-row"><div><b>Напоминать раз в неделю</b><p>Последняя копия: {last}. Плашка с кнопкой появляется сверху</p></div><input type="checkbox" className="sw" checked={!b.off} onChange={e=>{bakSet({off:!e.target.checked});sync()}}/></div>
+<div className="set-row"><div><b>Папка для копий</b><p>{canDir()?(b.dir?'Выбрана: '+b.dir+'. Браузер может спросить доступ при записи':'Не выбрана: копия скачивается файлом'):'Этот браузер не умеет писать в папку (нужен Chrome или Edge на компьютере): копия скачивается файлом'}</p></div>{canDir()&&<div className="stack"><button className="btn" onClick={()=>void pick()}>{b.dir?'Сменить':'Выбрать'}</button>{b.dir&&<button className="btn" onClick={()=>{void forgetDir().then(sync)}}>Сбросить</button>}</div>}</div></>}
