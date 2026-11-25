@@ -1,10 +1,10 @@
-import {useEffect,useState} from 'react';
-import {Check,MessageCircle,RotateCcw,Trash2,X} from 'lucide-react';
+import {useEffect,useRef,useState} from 'react';
+import {Check,MessageCircle,RotateCcw,Trash2,Upload,X} from 'lucide-react';
 import {useStore} from '../../store';
 import type {Block,Dev} from '../../store';
 import {uid} from '../../lib/uid';
 import {cmNums,cmCount,cmShow,cmWhen,getAuthor,setAuthor} from '../../lib/comments';import type {CmFilter} from '../../lib/comments';
-import {toast} from '../../lib/toast';
+import {toast} from '../../lib/toast';import {parseNotes,applyNotes} from '../../lib/clientNotes';
 import './cm.css';
 /** состояние слоя комментариев: on режим «ставить пин» (C), show слои видны, f фильтр, open ветка, draft новая точка */
 export interface CmState{on:boolean;show:boolean;f:CmFilter;open:string|null;draft:{bid:string;x:number;y:number}|null}
@@ -28,7 +28,7 @@ return<>{cm.on&&<div className="cm-cap" style={{height:H}} onPointerDown={hit}/>
 /** панель комментариев: список с фильтром, ветка, новая запись */
 export function CmPanel({dev,blocks,cm,setCm}:{dev:Dev;blocks:Block[];cm:CmState;setCm:(f:(s:CmState)=>CmState)=>void}){
 const s=useStore();const pr=s.data?.projects.find(p=>p.id===s.projectId);const all=pr?.sheets.flatMap(x=>x.blocks)??[];const nums=cmNums(all);const cnt=cmCount(blocks);
-const [txt,setTxt]=useState('');const [by,setBy]=useState(getAuthor);
+const [txt,setTxt]=useState('');const [by,setBy]=useState(getAuthor);const fr=useRef<HTMLInputElement>(null);
 useEffect(()=>{setTxt('')},[cm.open,cm.draft?.bid,cm.draft?.x,cm.draft?.y]);
 if(!cm.on&&!cm.open&&!cm.draft)return null;
 const found=cm.open?blocks.flatMap(b=>(b.cmt??[]).map(c=>({b,c}))).find(x=>x.c.id===cm.open):undefined;
@@ -37,6 +37,8 @@ const add=()=>{const t=txt.trim();if(!t||!cm.draft)return;const id=uid();s.cmAdd
 const reply=()=>{const t=txt.trim();if(!t||!found)return;s.cmReply(found.b.id,found.c.id,t,au());setTxt('')};
 const key=(fn:()=>void)=>(ev:React.KeyboardEvent)=>{if(ev.key==='Enter'&&(ev.ctrlKey||ev.metaKey)){ev.preventDefault();fn()}};
 const close=()=>setCm(q=>({...q,open:null,draft:null}));
+const loadNotes=async(f:File|undefined)=>{if(!f||!pr)return;let r;try{r=parseNotes(await f.text())}catch{toast('Файл не читается');return}if(!r.ok){toast(r.err);return}const o=applyNotes(pr,r.notes);if(o.added)s.replaceProject(o.project);
+toast(o.added?'Заметок добавлено: '+o.added+(o.dup?', уже были: '+o.dup:'')+(o.lost?', без блока: '+o.lost:''):o.dup&&!o.lost?'Все заметки уже есть в проекте':'Не нашёл блоки для заметок: '+o.lost+'. Файл от другого проекта?')};
 const who=<label className="fld"><span>Подпись</span><input className="inp" value={by} maxLength={40} placeholder="Как тебя подписать" onChange={ev=>setBy(ev.target.value)} onBlur={()=>setAuthor(by.trim())}/></label>;
 return<aside className="cm-p" onPointerDown={ev=>ev.stopPropagation()} aria-label="Комментарии">
 {cm.draft?<><div className="ph"><b>Новый комментарий</b><button className="btn ic" aria-label="Отмена" onClick={()=>setCm(q=>({...q,draft:null}))}><X size={14}/></button></div>
@@ -51,5 +53,6 @@ return<aside className="cm-p" onPointerDown={ev=>ev.stopPropagation()} aria-labe
 :<><div className="ph"><b><MessageCircle size={14}/> Комментарии</b><span>{cnt.open} открытых · {cnt.done} решённых</span><button className="btn ic" aria-label="Выключить режим" onClick={()=>setCm(q=>({...q,on:false}))}><X size={14}/></button></div>
 <div className="seg">{([['all','Все'],['open','Открытые'],['done','Решённые']] as const).map(([k,l])=><button key={k} className={cm.f===k?'on':''} onClick={()=>setCm(q=>({...q,f:k}))}>{l}</button>)}</div>
 {(()=>{const a=blocks.flatMap(b=>(b.cmt??[]).filter(c=>cmShow(c,cm.f)).map(c=>({b,c})));return a.length?a.map(({b,c})=><button key={c.id} className={'cm-li'+(c.done?' done':'')} onClick={()=>{setCm(q=>({...q,open:c.id}));setTimeout(()=>document.getElementById('cmpin-'+c.id)?.scrollIntoView({block:'center',inline:'center',behavior:'smooth'}),30)}}><b>{nums.get(c.id)}</b><span>{b.title}: {c.msgs[0]?.text.slice(0,70)}</span></button>):<p className="hint">{cnt.all?'В этом фильтре ничего нет':'Комментариев пока нет. Кликни по холсту, чтобы поставить первый'}</p>})()}
+<div className="btnrow"><button className="btn" title="Загрузить файл заметок, который вернул заказчик" onClick={()=>fr.current?.click()}><Upload size={14}/>Заметки заказчика</button><input ref={fr} type="file" accept=".json,application/json" hidden onChange={ev=>{void loadNotes(ev.target.files?.[0]);ev.target.value=''}}/></div>
 <p className="hint">Режим включён: клик по холсту ставит пин. C включает и выключает режим, Esc закрывает. Комментарии видны в ТЗ, PDF и скачанном HTML</p></>}
 </aside>}

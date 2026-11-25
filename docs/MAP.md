@@ -769,3 +769,7 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 
 ### `src/features/canvas/BindSecs.tsx` (1.66)
 `BindSec` (панель стрелки), `BindRow` (привязать из `MultiPanel`), `ClipSec` (обрезка у фрейма, в `ElPanel`).
+
+### `src/lib/clientNotes.ts` (1.67)
+`CNote`, `NOTES_KIND`, `parseNotes` (разбор файла заметок), `applyNotes` (ставит `Cm` в блоки по `block`, id пина `cn`+id заметки, повтор не дублирует). Вызывается из `CmPanel` (`features/canvas/Comments.tsx`, кнопка «Заметки заказчика», `replaceProject`).
+- Сторона заказчика: `src/lib/share.ts`, внутри `runtime`: `nm`, `nts`, `ntBtn`, `ntOpen`, `ntDl`, `nsave`; стили `#nf`, `.cmk.nt` в конце `BASE_CSS`. Только в скачанном HTML (`parent===window`), в просмотре внутри приложения кнопок нет.
