@@ -45,3 +45,10 @@ const els=(sh?.blocks??[]).flatMap(b=>b.els[dev]).filter(e=>ids.includes(e.id));
 const cs=[...new Set(els.flatMap(e=>[e.fill,e.stroke,e.c]).filter((c):c is string=>!!c&&HEX6.test(c)).map(c=>c.slice(0,7).toLowerCase()))];
 if(!cs.length)return null;
 return<Sec t="Цвета выделения"><div className="cs-row">{cs.map((c,i)=><label key={i} className="cs pick big" style={{background:c}} title={'Заменить '+c+' везде в выделении'}><input type="color" value={c} onChange={ev=>s.recolor(dev,ids,c,ev.target.value)}/></label>)}</div><p className="hint">Нажми на цвет, чтобы заменить его во всех выбранных элементах</p></Sec>}
+/** Наведение: цвет кнопки под курсором в просмотре и HTML (пусто = стандартный подъём и подсветка) */
+export function HoverSec({e,pal,set}:{e:El;pal:string[];set:SetFn}){
+const h=e.hv;const put=(p:Partial<NonNullable<El['hv']>>)=>{const n={...h,...p};for(const k of Object.keys(n) as (keyof typeof n)[])if(!n[k])delete n[k];set({hv:Object.keys(n).length?n:undefined})};
+return<Sec t="Наведение"><Color label="Заливка" value={h?.fill} def="#1E293B" pal={pal} onChange={v=>put({fill:v})}/>
+<Color label="Цвет текста" value={h?.c} def="#FFFFFF" pal={pal} onChange={v=>put({c:v})}/>
+<Color label="Обводка" value={h?.stroke} def="#2F6BFF" pal={pal} onChange={v=>put({stroke:v})}/>
+{h&&<button className="btn" onClick={()=>set({hv:undefined})}>Сбросить наведение</button>}</Sec>}

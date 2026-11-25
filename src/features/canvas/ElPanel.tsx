@@ -5,7 +5,7 @@ import type {El,Dev,Block} from '../../store';
 import {SHAPES,MOCKS,BULLETS,ROLES,FONTS,NAME_NEW,resolve} from '../../lib/art';
 import type {PStyle,Role} from '../../lib/art';
 import {ICON_LIST} from '../../lib/icons';
-import {checkText} from '../../lib/textcheck';import {Prev} from './Insert';import {RotSec,CornersRow,StrokeSec,FxSec,SelColors} from './FxSecs';import {LayPanel} from './LayPanel';import {FieldSec,CmpSec} from './FormSecs';import {ElSettings} from './ElSettings';import {LinkEditor} from './LinkEditor';import {linkOf} from '../../lib/rich';
+import {checkText} from '../../lib/textcheck';import {Prev} from './Insert';import {RotSec,CornersRow,StrokeSec,FxSec,SelColors,HoverSec} from './FxSecs';import {LayPanel} from './LayPanel';import {FieldSec,CmpSec} from './FormSecs';import {ElSettings} from './ElSettings';import {LinkEditor} from './LinkEditor';import {linkOf} from '../../lib/rich';
 
 const NM:Record<string,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW};
 const HEX=/^#[0-9a-f]{6}$/i;
@@ -91,6 +91,7 @@ return<aside className="panel ep"><div className="ph"><b>{NM[t]}</b><span>Эле
 {t==='icon'&&<Sec t="Цвет иконки"><Color label="Цвет" value={e.c} def="#0F172A" pal={pal} onChange={v=>set({c:v})}/><Range label="Линия" value={e.sw??2} min={1} max={4} step={.25} onChange={v=>set({sw:v})}/></Sec>}
 {hasStroke&&<StrokeSec e={e} pal={pal} set={set}/>}
 <FxSec e={e} set={set}/>
+{e.t==='btn'&&!e.tg&&<HoverSec e={e} pal={pal} set={set}/>}
 <SelColors dev={dev} ids={[e.id]}/>
 
 <Sec t="Ссылка"><LinkEditor value={linkOf(e)} onChange={v=>set({ln:v,go:undefined})}/></Sec>
