@@ -6,6 +6,9 @@ const r=e as unknown as Record<string,unknown>;
 if(r.nm!==undefined&&(typeof r.nm!=='string'||!r.nm.trim()))delete r.nm;
 if(r.rot!==undefined){if(!num(r.rot)||!(r.rot%360))delete r.rot;else e.rot=((r.rot%360)+360)%360}
 for(const k of ['flipX','flipY','lockRatio'] as const)if(r[k]!==undefined&&r[k]!==1)delete r[k];
+if(r.fc!==undefined&&r.fc!==1)delete r.fc;
+if(r.cx!==undefined&&!(Array.isArray(r.cx)&&r.cx.length===4&&r.cx.every(num)))delete r.cx;
+if(r.ab!==undefined){const b=r.ab as Record<string,unknown>|null;if(!b||typeof b!=='object'){delete r.ab}else{for(const k of ['a','b'])if(typeof b[k]!=='string')delete b[k];if(!b.a&&!b.b)delete r.ab}}
 if(r.rc!==undefined&&!(Array.isArray(r.rc)&&r.rc.length===4&&r.rc.every(num)))delete r.rc;
 if(r.dash!==undefined&&r.dash!=='solid'&&r.dash!=='dashed'&&r.dash!=='dotted')delete r.dash;
 if(r.sp!==undefined&&r.sp!=='in'&&r.sp!=='out'&&r.sp!=='mid')delete r.sp;

@@ -13,6 +13,7 @@ if(box&&e.dash&&e.dash!=='solid'&&sw>0){o['border-style']=e.dash;o['border-width
 else if(box&&(e.sp==='out'||e.sp==='mid')&&sw>0){o['border-style']='none';o['border-width']='0';
 sh.push(e.sp==='out'?`0 0 0 ${sw}px ${col}`:`0 0 0 ${sw/2}px ${col}`,...(e.sp==='mid'?[`inset 0 0 0 ${sw/2}px ${col}`]:[]))}
 if(e.shadow){const s=e.shadow;if(box)sh.push(`${s.x}px ${s.y}px ${s.b}px ${s.c}`);else f.push(`drop-shadow(${s.x}px ${s.y}px ${s.b}px ${s.c})`)}
+if(e.cx)o['clip-path']='inset('+e.cx.map(v=>(v>0?v:-300)+'px').join(' ')+')';
 if(e.blur)f.push(`blur(${e.blur}px)`);
 if(sh.length)o['box-shadow']=sh.join(', ');if(f.length)o['filter']=f.join(' ');
 return o}

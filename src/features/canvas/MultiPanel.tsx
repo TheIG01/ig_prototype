@@ -2,7 +2,7 @@ import {AlignStartVertical,AlignCenterVertical,AlignEndVertical,AlignStartHorizo
 import {useStore} from '../../store';import {useLive} from '../../lib/live';import {VList} from './VList';
 import type {Dev,El} from '../../store';import {Color} from './ElPanel';import {SelColors} from './FxSecs';
 import {uid} from '../../lib/uid';
-import {NAME_NEW} from '../../lib/art';import {LayPanel} from './LayPanel';
+import {NAME_NEW} from '../../lib/art';import {LayPanel} from './LayPanel';import {BindRow} from './BindSecs';
 const NM:Record<string,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW};
 type M='l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv';
 const AL:[M,string,typeof AlignStartVertical][]=[['l','Влево (Alt+A)',AlignStartVertical],['c','По центру горизонтально (Alt+H)',AlignCenterVertical],['r','Вправо (Alt+D)',AlignEndVertical],['t','Вверх (Alt+W)',AlignStartHorizontal],['m','По центру вертикально (Alt+V)',AlignCenterHorizontal],['b','Вниз (Alt+S)',AlignEndHorizontal]];
@@ -24,6 +24,7 @@ return<aside className="panel"><div className="ph"><b>Выбрано {ids.length
 {bx.length>0&&<><Color label="Заливка" value={same('fill',bx)} def="#FFFFFF" pal={pal} none onChange={v=>s.patchEls(dev,bx,{fill:v})}/><Rng label="Скругление" value={same('r',bx)??0} min={0} max={80} unit=" px" onChange={v=>s.patchEls(dev,bx,{r:v})}/></>}
 <Rng label="Прозрачность" value={Math.round((same('op',al)??1)*100)} min={5} max={100} unit="%" onChange={v=>s.patchEls(dev,al,{op:v>=100?undefined:v/100})}/>
 <p className="hint">Изменения применяются ко всем выбранным элементам. Если значения разные, поле показывает «разный»</p></div>
+<BindRow dev={dev} ids={ids} els={els}/>
 <div className="sec"><h4>Выравнивание</h4><div className="algrid">{AL.map(([m,t,I])=><button key={m} className="btn ic" title={t} onClick={()=>s.alignEls(dev,ids,m)}><I size={16}/></button>)}</div>
 <div className="btnrow"><button className="btn" disabled={ids.length<3} title="Равные промежутки по горизонтали (Ctrl+Alt+Shift+H)" onClick={()=>s.alignEls(dev,ids,'dh')}><AlignHorizontalSpaceBetween size={16}/>По горизонтали</button><button className="btn" disabled={ids.length<3} title="Равные промежутки по вертикали (Ctrl+Alt+Shift+V)" onClick={()=>s.alignEls(dev,ids,'dv')}><AlignVerticalSpaceBetween size={16}/>По вертикали</button></div></div>
 <div className="sec"><h4>Размер и отступ</h4><div className="btnrow"><button className="btn" title="Все выбранные получают ширину самого широкого" onClick={()=>s.alignEls(dev,ids,'ew')}><ArrowLeftRight size={16}/>Равная ширина</button><button className="btn" title="Все выбранные получают высоту самого высокого" onClick={()=>s.alignEls(dev,ids,'eh')}><ArrowUpDown size={16}/>Равная высота</button></div>

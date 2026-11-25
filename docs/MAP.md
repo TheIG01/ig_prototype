@@ -763,3 +763,9 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 ### `src/lib/findrep.ts` — найти и заменить (1.64): `mkRe`, `replLine`, `findAll(pr,q,o)` → `Row[]`, `applyAll(pr,q,r,o,skip)`
 ### `src/features/shell/FindDialog.tsx` — окно «Найти и заменить» (меню «Ещё»), действие `findRep` в `store.ts`
 - 1.65: `src/store.ts` (`El.hv`), `src/features/canvas/FxSecs.tsx` (`HoverSec`), `src/features/canvas/ElPanel.tsx` (секция «Наведение» у кнопок), `src/lib/share.ts` (`--hf/--hc/--hs`, правила :hover), `src/lib/export.ts` (ТЗ и JSON)
+
+### `src/lib/arrowBind.ts` (1.66)
+`fixArrows` (привязка стрелок `El.ab`), `fixClips` (обрезка фрейма `El.fc` → `El.cx`), `canBind`. Вызываются в конце `mut` в `store.ts`; `clip-path` строит `fxMap` в `elFx.ts`.
+
+### `src/features/canvas/BindSecs.tsx` (1.66)
+`BindSec` (панель стрелки), `BindRow` (привязать из `MultiPanel`), `ClipSec` (обрезка у фрейма, в `ElPanel`).
