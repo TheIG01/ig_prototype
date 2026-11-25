@@ -757,3 +757,6 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 ### `src/features/shell/SnapDialog.tsx` — окно «Версии проекта»
 - `SnapDialog`; открывается из «Ещё» и Ctrl+K (`modal==='snap'` в `Shell.tsx`); `replaceProject` в `store.ts`
 - 1.61: `src/lib/autobak.ts` (`bakDue`, `bakDone`, `pickDir`, `writeDir`), `BakBar` в `shell/SaveBar.tsx` (монтируется в `Shell.tsx`), блок `BakRow` в конце `shell/Settings.tsx`. Стиль `.sbar.bak`.
+
+### `src/lib/sitemap.ts` — карта сайта (1.63): `buildMap(pr)` → `{nodes,edges,warns,cols}`; `MapNode`, `MapEdge`, `MapWarn`
+### `src/features/shell/SiteMapDialog.tsx` — окно «Карта сайта» (меню «Ещё»), SVG-стрелки, список «Что поправить»
