@@ -104,7 +104,7 @@ if(e.code==='KeyA'&&editing&&e.shiftKey&&!e.altKey){e.preventDefault();if(!selId
 if(e.code==='KeyR'&&editing&&!e.shiftKey&&!e.altKey){e.preventDefault();if(!cur){toast('Выдели элемент, чтобы переименовать слой');return}useLayerUi.getState().setRen(cur.id);return}
 if(e.code==='KeyA'&&editing){e.preventDefault();s.setMulti(els.filter(x=>!x.lk).map(x=>x.id));return}
 if(e.code==='KeyK'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();openLib(true);return}
-if(e.code==='KeyB'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();const ids=selEls.filter(q=>q.cm).map(q=>q.id);if(!ids.length){toast('У выделенного нет связи с библиотекой');return}s.patchEls(dev,ids,{cm:undefined});toast('Отсоединено от библиотеки: '+ids.length);return}
+if(e.code==='KeyB'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();const ids=selEls.filter(q=>q.cm).map(q=>q.id);if(!ids.length){toast('У выделенного нет связи с библиотекой');return}s.patchEls(dev,ids,{cm:undefined,ci:undefined});toast('Отсоединено от библиотеки: '+ids.length);return}
 if(e.code==='KeyG'&&editing&&e.altKey&&!e.shiftKey){e.preventDefault();if(!selIds.length){toast('Выдели элементы, чтобы собрать их во фрейм');return}if(wrapInFrame(dev,selIds,els,s.editId??undefined))toast('Фрейм создан, элементы сгруппированы');return}
 if(e.code==='KeyG'&&editing&&e.shiftKey&&selIds.length){e.preventDefault();s.groupEls(dev,selIds,false);return}
 if(e.code==='KeyG'&&editing&&selIds.length>1){e.preventDefault();s.groupEls(dev,selIds,true);return}

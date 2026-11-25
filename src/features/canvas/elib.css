@@ -13,3 +13,5 @@
 .elib-a button:hover{color:var(--acc);border-color:var(--acc)}
 .elib-e{grid-column:1/-1;text-align:center;padding:16px 0}
 .elib-b{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--mute)}.elib-io{display:flex;gap:4px}
+.elib-k{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mute);cursor:pointer}
+.elib-k input{margin:0}
