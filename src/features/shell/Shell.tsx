@@ -1,12 +1,13 @@
 import {useState,useRef,useEffect,lazy,Suspense} from 'react';
 import {parseTags} from '../../lib/elLib';
 import {LayersTab} from './LayersTab';import {useLayerUi} from '../../lib/layerUi';
-import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2} from 'lucide-react';
+import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2,ListChecks,Mail} from 'lucide-react';
 import {useStore,PRESETS,FW,onDev} from '../../store';
 import {DEVS_SHORT} from '../../lib/dev';
 import {DelDialog,requestDelBlock} from '../blocks/DelBlock';
 import type {Kind,Dev,Project,Sheet,Block} from '../../store';
 import {importBackup} from '../../lib/vault';import {SaveBar,downloadCopy} from './SaveBar';import {useTab} from '../../lib/tabs';
+const CheckDialog=lazy(()=>import('./CheckDialog').then(m=>({default:m.CheckDialog})));
 const ReportDialog=lazy(()=>import('./ReportDialog').then(m=>({default:m.ReportDialog})));
 const SettingsBody=lazy(()=>import('./Settings').then(m=>({default:m.SettingsBody})));
 import {briefMd,specJson,download} from '../../lib/export';
@@ -15,7 +16,7 @@ import {BlockPicker,ContentPanel,Thumb} from '../blocks/blocks';
 import {Canvas,RightPanel} from '../canvas/Canvas';
 import {Preview} from '../preview/Preview';
 import {buildHtml} from '../../lib/share';
-type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share'|'pdf';
+type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share'|'pdf'|'check'|'letter';
 const FORMS:Modal[]=['proj','sheet','block','type','ren','tpl'];
 const TITLE:Record<string,string>={proj:'Новый проект',sheet:'Новый лист',block:'Новый блок',type:'Сохранить как тип сайта',ren:'Переименовать',tpl:'Сохранить блок как шаблон'};
 const DEVS:Dev[]=['desktop','tablet','mobile'];
@@ -27,7 +28,7 @@ const HELP:[string,[string,string][]][]=[
 ['Блоки',[['A','Добавить блок: с нуля или из библиотеки'],['Enter','Войти в блок (редактировать)'],['Ctrl+Enter','Сохранить и выйти из блока'],['Alt+↑ / ↓','Блок выше / ниже'],['Ctrl+D','Дублировать блок или элемент'],['Esc','Шаг вверх: элемент → блок → ничего']]],
 ['Текст (двойной клик по тексту)',[['Ctrl+B / I / U','Жирный, курсив, подчёркнутый'],['Ctrl+Shift+X','Зачёркнутый'],['Ctrl+K','Ссылка на выделенное слово'],['Enter','Новая строка'],['Ctrl+Enter или Esc','Закончить правку']]],
 ['Положение',[['Ctrl+B','Жирный текст (элемент целиком)'],['Стрелки','Сдвиг на 1 px'],['Shift+стрелки','Сдвиг на 8 px'],['Alt при перетаскивании','Без привязки'],['Ctrl+]','Слой выше'],['Ctrl+[','Слой ниже'],['Ctrl+Shift+]','На передний план'],['Ctrl+Shift+[','На задний план']]],
-['Вид и команды',[['P','Просмотр для заказчика'],['Пробел + перетаскивание','Панорама'],['Ctrl + колесо','Масштаб'],['+ / −','Масштаб'],['Shift+0','100%'],['Shift+1','Вписать'],['Shift+R','Линейки'],["Ctrl+'",'Точечная сетка'],['Ctrl+;','Направляющие'],["Ctrl+Shift+'",'Колонки'],['Alt+Shift+1 / 2 / 3','Desktop, Tablet, Mobile'],['Alt+1 или Alt+L','Панель «Слои»'],['Alt+8','Свойства элемента'],['Shift+H / Shift+V','Отразить элемент или группу'],['Ctrl+\\','Панель проектов'],['Ctrl+K','Команды'],['?','Горячие клавиши']]]];
+['Вид и команды',[['P','Просмотр для заказчика'],['Пробел + перетаскивание','Панорама'],['Ctrl + колесо','Масштаб'],['+ / −','Масштаб'],['Shift+0','100%'],['Shift+1','Вписать'],['Shift+2','Приблизить выделенное'],['Shift+R','Линейки'],["Ctrl+'",'Точечная сетка'],['Ctrl+;','Направляющие'],["Ctrl+Shift+'",'Колонки'],['Alt+Shift+1 / 2 / 3','Desktop, Tablet, Mobile'],['Alt+1 или Alt+L','Панель «Слои»'],['Alt+8','Свойства элемента'],['Shift+H / Shift+V','Отразить элемент или группу'],['Ctrl+\\','Панель проектов'],['Ctrl+K','Команды'],['?','Горячие клавиши']]]];
 function Ask({title,children,onClose,wide,xl}:{title:string;children:React.ReactNode;onClose:()=>void;wide?:boolean;xl?:boolean}){return<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><div className={'sheet'+(wide?' wide':'')+(xl?' wide xl':'')}><h2>{title}</h2>{children}</div></div>}
 
 export function Shell(){
@@ -140,8 +141,11 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 {modal==='cmd'&&<div className="modal top" onMouseDown={e=>e.target===e.currentTarget&&close()}><div className="pal"><div className="pal-in"><Search size={16}/><input autoFocus placeholder="Команда, проект или лист" value={q} onChange={e=>{setQ(e.target.value);setCi(0)}} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();setCi(Math.min(cur+1,list.length-1))}else if(e.key==='ArrowUp'){e.preventDefault();setCi(Math.max(cur-1,0))}else if(e.key==='Enter'){e.preventDefault();exec(list[cur])}}}/></div>
 <div className="pal-list">{list.map((c,i)=><button key={c.l} className={i===cur?'on':''} onMouseEnter={()=>setCi(i)} onClick={()=>exec(c)}><span>{c.l}</span>{c.k&&<kbd>{c.k}</kbd>}</button>)}{!list.length&&<p className="hint">Ничего не найдено</p>}</div></div></div>}
 {modal==='add'&&<Ask title="Новый блок" onClose={close}><div className="addm"><button type="button" className="am dash" onClick={()=>{addAndEdit('Блок');close()}}><span className="amic"><Plus size={20}/></span><b>Создать с нуля</b><small>Пустой блок. Откроется редактор: рисуй элементы сам</small></button><button type="button" className="am" onClick={()=>setModal('block')}><span className="amic"><LayoutTemplate size={20}/></span><b>Из библиотеки</b><small>Готовые макеты и твои шаблоны по группам</small></button></div></Ask>}
+{(modal==='check'||modal==='letter')&&pr&&<Suspense fallback={null}><CheckDialog pr={pr} tab0={modal==='letter'?'letter':'check'} onGo={i=>{s.setSheet(i.sheetId);s.enterEdit(i.blockId);if(i.elId)s.setEl(i.elId);if(i.dev)setFr(i.dev);close()}} onClose={close}/></Suspense>}
 {modal==='pdf'&&pr&&<Suspense fallback={null}><ReportDialog pr={pr} dev={fr} onClose={close}/></Suspense>}
 {modal==='share'&&pr&&<Ask title="Экспорт" wide onClose={close}><p className="txt">Размер для файла и PDF: {FW[fr]} px (переключается сверху)</p><div className="addm">
+<button type="button" className="am" onClick={()=>setModal('check')}><span className="amic"><ListChecks size={20}/></span><b>Проверка перед экспортом</b><small>Пустые тексты, ссылки в никуда, формы без обязательных полей, блоки без задачи текста. Список с переходом к месту</small></button>
+<button type="button" className="am" onClick={()=>setModal('letter')}><span className="amic"><Mail size={20}/></span><b>Письмо заказчику</b><small>Готовый текст: название, ссылка, вопросы. Кнопка «Скопировать»</small></button>
 <button type="button" className="am" onClick={()=>{saveHtml();close()}}><span className="amic"><Eye size={20}/></span><b>Интерактив (HTML)</b><small>Один файл: кликабельные переходы, попапы, переключение размеров. Открывается без интернета, ссылкой делится как любой файл на хостинге. Заметок внутри нет</small></button>
 <button type="button" className="am" onClick={()=>setModal('pdf')}><span className="amic"><Share2 size={20}/></span><b>PDF-отчёт</b><small>Обложка с логотипом, оглавление, каждый блок со снимком, текстами и таблицей характеристик. A4 или Letter, предпросмотр, выбор листов, заметки по желанию</small></button>
 <button type="button" className="am" onClick={()=>{aiPack(pr);close()}}><span className="amic"><Sparkles size={20}/></span><b>Всё для нейросети</b><small>brief.md, spec.json и project.json тремя файлами</small></button>

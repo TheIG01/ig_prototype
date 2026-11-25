@@ -74,6 +74,11 @@ let L=0,R=W,T=0,B=bh;for(const q of ot){const qb=q.y+(q.t==='line'?0:q.h);if(hv(
 const o:Ms[]=[];if(x0-L>0)o.push({x:L,y:cy,w:x0-L,h:0,v:x0-L,vt:false});if(R-x1>0)o.push({x:x1,y:cy,w:R-x1,h:0,v:R-x1,vt:false});if(y0-T>0)o.push({x:cx,y:T,w:0,h:y0-T,v:y0-T,vt:true});if(B-y1>0)o.push({x:cx,y:y1,w:0,h:B-y1,v:B-y1,vt:true});return o})();
 
 const fit=()=>{const w=stage()?.clientWidth??1000;setZ(clampZ(Math.min(1,(w-48-(getUi().rulers?22:0))/W)))};
+/** Shift+2: приблизить выделенное и поставить в центр окна */
+const zoomSel=()=>{const st=stage(),wr=wrap.current;if(!st||!wr)return;if(!editing||!selEls.length){toast('Выдели элементы, чтобы приблизить');return}
+const x0=Math.min(...selEls.map(e=>e.x)),y0=Math.min(...selEls.map(e=>e.y)),x1=Math.max(...selEls.map(e=>e.x+e.w)),y1=Math.max(...selEls.map(e=>e.y+e.h));
+const nz=clampZ(Math.min((st.clientWidth-96)/Math.max(1,x1-x0),(st.clientHeight-96)/Math.max(1,y1-y0)));setZ(nz);
+requestAnimationFrame(()=>requestAnimationFrame(()=>{const r=wr.getBoundingClientRect(),sr=st.getBoundingClientRect();st.scrollLeft+=r.left+(x0+x1)/2*nz-(sr.left+sr.width/2);st.scrollTop+=r.top+(y0+y1)/2*nz-(sr.top+sr.height/2)}))};
 useEffect(fit,[W]);
 useEffect(()=>{if(!editing){setTool('sel');setArm({});setIns(false);setIed(null)}},[editing]);
 const place=(t:ET,x:Partial<El>)=>{if(!editB)return;pick(t,x);setIns(false)};
@@ -129,6 +134,7 @@ if(e.altKey)return;
 if(e.shiftKey&&e.code==='KeyI'){e.preventDefault();if(editing)openLib();else if(curB){s.enterEdit(curB.id);openLib()}return}
 if(e.shiftKey&&e.code==='Digit0'){e.preventDefault();setZ(1);return}
 if(e.shiftKey&&e.code==='Digit1'){e.preventDefault();fit();return}
+if(e.shiftKey&&e.code==='Digit2'){e.preventDefault();zoomSel();return}
 if(e.code==='KeyA'&&!e.shiftKey){e.preventDefault();if(!editing)onAdd(s.blockId??undefined);return}
 if(e.code==='KeyE'&&!e.shiftKey){e.preventDefault();if(editing)setIns(v=>!v);else if(curB){s.enterEdit(curB.id);setIns(true)}return}
 if(e.code==='KeyO'&&!e.shiftKey){e.preventDefault();if(editing)pick('shape',{sh:'circle',w:120,h:120});else if(curB){s.enterEdit(curB.id);pick('shape',{sh:'circle',w:120,h:120})}return}

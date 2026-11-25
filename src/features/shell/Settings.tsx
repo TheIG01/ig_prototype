@@ -2,6 +2,7 @@ import {useState,useRef} from 'react';
 import {useStore} from '../../store';import {tplsFile,parseTpls,download} from '../../lib/export';import {toast} from '../../lib/toast';
 import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,useUi,saveUi,liteOn,weakDevice} from '../../lib/ui';import type {Ui} from '../../lib/ui';
 import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';import {isOwner} from '../../lib/tabs';import {typo,TY_RULES,TY_DEMO,TY0} from '../../lib/typo';import type {TyKey} from '../../lib/typo';
+import {FreeSpace} from './FreeSpace';
 export function SettingsBody({onBackup}:{onBackup:()=>void}){
 const tpls=useStore(x=>x.data?.blockTpls);const importTpls=useStore(x=>x.importTpls);const tf=useRef<HTMLInputElement>(null);const nTpl=tpls?.length??0;
 const dlTpls=()=>{download('ig_templates.json',tplsFile(tpls??[]),'application/json');toast('Шаблоны скачаны')};
@@ -50,6 +51,8 @@ return<div>
 <div className="set-row"><div><b>Логотип</b><p>PNG, JPG, WebP или SVG. Сохраняется в браузере, на сервер не уходит</p></div><div className="seg">{u.ag.l&&<img src={u.ag.l} alt="" style={{height:32,maxWidth:120,objectFit:'contain',marginRight:8}}/>}<button type="button" onClick={()=>lf.current?.click()}>{u.ag.l?'Заменить':'Загрузить'}</button>{u.ag.l&&<button type="button" onClick={()=>setAg('l','')}>Убрать</button>}<input ref={lf} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={e=>pickLogo(e.target.files)}/></div></div>
 <h4 className="set-h">Шаблоны блоков</h4>
 <div className="set-row"><div><b>Мои шаблоны</b><p>{nTpl} шт. Скачай файл, чтобы передать блоки нейросети или перенести на другое устройство. Подходит и файл одного блока</p></div><div className="stack"><button className="btn" disabled={!nTpl} onClick={dlTpls}><Download size={16}/>Скачать</button><button className="btn" onClick={()=>tf.current?.click()}><Upload size={16}/>Загрузить</button></div><input ref={tf} type="file" accept=".json,application/json" multiple hidden onChange={e=>ulTpls(e.target.files)}/></div>
+<h4 className="set-h">Освободить место</h4>
+<FreeSpace onBackup={onBackup}/>
 <h4 className="set-h">Безопасность</h4>
 <div className="set-row"><div><b>Запоминать это устройство</b><p>Вход без ПИН. Любой, кто откроет этот браузер, увидит данные</p></div><input type="checkbox" className="sw" checked={rem} onChange={e=>toggle(e.target.checked)}/></div>
 <div className="set-row"><div><b>Выйти</b><p>Устройство забудется, при входе потребуется ПИН</p></div><button className="btn" onClick={out}><LogOut size={16}/>Выйти</button></div>

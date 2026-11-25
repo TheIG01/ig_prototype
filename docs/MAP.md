@@ -729,3 +729,12 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 - `src/features/canvas/FormSecs.tsx`: `FieldSec`, `CmpSec`, `FormSec` (панели)
 - `src/features/canvas/Comments.tsx`, `cm.css`: `CmLayer` (пины), `CmPanel`, `useCmKeys` (клавиша C)
 - Правки: `store.ts` (`El.ff`, `El.cp`, `Block.fm`, `Block.cmt`, `ET cmp`, `cmAdd/cmReply/cmDone/cmDel`), `share.ts` (runtime: маска, проверка, компоненты, пины), `art.ts`, `elStyle.tsx`, `Insert.tsx` (вкладка «Формы»), `export.ts`, `report.ts`, `migrate*.ts`
+
+### 1.56 новые файлы
+- `src/lib/precheck.ts`: `checkProject(p)` (пустые тексты и кнопки, ссылки в никуда, формы без обязательных полей, пустая «Задача текста»), `Issue`, `KIND_NAMES`
+- `src/lib/letter.ts`: `buildLetter(p,{title,link,questions,from})`, `LETTER_Q` (текст письма заказчику)
+- `src/features/shell/CheckDialog.tsx`, `check.css`: окно «Перед отправкой заказчику» (вкладки «Проверка» и «Письмо»), грузится лениво из `Shell.tsx`
+- `src/features/shell/FreeSpace.tsx`: «Освободить место» (секция в `Settings.tsx`)
+- `src/lib/update.ts`: `watchUpdate()` плашка «Вышла новая версия» (вызов в `main.tsx`)
+- Правки: `Shell.tsx` (окна `check`/`letter`, две кнопки в «Экспорт», справка Shift+2), `Canvas.tsx` (`zoomSel`, Shift+2), `Settings.tsx`, `main.tsx`, `vite.config.ts` (`manualChunks`: react, icons, vendor)
+
