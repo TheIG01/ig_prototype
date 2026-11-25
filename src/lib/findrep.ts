@@ -1,4 +1,4 @@
-/** Поиск и замена текста по проекту (1.64): тексты и кнопки на всех устройствах, тексты формы (спасибо, согласие). */
+/** Поиск и замена текста по проекту (1.64): тексты и кнопки на всех устройствах, тексты формы (спасибо, согласие), названия блоков. */
 import type {Project,Block,El} from '../store';
 import {DEVS} from './dev';
 import type {Dev} from './dev';
@@ -42,6 +42,7 @@ const FM:[keyof NonNullable<Block['fm']>,string][]=[['thanks','Форма: те�
 const elLabel=(e:El)=>e.t==='btn'?'Кнопка':'Текст';
 const elKey=(b:Block,e:El)=>'e|'+b.id+'|'+e.text;
 const fmKey=(b:Block,f:string,t:string)=>'f|'+b.id+'|'+f+'|'+t;
+const tiKey=(b:Block)=>'t|'+b.id+'|'+b.title;
 
 /** найденные места: одинаковые тексты одного блока на разных устройствах идут одной строкой */
 export function findAll(pr:Project,q:string,o:FOpt,only?:string|null):Row[]{
@@ -56,7 +57,9 @@ if(ex){if(!ex.devs.includes(d)){ex.devs.push(d);ex.count+=c}}
 else{const r:Row={key:k,sheetId:s.id,sheet:s.name,blockId:b.id,block:b.title,label:elLabel(e),devs:[d],count:c,...snip(e.text,re)};map.set(k,r)}}}
 rows.push(...map.values());
 for(const [f,label] of FM){const t=b.fm?.[f];if(!t)continue;const c=countIn(t,re);if(!c)continue;
-rows.push({key:fmKey(b,f,t),sheetId:s.id,sheet:s.name,blockId:b.id,block:b.title,label,devs:[],count:c,...snip(t,re)})}}}
+rows.push({key:fmKey(b,f,t),sheetId:s.id,sheet:s.name,blockId:b.id,block:b.title,label,devs:[],count:c,...snip(t,re)})}
+const tc=b.title?countIn(b.title,re):0;
+if(tc)rows.push({key:tiKey(b),sheetId:s.id,sheet:s.name,blockId:b.id,block:b.title,label:'Название блока',devs:[],count:tc,...snip(b.title,re)})}}
 return rows}
 
 /** замена прямо в черновике проекта; skip: ключи строк, которые не трогать. Возвращает число замен */
@@ -68,5 +71,6 @@ for(const e of b.els[d]){if(!e.text||skip.has(elKey(b,e)))continue;const c=count
 const lines=getLines(e).map(l=>replLine(l,re,r));const p=toPatch(lines);
 e.text=p.text;if(p.rt)e.rt=p.rt;else delete e.rt;n+=c}}
 for(const [f] of FM){const t=b.fm?.[f];if(!t||!b.fm||skip.has(fmKey(b,f,t)))continue;const c=countIn(t,re);if(!c)continue;
-b.fm[f]=t.replace(re,()=>r);n+=c}}}
+b.fm[f]=t.replace(re,()=>r);n+=c}
+if(b.title&&!skip.has(tiKey(b))){const c=countIn(b.title,re);if(c){b.title=b.title.replace(re,()=>r);n+=c}}}}
 return n}
