@@ -44,10 +44,10 @@ const elKey=(b:Block,e:El)=>'e|'+b.id+'|'+e.text;
 const fmKey=(b:Block,f:string,t:string)=>'f|'+b.id+'|'+f+'|'+t;
 
 /** найденные места: одинаковые тексты одного блока на разных устройствах идут одной строкой */
-export function findAll(pr:Project,q:string,o:FOpt):Row[]{
+export function findAll(pr:Project,q:string,o:FOpt,only?:string|null):Row[]{
 const re=mkRe(q,o);if(!re)return[];
 const rows:Row[]=[];
-for(const s of pr.sheets)for(const b of s.blocks){
+for(const s of pr.sheets){if(only&&s.id!==only)continue;for(const b of s.blocks){
 const map=new Map<string,Row>();
 for(const d of DEVS){if(b.dv&&!b.dv.includes(d))continue;
 for(const e of b.els[d]){if(!e.text)continue;const c=countIn(e.text,re);if(!c)continue;
@@ -56,17 +56,17 @@ if(ex){if(!ex.devs.includes(d)){ex.devs.push(d);ex.count+=c}}
 else{const r:Row={key:k,sheetId:s.id,sheet:s.name,blockId:b.id,block:b.title,label:elLabel(e),devs:[d],count:c,...snip(e.text,re)};map.set(k,r)}}}
 rows.push(...map.values());
 for(const [f,label] of FM){const t=b.fm?.[f];if(!t)continue;const c=countIn(t,re);if(!c)continue;
-rows.push({key:fmKey(b,f,t),sheetId:s.id,sheet:s.name,blockId:b.id,block:b.title,label,devs:[],count:c,...snip(t,re)})}}
+rows.push({key:fmKey(b,f,t),sheetId:s.id,sheet:s.name,blockId:b.id,block:b.title,label,devs:[],count:c,...snip(t,re)})}}}
 return rows}
 
 /** замена прямо в черновике проекта; skip: ключи строк, которые не трогать. Возвращает число замен */
-export function applyAll(pr:Project,q:string,r:string,o:FOpt,skip:ReadonlySet<string>):number{
+export function applyAll(pr:Project,q:string,r:string,o:FOpt,skip:ReadonlySet<string>,only?:string|null):number{
 const re=mkRe(q,o);if(!re)return 0;let n=0;
-for(const s of pr.sheets)for(const b of s.blocks){
+for(const s of pr.sheets){if(only&&s.id!==only)continue;for(const b of s.blocks){
 for(const d of DEVS){if(b.dv&&!b.dv.includes(d))continue;
 for(const e of b.els[d]){if(!e.text||skip.has(elKey(b,e)))continue;const c=countIn(e.text,re);if(!c)continue;
 const lines=getLines(e).map(l=>replLine(l,re,r));const p=toPatch(lines);
 e.text=p.text;if(p.rt)e.rt=p.rt;else delete e.rt;n+=c}}
 for(const [f] of FM){const t=b.fm?.[f];if(!t||!b.fm||skip.has(fmKey(b,f,t)))continue;const c=countIn(t,re);if(!c)continue;
-b.fm[f]=t.replace(re,()=>r);n+=c}}
+b.fm[f]=t.replace(re,()=>r);n+=c}}}
 return n}
