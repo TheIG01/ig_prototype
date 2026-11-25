@@ -1,7 +1,7 @@
 import {useState,useRef,useEffect,lazy,Suspense} from 'react';
 import {parseTags} from '../../lib/elLib';
 import {LayersTab} from './LayersTab';import {useLayerUi} from '../../lib/layerUi';
-import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2,ListChecks,Mail,BookOpen,Command,MoreHorizontal,Camera,Network} from 'lucide-react';
+import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2,ListChecks,Mail,BookOpen,Command,MoreHorizontal,Camera,Network,Replace} from 'lucide-react';
 import {useStore,PRESETS,FW,onDev} from '../../store';
 import {DEVS_SHORT} from '../../lib/dev';
 import {DelDialog,requestDelBlock} from '../blocks/DelBlock';
@@ -10,6 +10,7 @@ import {importBackup} from '../../lib/vault';import {SaveBar,BakBar,downloadCopy
 const CheckDialog=lazy(()=>import('./CheckDialog').then(m=>({default:m.CheckDialog})));
 const ReportDialog=lazy(()=>import('./ReportDialog').then(m=>({default:m.ReportDialog})));
 const SiteMapDialog=lazy(()=>import('./SiteMapDialog').then(m=>({default:m.SiteMapDialog})));
+const FindDialog=lazy(()=>import('./FindDialog').then(m=>({default:m.FindDialog})));
 const SnapDialog=lazy(()=>import('./SnapDialog').then(m=>({default:m.SnapDialog})));
 const AiDialog=lazy(()=>import('./AiDialog').then(m=>({default:m.AiDialog})));
 const GuideBody=lazy(()=>import('./Guide').then(m=>({default:m.GuideBody})));
@@ -20,7 +21,7 @@ import {BlockPicker,ContentPanel,Thumb} from '../blocks/blocks';
 import {Canvas,RightPanel} from '../canvas/Canvas';
 import {Preview} from '../preview/Preview';
 import {buildHtml} from '../../lib/share';
-type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share'|'pdf'|'check'|'letter'|'guide'|'ai'|'snap'|'map'|'more';
+type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share'|'pdf'|'check'|'letter'|'guide'|'ai'|'snap'|'map'|'find'|'more';
 const FORMS:Modal[]=['proj','sheet','block','type','ren','tpl'];
 const TITLE:Record<string,string>={proj:'Новый проект',sheet:'Новый лист',block:'Новый блок',type:'Сохранить как тип сайта',ren:'Переименовать',tpl:'Сохранить блок как шаблон'};
 const DEVS:Dev[]=['desktop','tablet','mobile'];
@@ -136,7 +137,7 @@ return<div className={'app'+(hide?' nosb':'')}>
 <i className="vr"/>
 <button className="btn ic" onClick={()=>s.undo()} title="Отменить (Ctrl+Z)"><Undo2 size={16}/></button><button className="btn ic" onClick={()=>s.redo()} title="Повторить (Ctrl+Shift+Z)"><Redo2 size={16}/></button>
 <i className="vr"/>
-{!ed&&<div className="more"><button className={'btn ic'+(modal==='more'?' on':'')} onClick={()=>setModal(modal==='more'?'':'more')} title="Ещё: версии, копия, тип сайта" aria-label="Ещё"><MoreHorizontal size={16}/></button>{modal==='more'&&<><div className="more-bg" onClick={()=>setModal('')}/><div className="more-m">{pr&&<button onClick={()=>{setModal('');tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):setModal('snap')}}><Camera size={16}/><span>Версии проекта</span></button>}{pr&&<button onClick={()=>setModal('map')}><Network size={16}/><span>Карта сайта</span></button>}{pr&&<button onClick={()=>openForm('type')}><BookmarkPlus size={16}/><span>Сохранить как тип сайта</span></button>}<button onClick={()=>{setModal('');backup()}}><Download size={16}/><span>Скачать копию</span></button><button onClick={()=>{setModal('');tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):file.current?.click()}}><Upload size={16}/><span>Загрузить копию</span></button></div></>}<input ref={file} type="file" accept=".json" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f){setPend(f);setModal('rst')}}}/></div>}
+{!ed&&<div className="more"><button className={'btn ic'+(modal==='more'?' on':'')} onClick={()=>setModal(modal==='more'?'':'more')} title="Ещё: версии, копия, тип сайта" aria-label="Ещё"><MoreHorizontal size={16}/></button>{modal==='more'&&<><div className="more-bg" onClick={()=>setModal('')}/><div className="more-m">{pr&&<button onClick={()=>{setModal('');tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):setModal('snap')}}><Camera size={16}/><span>Версии проекта</span></button>}{pr&&<button onClick={()=>setModal('map')}><Network size={16}/><span>Карта сайта</span></button>}{pr&&<button onClick={()=>{setModal('');tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):setModal('find')}}><Replace size={16}/><span>Найти и заменить</span></button>}{pr&&<button onClick={()=>openForm('type')}><BookmarkPlus size={16}/><span>Сохранить как тип сайта</span></button>}<button onClick={()=>{setModal('');backup()}}><Download size={16}/><span>Скачать копию</span></button><button onClick={()=>{setModal('');tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):file.current?.click()}}><Upload size={16}/><span>Загрузить копию</span></button></div></>}<input ref={file} type="file" accept=".json" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f){setPend(f);setModal('rst')}}}/></div>}
 {!ed&&pr&&<button className="btn pri" onClick={openPreview} title="Просмотр для заказчика (P)"><Eye size={16}/>Просмотр</button>}{!ed&&pr&&<button className="btn" onClick={()=>setModal('share')} title="Отдать заказчику"><Share2 size={16}/><span className="tl">Экспорт</span></button>}{!ed&&pr&&<button className="btn" onClick={()=>setModal('ai')} title="Промпт для нейросети: Claude, v0, Lovable, Cursor"><Sparkles size={16}/><span className="tl">Для ИИ</span></button>}
 <button className="btn ic mobonly" onClick={()=>setModal('set')} title="Настройки"><Settings size={16}/></button>
 {ed&&<><i className="vr"/><button className="btn" onClick={cancelEdit} title="Откатить все правки в этом блоке">Не сохранять</button><button className="btn pri" onClick={()=>s.exitEdit(true)} title="Ctrl+Enter">Сохранить</button></>}
@@ -152,7 +153,7 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 <div className="pal-list">{list.map((c,i)=><button key={c.l} className={i===cur?'on':''} onMouseEnter={()=>setCi(i)} onClick={()=>exec(c)}><span>{c.l}</span>{c.k&&<kbd>{c.k}</kbd>}</button>)}{!list.length&&<p className="hint">Ничего не найдено</p>}</div></div></div>}
 {modal==='add'&&<Ask title="Новый блок" onClose={close}><div className="addm"><button type="button" className="am dash" onClick={()=>{addAndEdit('Блок');close()}}><span className="amic"><Plus size={20}/></span><b>Создать с нуля</b><small>Пустой блок. Откроется редактор: рисуй элементы сам</small></button><button type="button" className="am" onClick={()=>setModal('block')}><span className="amic"><LayoutTemplate size={20}/></span><b>Из библиотеки</b><small>Готовые макеты и твои шаблоны по группам</small></button></div></Ask>}
 {(modal==='check'||modal==='letter')&&pr&&<Suspense fallback={null}><CheckDialog pr={pr} tab0={modal==='letter'?'letter':'check'} onGo={i=>{s.setSheet(i.sheetId);s.enterEdit(i.blockId);if(i.elId)s.setEl(i.elId);if(i.dev)setFr(i.dev);close()}} onClose={close}/></Suspense>}
-{modal==='map'&&pr&&<Ask title="Карта сайта" wide onClose={close}><Suspense fallback={<p className="hint">Загрузка…</p>}><SiteMapDialog pr={pr} onClose={close}/></Suspense></Ask>}{modal==='snap'&&pr&&<Ask title="Версии проекта" wide onClose={close}><Suspense fallback={<p className="hint">Загрузка…</p>}><SnapDialog pr={pr} onClose={close}/></Suspense></Ask>}
+{modal==='find'&&pr&&<Ask title="Найти и заменить" wide onClose={close}><Suspense fallback={<p className="hint">Загрузка…</p>}><FindDialog pr={pr} onClose={close}/></Suspense></Ask>}{modal==='map'&&pr&&<Ask title="Карта сайта" wide onClose={close}><Suspense fallback={<p className="hint">Загрузка…</p>}><SiteMapDialog pr={pr} onClose={close}/></Suspense></Ask>}{modal==='snap'&&pr&&<Ask title="Версии проекта" wide onClose={close}><Suspense fallback={<p className="hint">Загрузка…</p>}><SnapDialog pr={pr} onClose={close}/></Suspense></Ask>}
 {modal==='ai'&&pr&&<Ask title="Для нейросети" wide onClose={close}><Suspense fallback={<p className="hint">Загрузка…</p>}><AiDialog pr={pr} typeName={tName(pr)}/></Suspense></Ask>}
 {modal==='pdf'&&pr&&<Suspense fallback={null}><ReportDialog pr={pr} dev={fr} onClose={close}/></Suspense>}
 {modal==='share'&&pr&&<Ask title="Экспорт" wide onClose={close}><p className="txt">Размер для файла и PDF: {FW[fr]} px (переключается сверху)</p><div className="addm">

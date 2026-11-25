@@ -760,3 +760,5 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 
 ### `src/lib/sitemap.ts` — карта сайта (1.63): `buildMap(pr)` → `{nodes,edges,warns,cols}`; `MapNode`, `MapEdge`, `MapWarn`
 ### `src/features/shell/SiteMapDialog.tsx` — окно «Карта сайта» (меню «Ещё»), SVG-стрелки, список «Что поправить»
+### `src/lib/findrep.ts` — найти и заменить (1.64): `mkRe`, `replLine`, `findAll(pr,q,o)` → `Row[]`, `applyAll(pr,q,r,o,skip)`
+### `src/features/shell/FindDialog.tsx` — окно «Найти и заменить» (меню «Ещё»), действие `findRep` в `store.ts`

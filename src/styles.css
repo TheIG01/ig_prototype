@@ -768,3 +768,14 @@ html,body{overflow:hidden}.app,.main,.work{min-height:0;overflow:hidden}
 .smp-w{display:flex;flex-direction:column;gap:6px}.smp-w h4{display:flex;align-items:center;gap:6px;margin:0;font-size:13px}
 .smp-wr{text-align:left;padding:8px 12px;border:1px solid #e3e6ec;border-radius:8px;background:#fff;font:inherit;font-size:13px;cursor:pointer}
 .smp-wr:hover{border-color:#2f6bff}.smp-wr.orphan,.smp-wr.broken{border-left:3px solid #e5484d}.smp-wr.empty{border-left:3px solid #f5a524}
+/* 1.64 найти и заменить */
+.fnd{display:flex;flex-direction:column;gap:10px;min-width:0}
+.fnd-f{display:flex;flex-direction:column;gap:4px;font-size:13px}.fnd-f span{color:#6b7385}
+.fnd-o{display:flex;gap:16px;flex-wrap:wrap;font-size:13px}.fnd-o label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.fnd-l{display:flex;flex-direction:column;gap:10px;max-height:40vh;overflow:auto;border:1px solid #e3e6ec;border-radius:8px;padding:8px;background:#fafbfc}
+.fnd-g h4{margin:0 0 6px;font-size:13px}
+.fnd-r{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:6px 8px;border:1px solid #e3e6ec;border-radius:8px;background:#fff;margin-bottom:6px}
+.fnd-r.off{opacity:.5}
+.fnd-t{display:flex;flex-direction:column;gap:2px;min-width:0}.fnd-t small{color:#6b7385;font-size:11px}
+.fnd-t span{font-size:13px;overflow-wrap:anywhere}
+.fnd-t del{background:#ffe9e9;color:#b42318;text-decoration:line-through}.fnd-t ins{background:#e3f6e8;color:#127a2f;text-decoration:none;margin-left:2px}
