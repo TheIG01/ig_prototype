@@ -745,3 +745,5 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 - `Shell.tsx`: рельса с подписями, `PanelGrip` (ширина правой панели, `--pw`), `.stagew`, окно «Новый проект» с шагами.
 - `Canvas.tsx`: двойное нажатие в `down` (правка текста), `dockDrag` (нижняя панель), размеры при клике из `Ui.dz`, Hug по умолчанию: текст `w`, кнопка `b`, поле `h`.
 - `measure.ts`, `store.ts`: `hug:'b'` (по ширине и высоте). `ElPanel.tsx`: Hug/Fixed по осям. `ui.ts`, `Settings.tsx`: «Новые элементы».
+
+- 1.58 `ElPanel.tsx`: `PanelTabs`, `TAB_OF`, `Sec` фильтрует по вкладке. `ui.ts`: `hp` (отступы Hug). `measure.ts`: `hugSize` берёт `getUi().hp`. `Settings.tsx`: «Отступы Hug».

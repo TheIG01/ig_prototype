@@ -1,4 +1,4 @@
-import {useMemo,useState} from 'react';import {useLive} from '../../lib/live';
+import {useMemo,useState,useSyncExternalStore} from 'react';import {useLive} from '../../lib/live';
 import {X,ChevronDown,Bold,AlignLeft,AlignCenter,AlignRight,ArrowUp,ArrowDown,Copy,Trash2,Smartphone,LayoutTemplate,Search} from 'lucide-react';
 import {useStore,FW} from '../../store';
 import type {El,Dev,Block} from '../../store';
@@ -12,9 +12,19 @@ const HEX=/^#[0-9a-f]{6}$/i;
 
 /** сворачиваемая секция: состояние помнится между элементами и сессиями */
 const SHUT=new Set<string>((()=>{try{const v=localStorage.getItem('igp.shut');return v?JSON.parse(v) as string[]:['Слой и копии']}catch{return['Слой и копии']}})());
+/** вкладки правой панели: Элемент / Стиль / Эффекты; секция попадает во вкладку по названию */
+export type PTab='el'|'st'|'fx';
+const TAB_OF:Record<string,PTab>={'Вид':'st','Заливка':'st','Цвет иконки':'st','Обводка':'st','Цвета выделения':'st','Эффекты':'fx','Поворот и отражение':'fx'};
+let ptab:PTab=(()=>{try{const v=localStorage.getItem('igp.ptab');return v==='st'||v==='fx'?v:'el'}catch{return'el'}})();
+const psubs=new Set<()=>void>();
+const setPtab=(v:PTab)=>{ptab=v;try{localStorage.setItem('igp.ptab',v)}catch{/* память недоступна */}psubs.forEach(f=>f())};
+const usePtab=()=>useSyncExternalStore(f=>{psubs.add(f);return()=>{psubs.delete(f)}},()=>ptab);
+export function PanelTabs(){const c=usePtab();return<div className="ptabs" role="tablist">{([['el','Элемент'],['st','Стиль'],['fx','Эффекты']] as const).map(([k,l])=><button key={k} role="tab" aria-selected={c===k} className={c===k?'on':''} onClick={()=>setPtab(k)}>{l}</button>)}</div>}
 export function Sec({t,children}:{t:string;children:React.ReactNode}){
+const cur=usePtab();
 const [o,setO]=useState(!SHUT.has(t));
 const tg=()=>{if(o)SHUT.add(t);else SHUT.delete(t);setO(!o);try{localStorage.setItem('igp.shut',JSON.stringify([...SHUT]))}catch{/* память недоступна */}};
+if((TAB_OF[t]??'el')!==cur)return null;
 return<div className={'sec fold'+(o?'':' shut')}><button className="sh" aria-expanded={o} onClick={tg}><ChevronDown size={13}/>{t}</button>{o&&<div className="sb">{children}</div>}</div>}
 
 export function Color({label,value,def,pal,none,onChange}:{label:string;value?:string;def:string;pal:string[];none?:boolean;onChange:(v:string|undefined)=>void}){
@@ -49,7 +59,7 @@ const defR=t==='btn'?10:t==='input'?8:t==='shape'&&e.sh==='round'?16:t==='shape'
 const pal=st.palette;
 const sizes=[...new Set([12,13,14,16,18,20,24,32,40,48,56,72,r.fs??16])].sort((a,c)=>a-c);
 return<aside className="panel ep"><div className="ph"><b>{NM[t]}</b><span>Элемент</span><button className="btn ic" onClick={()=>s.setBlock(b.id)} aria-label="Снять выделение"><X size={14}/></button></div>
-<div className="sec"><button className="up" title="Выбрать весь блок (Esc)" onClick={()=>s.setBlock(b.id)}><LayoutTemplate size={14}/>Блок: {b.title}</button></div>
+<PanelTabs/><div className="sec"><button className="up" title="Выбрать весь блок (Esc)" onClick={()=>s.setBlock(b.id)}><LayoutTemplate size={14}/>Блок: {b.title}</button></div>
 <Sec t="Положение и размер"><div className="grid2">{num('x','X')}{num('y','Y')}{num('w','Ш')}{num('h','В')}</div>
 <div className="btnrow">{(['Влево','Центр','Вправо'] as const).map((l,i)=><button key={l} className="btn" title="Выровнять по фрейму" onClick={()=>set({x:Math.max(0,[0,Math.round((FW[dev]-e.w)/2),FW[dev]-e.w][i])})}>{l}</button>)}</div>{hugRow}
 <button className="btn" title="Привязать положение и размер к шкале 4 px: отступы 4, 8, 12, 16, 24, 32, 48, 64 складываются из неё" onClick={()=>{const q=(v:number)=>Math.round(v/4)*4;set({x:q(e.x),y:q(e.y),...(e.hug?{}:{w:Math.max(4,q(e.w)),...(t==='line'?{}:{h:Math.max(4,q(e.h))})})})}}>К шкале 4 px</button></Sec>

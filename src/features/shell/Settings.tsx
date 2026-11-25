@@ -1,6 +1,6 @@
 import {useState,useRef} from 'react';
 import {useStore} from '../../store';import {tplsFile,parseTpls,download} from '../../lib/export';import {toast} from '../../lib/toast';
-import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,useUi,saveUi,liteOn,weakDevice} from '../../lib/ui';import type {Ui} from '../../lib/ui';
+import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,UI0,useUi,saveUi,liteOn,weakDevice} from '../../lib/ui';import type {Ui} from '../../lib/ui';
 import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';import {isOwner} from '../../lib/tabs';import {typo,TY_RULES,TY_DEMO,TY0} from '../../lib/typo';import type {TyKey} from '../../lib/typo';
 import {FreeSpace} from './FreeSpace';import {GuideBody} from './Guide';
 const DZ:[string,string,number,number][]=[['rect','Прямоугольник',320,200],['input','Поле ввода (ширина)',280,44],['img','Изображение',320,220],['btn','Кнопка (подстроится под текст)',180,48],['text','Текст (подстроится под текст)',240,40]];
@@ -42,6 +42,9 @@ return<div>
 <h4 className="set-h">Новые элементы</h4>
 <p className="hint">Размер при простом клике инструментом. Если потянуть, размер задаёшь ты</p>
 {DZ.map(([k,l,w0,h0])=>{const v=u.dz[k]??[w0,h0];const ch=(a:number,b:number)=>up({dz:{...u.dz,[k]:[a,b]}});return<div className="set-row" key={k}><div><b>{l}</b><p>{u.dz[k]?'Свой размер':'По умолчанию'}, px</p></div><div className="stack dz"><input type="number" className="inp nm" min={8} value={v[0]} aria-label="Ширина" onChange={e=>ch(+e.target.value||8,v[1])}/><span>×</span><input type="number" className="inp nm" min={8} value={v[1]} aria-label="Высота" onChange={e=>ch(v[0],+e.target.value||8)}/>{u.dz[k]&&<button className="btn" onClick={()=>{const n={...u.dz};delete n[k];up({dz:n})}}>Сбросить</button>}</div></div>})}
+<h4 className="set-h">Отступы Hug</h4>
+<p className="hint">Внутренние отступы кнопок и полей, когда размер по содержимому. Применяются при следующем изменении текста</p>
+{([['Кнопка, по бокам',0],['Кнопка, сверху и снизу',1],['Поле, по бокам',2],['Поле, сверху и снизу',3]] as const).map(([l,i])=><div className="set-row" key={i}><div><b>{l}</b><p>px с каждой стороны</p></div><div className="stack dz"><input type="number" className="inp nm" min={0} max={80} value={u.hp[i]} aria-label={l} onChange={e=>{const h:[number,number,number,number]=[...u.hp];h[i]=Math.max(0,Math.min(80,+e.target.value||0));up({hp:h})}}/>{u.hp[i]!==UI0.hp[i]&&<button className="btn" onClick={()=>{const h:[number,number,number,number]=[...u.hp];h[i]=UI0.hp[i];up({hp:h})}}>Сбросить</button>}</div></div>)}
 <h4 className="set-h">Колонки</h4>
 {tg('cols','Показывать колонки','Притягивают элементы к краям колонок. Ctrl+Shift+\'')}
 <div className="set-row"><div><b>Число колонок</b><p>Авто: 12 на Desktop, 8 на Tablet, 4 на Mobile</p></div><div className="seg">{([[0,'Авто'],[4,'4'],[6,'6'],[8,'8'],[12,'12']] as const).map(([k,l])=><button key={k} className={u.colsN===k?'on':''} onClick={()=>up({colsN:k})}>{l}</button>)}</div></div>

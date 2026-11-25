@@ -727,3 +727,9 @@ html,body{overflow:hidden}.app,.main,.work{min-height:0;overflow:hidden}
 .sheet{animation:pop .22s var(--ease)}.modal{animation:fade .16s}
 .toast{animation:pop .22s var(--ease)}
 .el.sel,.selbox{transition:none}
+
+/* 1.58: вкладки правой панели */
+.ptabs{display:flex;gap:2px;margin:8px 10px 4px;padding:3px;background:#F1F5F9;border-radius:10px}
+.ptabs button{flex:1;border:0;background:transparent;padding:6px 4px;border-radius:8px;font:inherit;font-size:12.5px;font-weight:600;color:#64748B;cursor:pointer}
+.ptabs button:hover{color:#0F172A}
+.ptabs button.on{background:#fff;color:var(--acc);box-shadow:0 1px 2px rgba(15,23,42,.12)}
