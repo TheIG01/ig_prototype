@@ -2,7 +2,8 @@ import {useState,useRef} from 'react';
 import {useStore} from '../../store';import {tplsFile,parseTpls,download} from '../../lib/export';import {toast} from '../../lib/toast';
 import {LogOut,Trash2,Download,Upload} from 'lucide-react';import {ACCENTS,useUi,saveUi,liteOn,weakDevice} from '../../lib/ui';import type {Ui} from '../../lib/ui';
 import {forgetDevice,rememberDevice,wipe,lock} from '../../lib/vault';import {isOwner} from '../../lib/tabs';import {typo,TY_RULES,TY_DEMO,TY0} from '../../lib/typo';import type {TyKey} from '../../lib/typo';
-import {FreeSpace} from './FreeSpace';
+import {FreeSpace} from './FreeSpace';import {GuideBody} from './Guide';
+const DZ:[string,string,number,number][]=[['rect','Прямоугольник',320,200],['input','Поле ввода (ширина)',280,44],['img','Изображение',320,220],['btn','Кнопка (подстроится под текст)',180,48],['text','Текст (подстроится под текст)',240,40]];
 export function SettingsBody({onBackup}:{onBackup:()=>void}){
 const tpls=useStore(x=>x.data?.blockTpls);const importTpls=useStore(x=>x.importTpls);const tf=useRef<HTMLInputElement>(null);const nTpl=tpls?.length??0;
 const dlTpls=()=>{download('ig_templates.json',tplsFile(tpls??[]),'application/json');toast('Шаблоны скачаны')};
@@ -19,6 +20,8 @@ const pickLogo=(fl:FileList|null)=>{const f=fl?.[0];if(!f)return;if(lf.current)l
 const im=new Image();im.onerror=()=>toast('Не получилось открыть картинку');im.onload=()=>{const k=Math.min(1,320/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d')!.drawImage(im,0,0,c.width,c.height);setAg('l',c.toDataURL('image/png'));toast('Логотип сохранён')};im.src=src};fr.readAsDataURL(f)};
 const kill=async()=>{if(!isOwner()){toast('Проект открыт в другой вкладке: забери управление');return}await wipe();location.reload()};
 return<div>
+<h4 className="set-h">Гид по функциям</h4>
+<details className="fold2"><summary>Что делает каждый инструмент и зачем</summary><GuideBody/></details>
 <h4 className="set-h">Вид</h4>
 <div className="set-row"><div><b>Акцентный цвет</b><p>Кнопки, выделение, направляющие</p></div><div className="swatches">{ACCENTS.map(([c,n])=><button key={c} className={'swt'+(u.accent===c?' on':'')} style={{background:c}} title={n} aria-label={n} aria-pressed={u.accent===c} onClick={()=>up({accent:c})}/>)}</div></div>
 <div className="set-row"><div><b>Размер интерфейса</b><p>Крупнее подписи, кнопки и иконки в панелях, дереве и тулбаре</p></div><div className="seg">{([['m','Обычный'],['l','Крупный'],['xl','Очень крупный']] as const).map(([k,l])=><button key={k} className={u.size===k?'on':''} onClick={()=>up({size:k})}>{l}</button>)}</div></div>
@@ -36,6 +39,9 @@ return<div>
 {tg('hover','Подсветка при наведении','Рамка вокруг элемента под курсором')}
 {tg('dims','Размеры у выделения','Подпись ширины и высоты под элементом и блоком')}
 <div className="set-row"><div><b>Шаг стрелок с Shift</b><p>Обычная стрелка двигает на 1 px</p></div>{nm('nudge',u.nudge,'8')}</div>
+<h4 className="set-h">Новые элементы</h4>
+<p className="hint">Размер при простом клике инструментом. Если потянуть, размер задаёшь ты</p>
+{DZ.map(([k,l,w0,h0])=>{const v=u.dz[k]??[w0,h0];const ch=(a:number,b:number)=>up({dz:{...u.dz,[k]:[a,b]}});return<div className="set-row" key={k}><div><b>{l}</b><p>{u.dz[k]?'Свой размер':'По умолчанию'}, px</p></div><div className="stack dz"><input type="number" className="inp nm" min={8} value={v[0]} aria-label="Ширина" onChange={e=>ch(+e.target.value||8,v[1])}/><span>×</span><input type="number" className="inp nm" min={8} value={v[1]} aria-label="Высота" onChange={e=>ch(v[0],+e.target.value||8)}/>{u.dz[k]&&<button className="btn" onClick={()=>{const n={...u.dz};delete n[k];up({dz:n})}}>Сбросить</button>}</div></div>})}
 <h4 className="set-h">Колонки</h4>
 {tg('cols','Показывать колонки','Притягивают элементы к краям колонок. Ctrl+Shift+\'')}
 <div className="set-row"><div><b>Число колонок</b><p>Авто: 12 на Desktop, 8 на Tablet, 4 на Mobile</p></div><div className="seg">{([[0,'Авто'],[4,'4'],[6,'6'],[8,'8'],[12,'12']] as const).map(([k,l])=><button key={k} className={u.colsN===k?'on':''} onClick={()=>up({colsN:k})}>{l}</button>)}</div></div>

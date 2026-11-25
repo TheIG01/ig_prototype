@@ -679,3 +679,51 @@ html[data-lite=on] .modal{background:rgba(15,23,42,.42)}
 .rtb .rrow{display:flex;align-items:center;flex-wrap:wrap;gap:2px}.rtb .rsep{width:1px;height:18px;background:#E2E8F0;margin:0 4px}.rtb .rcl{color:#64748B;margin-right:6px}.rtb .rsz{min-width:22px;text-align:center;color:#64748B}
 .rb{width:28px;height:28px;border:0;border-radius:6px;background:transparent;display:grid;place-items:center;cursor:pointer;color:#0F172A;font:600 12px Inter,system-ui,sans-serif;padding:0}.rb:hover{background:#F1F5F9}.rb.on{background:#EAF0FF;color:#2F6BFF}
 .rtb .rlk{display:flex;flex-direction:column;gap:6px;padding-top:6px;border-top:1px solid #E2E8F0}.rtb .rlk .hint{margin:0;color:#64748B}.lke{display:flex;flex-direction:column;gap:6px}
+
+/* ===== 1.57: спокойный синий минимализм, независимая правая панель, подсказки, нижняя панель ===== */
+:root{--bg:#F4F7FD;--cvbg:#E7EDF8;--line:rgba(30,58,120,.10);--rail:#fff;--acc-s:color-mix(in srgb,var(--acc) 9%,#fff);--ink2:#33415C;--ease:cubic-bezier(.22,.8,.3,1)}
+html,body{overflow:hidden}.app,.main,.work{min-height:0;overflow:hidden}
+.stagew{position:relative;flex:1;min-width:0;min-height:0;display:flex}.stagew>.stage{flex:1;min-width:0;min-height:0;overscroll-behavior:contain}
+.stage{background:radial-gradient(1100px 560px at 50% -10%,#F1F5FD,var(--cvbg) 72%)}
+.side,.panel{background:#fff;overscroll-behavior:contain}
+.side{border-right:1px solid var(--line)}
+/* правая панель: свой слой, свой скролл, своя ширина */
+@media(min-width:861px){.panel{width:var(--pw,calc(284px*var(--u)));min-width:220px;max-width:640px;height:100%;max-height:100%;overflow-x:hidden;overflow-y:auto;scrollbar-gutter:stable}
+.pgrip{flex:none;width:9px;margin:0 -4px 0 -5px;position:relative;z-index:6;cursor:col-resize;display:grid;place-items:center;touch-action:none}
+.pgrip i{width:2px;height:100%;background:transparent;border-radius:2px;transition:background var(--t)}.pgrip:hover i,.pgrip:active i{background:var(--acc)}}
+@media(max-width:860px){.pgrip{display:none}}
+/* левая рельса: иконка и подпись */
+.app{grid-template-columns:calc(76px*var(--u)) calc(256px*var(--u)) 1fr}.app.nosb{grid-template-columns:calc(76px*var(--u)) 1fr}
+.rail{background:#fff;border-right:1px solid var(--line);padding:12px 0;gap:4px}
+.rail .logo{width:calc(34px*var(--u));height:calc(34px*var(--u));margin-bottom:12px}
+.rb{width:calc(62px*var(--u));height:auto;min-height:calc(52px*var(--u));padding:7px 2px 6px;flex-direction:column;gap:3px;color:#4A5B7C;border-radius:12px;transition:background var(--t) var(--ease),color var(--t),transform .12s}
+.rb span{font:600 10.5px/1.1 Inter,system-ui,sans-serif;letter-spacing:.01em}
+.rb:hover{background:var(--acc-s);color:var(--acc)}.rb:active{transform:scale(.94)}.rb.on{background:var(--acc-s);color:var(--acc)}
+.rb svg{width:calc(20px*var(--u));height:calc(20px*var(--u))}
+/* нижняя панель */
+.tools{border-radius:18px;padding:5px 6px;max-width:calc(100% - 20px);overflow:visible;z-index:8;background:rgba(255,255,255,.96);box-shadow:0 12px 34px rgba(30,58,120,.16),0 0 0 1px rgba(30,58,120,.06)}
+.tools button{border-radius:12px;transition:background var(--t) var(--ease),color var(--t),transform .12s,box-shadow var(--t)}
+.tools button:active{transform:scale(.9)}.tools button.on{box-shadow:0 4px 12px color-mix(in srgb,var(--acc) 34%,transparent)}
+.tools .grip{width:calc(22px*var(--u));cursor:grab;color:#9AA8C2;margin-right:2px}.tools .grip:active{cursor:grabbing}.tools .grip:hover{background:transparent;color:var(--acc)}
+.armhint{bottom:calc(84px*var(--u));background:#1E2F55}
+/* подсказка */
+.tip{position:fixed;z-index:60;pointer-events:none;display:flex;align-items:center;gap:8px;max-width:280px;padding:6px 10px;border-radius:9px;background:#1E2F55;color:#fff;font:500 12.5px/1.35 Inter,system-ui,sans-serif;box-shadow:0 8px 24px rgba(15,23,42,.25);opacity:0;transform:translateY(3px);transition:opacity .14s,transform .14s}
+.tip.on{opacity:1;transform:none}.tip kbd{font:600 11px Inter,system-ui,sans-serif;background:rgba(255,255,255,.16);border-radius:5px;padding:1px 6px;flex:none}
+/* Hug / Fixed */
+.hugg{display:flex;flex-direction:column;gap:6px;margin:6px 0}.hg{display:flex;align-items:center;gap:8px}.hg>span{flex:none;width:58px;font-size:12px;color:var(--mute)}.hg .seg{flex:1}
+/* новый проект */
+.steps{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin:0 0 12px;font-size:12.5px;color:var(--ink2)}.steps b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--acc);color:#fff;font-size:11px}
+.sheet form .btn.pri:disabled{background:var(--acc-s);color:var(--acc);box-shadow:none;cursor:not-allowed;opacity:1}
+.types button.on{box-shadow:0 0 0 2px var(--acc)}
+/* шаблоны: править и удалять видно сразу */
+.pcw .pcx{opacity:1}.pcw .pcx.pce:hover{color:var(--acc);border-color:var(--acc)}
+/* гид и размеры */
+.guide h4{margin:16px 0 6px;font:700 13px Inter,system-ui,sans-serif;color:var(--acc)}.guide p{margin:0 0 6px;font-size:13px;line-height:1.5;color:var(--ink2)}.guide p b{display:block;color:var(--text);font-weight:600}
+.stack.dz{display:flex;align-items:center;gap:6px}.stack.dz .nm{width:72px}
+/* микро-анимации */
+.btn,.row,.seg button,.cell,.pc,.set-row .sw{transition:background var(--t) var(--ease),color var(--t),border-color var(--t),box-shadow var(--t),transform .12s var(--ease)}
+.btn:active,.seg button:active,.cell:active{transform:scale(.96)}
+.row:hover{background:var(--acc-s)}.pc:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(30,58,120,.12)}
+.sheet{animation:pop .22s var(--ease)}.modal{animation:fade .16s}
+.toast{animation:pop .22s var(--ease)}
+.el.sel,.selbox{transition:none}

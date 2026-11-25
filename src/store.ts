@@ -6,7 +6,7 @@ import {FW,DEVS,onDev} from './lib/dev';import {defStyle} from './lib/art';impor
 export {FW,DEVS,onDev};export type {Dev};
 export type Kind='page'|'popup';
 export type ET='text'|'rect'|'btn'|'input'|'img'|'line'|'shape'|'icon'|'mock'|'list'|'cmp';
-export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h';mh?:number;lh?:number;ls?:number;va?:'t'|'m'|'b';qa?:string;tg?:string;sk?:string;hid?:1;lk?:1;nm?:string;ts?:'skip'|'key';rot?:number;flipX?:1;flipY?:1;rc?:[number,number,number,number];dash?:'solid'|'dashed'|'dotted';sp?:'in'|'out'|'mid';shadow?:{x:number;y:number;b:number;c:string};blur?:number;lockRatio?:1;rt?:import('./lib/rich').Lines;lt?:'ul'|'ol'|'ck';ln?:string;cm?:string;ff?:import('./lib/ff').FF;cp?:import('./lib/cmp').CP}
+export interface El{id:string;t:ET;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:'l'|'c'|'r';acc?:boolean;go?:string;g?:string;sh?:string;ic?:string;mk?:string;bu?:string;n?:number;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;c?:string;role?:Role;hug?:'w'|'h'|'b';mh?:number;lh?:number;ls?:number;va?:'t'|'m'|'b';qa?:string;tg?:string;sk?:string;hid?:1;lk?:1;nm?:string;ts?:'skip'|'key';rot?:number;flipX?:1;flipY?:1;rc?:[number,number,number,number];dash?:'solid'|'dashed'|'dotted';sp?:'in'|'out'|'mid';shadow?:{x:number;y:number;b:number;c:string};blur?:number;lockRatio?:1;rt?:import('./lib/rich').Lines;lt?:'ul'|'ol'|'ck';ln?:string;cm?:string;ff?:import('./lib/ff').FF;cp?:import('./lib/cmp').CP}
 /** авто-лейаут группы: d направление, gap отступ, al выравнивание поперёк, x y начало, mx центр по ширине блока, fl одинаковый поперечный размер */
 export interface Lay{d:'h'|'v';gap:number;al:'s'|'c'|'e';x:number;y:number;mx?:boolean;fl?:boolean}
 /** этапы: v вариант, g группа, i номер вкладки, n число этапов, tab вкладки переключаются в просмотре, x доп. блок этапа */
@@ -62,8 +62,8 @@ const LDV:Dev[]=['desktop','tablet','mobile'];const lh=(e:El)=>e.t==='line'?0:e.
 const reflow=(b:Block,dev:Dev)=>{const L=b.lay?.[dev];if(!L)return;const W=FW[dev];
 for(const gid of Object.keys(L)){const c=L[gid];const m=b.els[dev].filter(e=>e.g===gid);if(m.length<2){delete L[gid];continue}
 const v=c.d==='v';const ord=[...m].sort((a,q)=>v?a.y+lh(a)/2-(q.y+lh(q)/2):a.x+a.w/2-(q.x+q.w/2));
-if(c.fl&&!v)for(const e of m)if(e.t!=='line'&&e.hug!=='h'&&e.mh===undefined)e.mh=e.h;
-const cs=(e:El)=>v?e.w:lh(e);const nat=(e:El)=>v?e.w:e.t==='line'?0:e.hug==='h'?e.h:(e.mh??e.h);const cross=Math.max(...m.map(c.fl?nat:cs));
+if(c.fl&&!v)for(const e of m)if(e.t!=='line'&&e.hug!=='h'&&e.hug!=='b'&&e.mh===undefined)e.mh=e.h;
+const cs=(e:El)=>v?e.w:lh(e);const nat=(e:El)=>v?e.w:e.t==='line'?0:(e.hug==='h'||e.hug==='b')?e.h:(e.mh??e.h);const cross=Math.max(...m.map(c.fl?nat:cs));
 if(c.fl)for(const e of m){if(v)e.w=cross;else if(e.t!=='line')e.h=cross}
 const main=ord.reduce((a,e)=>a+(v?lh(e):e.w),0)+c.gap*(ord.length-1);
 let ox=c.x,oy=c.y;if(c.mx){if(v)ox=Math.round((W-cross)/2);else ox=Math.round((W-main)/2)}
@@ -149,9 +149,9 @@ setStyle:(patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);i
 setRole:(r,patch)=>mut(s=>{const p=s.data!.projects.find(x=>x.id===s.projectId);if(p)Object.assign(p.style.roles[r],patch)},'prole'+r),
 addEl:(dev,tp,x,y,bid,extra)=>mut(s=>{const sh=curSheet(s);if(!sh)return;if(!sh.blocks.some(q=>onDev(q,dev))){const nb=mkBlock('Блок');nb.dv=[dev];sh.blocks.push(nb)}let i:number,ry:number;if(bid){i=Math.max(0,sh.blocks.findIndex(q=>q.id===bid));ry=y}else{i=y<0?Math.max(0,sh.blocks.findIndex(q=>onDev(q,dev))):blockAt(sh.blocks,dev,y);ry=y-blockTops(sh.blocks,dev)[i]}const b=sh.blocks[i];const [w,h,text]=EL_DEF[tp];const e:El={id:uid(),t:tp,x:Math.max(0,x),y:Math.max(0,Math.round(ry)),w,h,text,...extra};b.els[dev].push(e);grow(b,dev);s.elId=e.id;s.blockId=b.id}),
 updEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(!f)return;const e=f.e;
-if(e.hug&&!('hug' in patch)){const cw=patch.w!==undefined&&patch.w!==e.w,chh=patch.h!==undefined&&patch.h!==e.h;if((e.hug==='w'&&(cw||chh))||(e.hug==='h'&&chh)){delete e.hug;delete e.mh}}
-if(patch.h!==undefined&&patch.h!==e.h&&e.hug!=='h'&&e.mh!==undefined&&!('mh' in patch))delete e.mh;Object.assign(e,patch);if(e.hug===undefined)delete e.hug;if(patch.text!==undefined&&e.tg)syncTabText(sh.blocks,f.b,dev,e);grow(f.b,dev)},'u'+id),
-dragEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(f){const e=f.e;if(patch.h!==undefined&&patch.h!==e.h){if(e.hug==='h'&&e.t!=='text')patch={...patch,mh:patch.h};else if(e.mh!==undefined)delete e.mh}Object.assign(e,patch)}},'u'+id),
+if(e.hug&&!('hug' in patch)){const cw=patch.w!==undefined&&patch.w!==e.w,chh=patch.h!==undefined&&patch.h!==e.h;if(((e.hug==='w'||e.hug==='b')&&(cw||chh))||(e.hug==='h'&&chh)){delete e.hug;delete e.mh}}
+if(patch.h!==undefined&&patch.h!==e.h&&e.hug!=='h'&&e.hug!=='b'&&e.mh!==undefined&&!('mh' in patch))delete e.mh;Object.assign(e,patch);if(e.hug===undefined)delete e.hug;if(patch.text!==undefined&&e.tg)syncTabText(sh.blocks,f.b,dev,e);grow(f.b,dev)},'u'+id),
+dragEl:(dev,id,patch)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(f){const e=f.e;if(patch.h!==undefined&&patch.h!==e.h){if((e.hug==='h'||e.hug==='b')&&e.t!=='text')patch={...patch,mh:patch.h};else if(e.mh!==undefined)delete e.mh}Object.assign(e,patch)}},'u'+id),
 dropEl:(dev,id,stay)=>mut(s=>{const sh=curSheet(s);const f=sh&&findEl(sh,dev,id);if(!sh||!f)return;const tops=blockTops(sh.blocks,dev);const i0=sh.blocks.findIndex(b=>b.id===f.b.id);const absTop=tops[i0]+f.e.y;const j=stay?i0:blockAt(sh.blocks,dev,absTop+f.e.h/2);let tb=f.b;
 if(j>=0&&j!==i0){tb=sh.blocks[j];f.b.els[dev]=f.b.els[dev].filter(x=>x.id!==id);f.e.y=Math.round(absTop-tops[j]);tb.els[dev].push(f.e);s.blockId=tb.id}
 const el=tb.els[dev].find(x=>x.id===id);if(el){el.y=Math.max(0,el.y)}grow(tb,dev)},'u'+id),
@@ -168,7 +168,7 @@ delEls:(dev,ids)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const q=new Set(ids
 dupEls:(dev,ids,off,nid,k)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const out:string[]=[];const gm:Record<string,string>={};ids.forEach((id,i)=>{const f=findEl(sh,dev,id);if(!f)return;const c:El={...f.e,id:nid[i]??uid(),x:f.e.x+off,y:f.e.y+off};if(c.g)c.g=gm[c.g]??=uid();f.b.els[dev].push(c);grow(f.b,dev);out.push(c.id)});s.multi=out;s.elId=out[out.length-1]??null},k??''),
 alignEls:(dev,ids,m)=>mut(s=>{const sh=curSheet(s);if(!sh)return;const fs=ids.map(i=>findEl(sh,dev,i)).filter(Boolean) as {b:Block;e:El}[];if(fs.length<2)return;const es=fs.map(f=>f.e);
 const L=Math.min(...es.map(e=>e.x)),R=Math.max(...es.map(e=>e.x+e.w)),T=Math.min(...es.map(e=>e.y)),B=Math.max(...es.map(e=>e.y+e.h));
-if(m==='ew'||m==='eh'){const w=m==='ew';const mx=Math.max(...es.filter(e=>e.t!=='line'||w).map(e=>w?e.w:e.h));for(const e of es){if(w){e.w=mx;if(e.hug==='w')delete e.hug}else if(e.t!=='line'){e.h=mx;if(e.hug==='h')delete e.hug}}}
+if(m==='ew'||m==='eh'){const w=m==='ew';const mx=Math.max(...es.filter(e=>e.t!=='line'||w).map(e=>w?e.w:e.h));for(const e of es){if(w){e.w=mx;if(e.hug==='w')delete e.hug;else if(e.hug==='b')e.hug='h'}else if(e.t!=='line'){e.h=mx;if(e.hug==='h')delete e.hug}}}
 else if(m==='dh'||m==='dv'){const h=m==='dh';const a=[...es].sort((p,q)=>h?p.x-q.x:p.y-q.y);const tot=a.reduce((n,e)=>n+(h?e.w:e.h),0);const gap=((h?R-L:B-T)-tot)/(a.length-1);let pos=h?L:T;for(const e of a){if(h)e.x=Math.round(pos);else e.y=Math.round(pos);pos+=(h?e.w:e.h)+gap}}
 else for(const e of es){if(m==='l')e.x=L;else if(m==='r')e.x=R-e.w;else if(m==='c')e.x=Math.round((L+R)/2-e.w/2);else if(m==='t')e.y=T;else if(m==='b')e.y=B-e.h;else e.y=Math.round((T+B)/2-e.h/2)}
 new Set(fs.map(f=>f.b)).forEach(b=>grow(b,dev))}),

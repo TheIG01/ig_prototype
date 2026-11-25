@@ -1,7 +1,7 @@
 import {useState,useRef,useEffect,lazy,Suspense} from 'react';
 import {parseTags} from '../../lib/elLib';
 import {LayersTab} from './LayersTab';import {useLayerUi} from '../../lib/layerUi';
-import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2,ListChecks,Mail} from 'lucide-react';
+import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2,ListChecks,Mail,BookOpen,Command} from 'lucide-react';
 import {useStore,PRESETS,FW,onDev} from '../../store';
 import {DEVS_SHORT} from '../../lib/dev';
 import {DelDialog,requestDelBlock} from '../blocks/DelBlock';
@@ -9,6 +9,7 @@ import type {Kind,Dev,Project,Sheet,Block} from '../../store';
 import {importBackup} from '../../lib/vault';import {SaveBar,downloadCopy} from './SaveBar';import {useTab} from '../../lib/tabs';
 const CheckDialog=lazy(()=>import('./CheckDialog').then(m=>({default:m.CheckDialog})));
 const ReportDialog=lazy(()=>import('./ReportDialog').then(m=>({default:m.ReportDialog})));
+const GuideBody=lazy(()=>import('./Guide').then(m=>({default:m.GuideBody})));
 const SettingsBody=lazy(()=>import('./Settings').then(m=>({default:m.SettingsBody})));
 import {briefMd,specJson,download} from '../../lib/export';
 import {toast,dismiss,useToast} from '../../lib/toast';
@@ -16,7 +17,7 @@ import {BlockPicker,ContentPanel,Thumb} from '../blocks/blocks';
 import {Canvas,RightPanel} from '../canvas/Canvas';
 import {Preview} from '../preview/Preview';
 import {buildHtml} from '../../lib/share';
-type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share'|'pdf'|'check'|'letter';
+type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share'|'pdf'|'check'|'letter'|'guide';
 const FORMS:Modal[]=['proj','sheet','block','type','ren','tpl'];
 const TITLE:Record<string,string>={proj:'Новый проект',sheet:'Новый лист',block:'Новый блок',type:'Сохранить как тип сайта',ren:'Переименовать',tpl:'Сохранить блок как шаблон'};
 const DEVS:Dev[]=['desktop','tablet','mobile'];
@@ -29,6 +30,12 @@ const HELP:[string,[string,string][]][]=[
 ['Текст (двойной клик по тексту)',[['Ctrl+B / I / U','Жирный, курсив, подчёркнутый'],['Ctrl+Shift+X','Зачёркнутый'],['Ctrl+K','Ссылка на выделенное слово'],['Enter','Новая строка'],['Ctrl+Enter или Esc','Закончить правку']]],
 ['Положение',[['Ctrl+B','Жирный текст (элемент целиком)'],['Стрелки','Сдвиг на 1 px'],['Shift+стрелки','Сдвиг на 8 px'],['Alt при перетаскивании','Без привязки'],['Ctrl+]','Слой выше'],['Ctrl+[','Слой ниже'],['Ctrl+Shift+]','На передний план'],['Ctrl+Shift+[','На задний план']]],
 ['Вид и команды',[['P','Просмотр для заказчика'],['Пробел + перетаскивание','Панорама'],['Ctrl + колесо','Масштаб'],['+ / −','Масштаб'],['Shift+0','100%'],['Shift+1','Вписать'],['Shift+2','Приблизить выделенное'],['Shift+R','Линейки'],["Ctrl+'",'Точечная сетка'],['Ctrl+;','Направляющие'],["Ctrl+Shift+'",'Колонки'],['Alt+Shift+1 / 2 / 3','Desktop, Tablet, Mobile'],['Alt+1 или Alt+L','Панель «Слои»'],['Alt+8','Свойства элемента'],['Shift+H / Shift+V','Отразить элемент или группу'],['Ctrl+\\','Панель проектов'],['Ctrl+K','Команды'],['?','Горячие клавиши']]]];
+try{const pw=localStorage.getItem('igp.pw');if(pw)document.documentElement.style.setProperty('--pw',pw+'px')}catch{/* память недоступна */}
+/** тонкая линия слева от правой панели: потяни, чтобы изменить ширину; двойной клик: вернуть */
+function PanelGrip(){const down=(e:React.PointerEvent)=>{e.preventDefault();const p=document.querySelector<HTMLElement>('.work>.panel');if(!p)return;const sx=e.clientX,w0=p.offsetWidth,r=document.documentElement;let w=w0;
+const mv=(q:PointerEvent)=>{w=Math.max(220,Math.min(640,Math.round(w0+sx-q.clientX)));r.style.setProperty('--pw',w+'px')};const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);try{localStorage.setItem('igp.pw',String(w))}catch{/* память недоступна */}};addEventListener('pointermove',mv);addEventListener('pointerup',up)};
+const reset=()=>{document.documentElement.style.removeProperty('--pw');try{localStorage.removeItem('igp.pw')}catch{/* память недоступна */}};
+return<div className="pgrip" title="Потяни, чтобы изменить ширину панели. Двойной клик: вернуть" onPointerDown={down} onDoubleClick={reset}><i/></div>}
 function Ask({title,children,onClose,wide,xl}:{title:string;children:React.ReactNode;onClose:()=>void;wide?:boolean;xl?:boolean}){return<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><div className={'sheet'+(wide?' wide':'')+(xl?' wide xl':'')}><h2>{title}</h2>{children}</div></div>}
 
 export function Shell(){
@@ -98,11 +105,12 @@ addEventListener('keydown',h);return()=>removeEventListener('keydown',h)});
 const form=FORMS.includes(modal);
 return<div className={'app'+(hide?' nosb':'')}>
 <nav className="rail"><div className="logo">IG</div>
-<button className={'rb'+(hide?'':' on')} title="Проекты (Ctrl+\)" onClick={()=>setHide(v=>!v)}><PanelLeft size={18}/></button>
-<button className="rb" title="Команды (Ctrl+K)" onClick={()=>{setQ('');setCi(0);setModal('cmd')}}><Search size={18}/></button>
+<button className={'rb'+(hide?'':' on')} title="Проекты, листы и слои (Ctrl+\)" onClick={()=>setHide(v=>!v)}><PanelLeft size={20}/><span>Проекты</span></button>
+<button className="rb" title="Поиск команд, проектов и листов (Ctrl+K)" onClick={()=>{setQ('');setCi(0);setModal('cmd')}}><Command size={20}/><span>Команды</span></button>
 <div className="sp"/>
-<button className="rb" title="Горячие клавиши (?)" onClick={()=>setModal('keys')}><Keyboard size={18}/></button>
-<button className="rb" title="Настройки" onClick={()=>setModal('set')}><Settings size={18}/></button></nav>
+<button className="rb" title="Гид: что делает каждый инструмент и зачем" onClick={()=>setModal('guide')}><BookOpen size={20}/><span>Гид</span></button>
+<button className="rb" title="Горячие клавиши (?)" onClick={()=>setModal('keys')}><Keyboard size={20}/><span>Клавиши</span></button>
+<button className="rb" title="Настройки" onClick={()=>setModal('set')}><Settings size={20}/><span>Настройки</span></button></nav>
 <aside className={'side'+(open?' open':'')} onClick={()=>setOpen(false)}>
 <button className="btn pri" onClick={e=>{e.stopPropagation();openForm('proj')}}><Plus size={16}/>Новый проект</button>
 <button className="btn" onClick={e=>{e.stopPropagation();openForm('imp')}} title="Вставить структуру из майнд-карты"><FileText size={16}/>Из майнд-карты</button>
@@ -132,10 +140,11 @@ return<div className={'app'+(hide?' nosb':'')}>
 <button className="btn ic mobonly" onClick={()=>setModal('set')} title="Настройки"><Settings size={16}/></button>
 {ed&&<><i className="vr"/><button className="btn" onClick={cancelEdit} title="Откатить все правки в этом блоке">Не сохранять</button><button className="btn pri" onClick={()=>s.exitEdit(true)} title="Ctrl+Enter">Сохранить</button></>}
 <span className={'status'+(s.saveErr?' e':tabMode==='ro'?' r':s.status==='saving'?' s':'')}><i/>{s.saveErr?'Не сохранено':tabMode==='ro'?'Только чтение':s.status==='saving'?'Сохраняю':'Сохранено'}</span></div>
-<SaveBar/><div className="work"><div className="stage">{!sh?<div className="empty"><h2>{pr?'Добавь лист':'Создай проект'}</h2><p>{pr?'В проекте нет листов':'Выбери тип сайта: проект начнётся с пустого листа, без готовой структуры'}</p><button className="btn pri" onClick={()=>openForm(pr?'sheet':'proj')}><Plus size={16}/>{pr?'Добавить лист':'Новый проект'}</button><p style={{marginTop:14}}>Ctrl+K открывает команды, «?» горячие клавиши</p></div>:
+<SaveBar/><div className="work"><div className="stagew"><div className="stage">{!sh?<div className="empty"><h2>{pr?'Добавь лист':'Создай проект'}</h2><p>{pr?'В проекте нет листов':'Выбери тип сайта: проект начнётся с пустого листа, без готовой структуры'}</p><button className="btn pri" onClick={()=>openForm(pr?'sheet':'proj')}><Plus size={16}/>{pr?'Добавить лист':'Новый проект'}</button><p style={{marginTop:14}}>Ctrl+K открывает команды, «?» горячие клавиши</p></div>:
 view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="frame" style={{maxWidth:FW[fr]*.6+120}}>{sh.blocks.filter(b=>onDev(b,fr)).map(b=><div className={'blk'+(b.id===s.blockId?' sel':'')} key={b.id} onClick={()=>s.setBlock(b.id)}><Thumb els={b.els[fr]} h={b.h[fr]} dev={fr} tw={120}/><b>{b.title}</b>{b.text&&<small>{b.text}</small>}<span className="acts" onClick={e=>e.stopPropagation()}><button className="btn ic" title="Выше" onClick={()=>s.moveBlock(b.id,-1,fr)}><ArrowUp size={14}/></button><button className="btn ic" title="Ниже" onClick={()=>s.moveBlock(b.id,1,fr)}><ArrowDown size={14}/></button><button className="btn ic" title="Дублировать" onClick={()=>s.dupBlock(b.id)}><Copy size={14}/></button><button className="btn ic" title="Удалить" onClick={()=>dropBlock(b)}><X size={14}/></button></span></div>)}
-<button className="blk" style={{width:'100%',border:0}} onClick={()=>openAdd(lastOn(sh.blocks))}><Plus size={16}/>Добавить блок</button></div>}</div>{sh&&(view==='canvas'?<RightPanel dev={fr} onTpl={()=>openForm('tpl')}/>:<ContentPanel/>)}</div></main>
+<button className="blk" style={{width:'100%',border:0}} onClick={()=>openAdd(lastOn(sh.blocks))}><Plus size={16}/>Добавить блок</button></div>}</div></div>{sh&&<PanelGrip/>}{sh&&(view==='canvas'?<RightPanel dev={fr} onTpl={()=>openForm('tpl')}/>:<ContentPanel/>)}</div></main>
 <DelDialog/>{modal==='set'&&<Ask title="Настройки" onClose={close}><Suspense fallback={<p className="hint">Загрузка настроек…</p>}><SettingsBody onBackup={backup}/></Suspense></Ask>}
+{modal==='guide'&&<Ask title="Гид по функциям" wide onClose={close}><Suspense fallback={<p className="hint">Загрузка…</p>}><GuideBody/></Suspense></Ask>}
 {modal==='keys'&&<Ask title="Горячие клавиши" wide onClose={close}><div className="keys-g">{HELP.map(([g,rows])=><div key={g}><h4>{g}</h4>{rows.map(([k,l])=><div className="krow" key={k}><span>{l}</span><kbd>{k}</kbd></div>)}</div>)}</div></Ask>}
 {modal==='rst'&&<Ask title="Загрузить копию" onClose={close}><p className="txt">Данные на этом устройстве заменятся данными из файла «{pend?.name}». Перед этим скачай текущую копию, если она нужна</p><div className="btnrow"><button className="btn" onClick={close}>Отмена</button><button className="btn pri" onClick={restore}>Заменить данные</button></div></Ask>}
 {modal==='cmd'&&<div className="modal top" onMouseDown={e=>e.target===e.currentTarget&&close()}><div className="pal"><div className="pal-in"><Search size={16}/><input autoFocus placeholder="Команда, проект или лист" value={q} onChange={e=>{setQ(e.target.value);setCi(0)}} onKeyDown={e=>{if(e.key==='ArrowDown'){e.preventDefault();setCi(Math.min(cur+1,list.length-1))}else if(e.key==='ArrowUp'){e.preventDefault();setCi(Math.max(cur-1,0))}else if(e.key==='Enter'){e.preventDefault();exec(list[cur])}}}/></div>
@@ -160,8 +169,8 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 <input className="inp" autoFocus placeholder={modal==='block'?'Поиск или название нового блока':'Название'} value={name} onChange={e=>setName(e.target.value)}/>
 {modal==='block'&&<BlockPicker q={name} tpls={d.blockTpls} onPick={n=>{addAndEdit(n);close()}} onTpl={id=>{addAndEdit('',id);close()}} onDelTpl={id=>{s.delBlockTpl(id);toast('Шаблон удалён')}}/>}
 {modal==='tpl'&&<>{curBlk?.sv?.tab&&<label className="chk"><input type="checkbox" checked={whole} onChange={e=>setWhole(e.target.checked)}/> Сохранить весь набор этапов ({curBlk.sv.n})</label>}<input className="inp" list="grp" placeholder="Группа шаблона, например: Мои первые экраны" value={group} onChange={e=>setGroup(e.target.value)}/><input className="inp" placeholder="Теги через запятую: первый экран, форма" value={tagsIn} onChange={e=>setTagsIn(e.target.value)}/><datalist id="grp">{[...new Set(d.blockTpls.map(t=>t.cat).filter(Boolean))].map(c=><option key={c} value={c}/>)}</datalist></>}
-{modal==='proj'&&<div className="types">{types.map(t=><button type="button" key={t.id} className={typeId===t.id?'on':''} onClick={()=>setTypeId(t.id)}>{t.name}</button>)}</div>}
+{modal==='proj'&&<><p className="txt steps"><b>1</b> Выбери тип сайта <b>2</b> Впиши название <b>3</b> Нажми «Создать» или Enter</p><div className="types">{types.map(t=><button type="button" key={t.id} className={typeId===t.id?'on':''} onClick={()=>{setTypeId(t.id);if(!name.trim())setName(t.name)}}>{t.name}</button>)}</div></>}
 {modal==='sheet'&&<div className="seg" style={{marginBottom:14}}>{(['page','popup'] as Kind[]).map(k=><button type="button" key={k} className={kind===k?'on':''} onClick={()=>setKind(k)}>{k==='page'?'Страница':'Попап'}</button>)}</div>}
-<button className="btn pri" style={{width:'100%',justifyContent:'center'}}>{modal==='ren'||modal==='type'||modal==='tpl'?'Сохранить':modal==='block'?'Создать пустой блок':'Создать'}</button></form></Ask>}
+<button className="btn pri" disabled={!name.trim()} style={{width:'100%',justifyContent:'center'}}>{!name.trim()&&modal==='proj'?'Впиши название, чтобы создать':modal==='ren'||modal==='type'||modal==='tpl'?'Сохранить':modal==='block'?'Создать пустой блок':'Создать'}</button></form></Ask>}
 {pv&&<Preview html={pv} onClose={()=>setPv('')}/>}
 {tt&&<div className="toast" key={tt.id}><span>{tt.text}</span>{tt.act&&<button onClick={()=>{tt.act!.run();dismiss()}}>{tt.act.label}</button>}</div>}</div>}

@@ -738,3 +738,10 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 - `src/lib/update.ts`: `watchUpdate()` плашка «Вышла новая версия» (вызов в `main.tsx`)
 - Правки: `Shell.tsx` (окна `check`/`letter`, две кнопки в «Экспорт», справка Shift+2), `Canvas.tsx` (`zoomSel`, Shift+2), `Settings.tsx`, `main.tsx`, `vite.config.ts` (`manualChunks`: react, icons, vendor)
 
+
+### 1.57 (новое и изменённое)
+- `src/lib/tip.ts` подсказки при наведении (читает `title`, показывает название и клавишу).
+- `src/features/shell/Guide.tsx` гид по функциям (рельса, Настройки).
+- `Shell.tsx`: рельса с подписями, `PanelGrip` (ширина правой панели, `--pw`), `.stagew`, окно «Новый проект» с шагами.
+- `Canvas.tsx`: двойное нажатие в `down` (правка текста), `dockDrag` (нижняя панель), размеры при клике из `Ui.dz`, Hug по умолчанию: текст `w`, кнопка `b`, поле `h`.
+- `measure.ts`, `store.ts`: `hug:'b'` (по ширине и высоте). `ElPanel.tsx`: Hug/Fixed по осям. `ui.ts`, `Settings.tsx`: «Новые элементы».

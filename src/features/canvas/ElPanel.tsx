@@ -36,8 +36,9 @@ const s=useStore();const set=(p:Partial<El>)=>s.updEl(dev,e.id,p);const [q,setQ]
 const icons=useMemo(()=>{const f=q.trim().toLowerCase();return ICON_LIST.filter(([id,ru,c])=>!f||id.includes(f)||ru.toLowerCase().includes(f)||c.toLowerCase().includes(f))},[q]);
 const num=(k:'x'|'y'|'w'|'h',l:string)=><label className="num"><span>{l}</span><input type="number" value={Math.round(e[k])} disabled={k==='h'&&t==='line'} onChange={ev=>set({[k]:+ev.target.value||0} as Partial<El>)}/></label>;
 const canHug=t==='text'||t==='btn'||t==='input';
-const HUGS:{k:'w'|'h'|undefined;l:string}[]=[{k:'w',l:'По ширине'},...(canHug?[{k:'h' as const,l:'По высоте'}]:[]),{k:undefined,l:'Фиксир.'}];
-const hugRow=canHug?<div className="seg hug" title="По высоте: ширина остаётся, текст переносится, элемент растёт, соседи в ряду с авто-лейаутом подтягиваются до той же высоты">{HUGS.map(o=><button key={o.l} className={e.hug===o.k?'on':''} onClick={()=>set({hug:o.k,mh:o.k==='h'&&t!=='text'?e.h:undefined})}>{o.l}</button>)}</div>:null;
+const isT=t==='text';const wH=e.hug==='w'||e.hug==='b';const hH=e.hug==='h'||e.hug==='b'||(isT&&e.hug==='w');
+const setHug=(w:boolean,h:boolean)=>{const k:El['hug']=isT?(w?'w':h?'h':undefined):w&&h?'b':w?'w':h?'h':undefined;set({hug:k,mh:k&&k!=='w'&&!isT?(e.mh??e.h):undefined})};
+const hugRow=canHug?<div className="hugg" title="Hug: размер сам подстраивается под текст, отступы сохраняются. Fixed: размер задаёшь ты"><div className="hg"><span>Ширина</span><div className="seg hug">{([[true,'Hug'],[false,'Fixed']] as const).map(([v,l])=><button key={l} className={wH===v?'on':''} onClick={()=>setHug(v,hH&&!(isT&&v))}>{l}</button>)}</div></div><div className="hg"><span>Высота</span><div className="seg hug">{([[true,'Hug'],[false,'Fixed']] as const).map(([v,l])=><button key={l} className={hH===v?'on':''} onClick={()=>setHug(wH&&!(isT&&!v),v)}>{l}</button>)}</div></div></div>:null;
 const ARR=t==='shape'&&['arr1','arr2','elbow','arc'].includes(e.sh??'');
 const hasFill=!ARR&&(t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock'||t==='img');
 const hasStroke=t==='line'||t==='shape'||t==='rect'||t==='btn'||t==='input'||t==='mock';
