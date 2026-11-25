@@ -1,7 +1,7 @@
 import {useState,useRef,useEffect,lazy,Suspense} from 'react';
 import {parseTags} from '../../lib/elLib';
 import {LayersTab} from './LayersTab';import {useLayerUi} from '../../lib/layerUi';
-import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2,ListChecks,Mail,BookOpen,Command} from 'lucide-react';
+import {Plus,FileText,AppWindow,X,Download,Upload,Monitor,Tablet,Smartphone,Menu,BookmarkPlus,Undo2,Redo2,Settings,ArrowUp,ArrowDown,Copy,Sparkles,PanelLeft,Keyboard,Search,ChevronLeft,Pencil,LayoutTemplate,Eye,Share2,ListChecks,Mail,BookOpen,Command,MoreHorizontal} from 'lucide-react';
 import {useStore,PRESETS,FW,onDev} from '../../store';
 import {DEVS_SHORT} from '../../lib/dev';
 import {DelDialog,requestDelBlock} from '../blocks/DelBlock';
@@ -9,6 +9,7 @@ import type {Kind,Dev,Project,Sheet,Block} from '../../store';
 import {importBackup} from '../../lib/vault';import {SaveBar,downloadCopy} from './SaveBar';import {useTab} from '../../lib/tabs';
 const CheckDialog=lazy(()=>import('./CheckDialog').then(m=>({default:m.CheckDialog})));
 const ReportDialog=lazy(()=>import('./ReportDialog').then(m=>({default:m.ReportDialog})));
+const AiDialog=lazy(()=>import('./AiDialog').then(m=>({default:m.AiDialog})));
 const GuideBody=lazy(()=>import('./Guide').then(m=>({default:m.GuideBody})));
 const SettingsBody=lazy(()=>import('./Settings').then(m=>({default:m.SettingsBody})));
 import {briefMd,specJson,download} from '../../lib/export';
@@ -17,7 +18,7 @@ import {BlockPicker,ContentPanel,Thumb} from '../blocks/blocks';
 import {Canvas,RightPanel} from '../canvas/Canvas';
 import {Preview} from '../preview/Preview';
 import {buildHtml} from '../../lib/share';
-type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share'|'pdf'|'check'|'letter'|'guide';
+type Modal=''|'proj'|'sheet'|'block'|'type'|'set'|'ren'|'keys'|'cmd'|'rst'|'tpl'|'imp'|'add'|'share'|'pdf'|'check'|'letter'|'guide'|'ai'|'more';
 const FORMS:Modal[]=['proj','sheet','block','type','ren','tpl'];
 const TITLE:Record<string,string>={proj:'Новый проект',sheet:'Новый лист',block:'Новый блок',type:'Сохранить как тип сайта',ren:'Переименовать',tpl:'Сохранить блок как шаблон'};
 const DEVS:Dev[]=['desktop','tablet','mobile'];
@@ -74,7 +75,7 @@ if(modal==='proj')s.addProject(n,typeId);if(modal==='sheet')s.addSheet(n,kind);i
 if(modal==='ren'&&ren){if(ren.k==='proj')s.renameProject(ren.id,n);else s.renameSheet(ren.id,n)}close()};
 type Cmd={l:string;k?:string;run:()=>void};
 const cmds:Cmd[]=[{l:'Новый проект',run:()=>openForm('proj')},{l:'Импорт структуры из текста (майнд-карта)',run:()=>openForm('imp')},...(pr?[{l:'Просмотр для заказчика',k:'P',run:openPreview},{l:'Экспорт: интерактив, PDF, для ИИ',run:()=>setModal('share')},{l:'Скачать интерактив (HTML)',run:saveHtml},{l:'PDF-отчёт (предпросмотр и печать)',run:()=>setModal('pdf')}]:[]),
-...(pr?[{l:'Новый лист',run:()=>openForm('sheet')},{l:'Добавить блок',k:'A',run:()=>openAdd(s.blockId??undefined)},...(s.blockId?[{l:'Сохранить блок как шаблон',run:()=>{setWhole(false);openForm('tpl')}}]:[]),{l:'Переименовать проект',run:()=>startRen('proj',pr.id,pr.name)},{l:'Для ИИ: скачать brief.md и project.json',run:()=>aiPack(pr)},{l:'Сохранить структуру как тип сайта',run:()=>openForm('type')}]:[]),
+...(pr?[{l:'Новый лист',run:()=>openForm('sheet')},{l:'Добавить блок',k:'A',run:()=>openAdd(s.blockId??undefined)},...(s.blockId?[{l:'Сохранить блок как шаблон',run:()=>{setWhole(false);openForm('tpl')}}]:[]),{l:'Переименовать проект',run:()=>startRen('proj',pr.id,pr.name)},{l:'Для ИИ: промпт под сервис',run:()=>setModal('ai')},{l:'Для ИИ: скачать три файла',run:()=>aiPack(pr)},{l:'Сохранить структуру как тип сайта',run:()=>openForm('type')}]:[]),
 ...(sh?[{l:'Переименовать лист',run:()=>startRen('sheet',sh.id,sh.name)}]:[]),
 {l:'Вид: холст',run:()=>setView('canvas')},{l:'Вид: структура',run:()=>setView('struct')},
 {l:'Размер: Desktop 1440',k:'Alt+Shift+1',run:()=>setFr('desktop')},{l:'Размер: Tablet 768',k:'Alt+Shift+2',run:()=>setFr('tablet')},{l:'Размер: Mobile 390',k:'Alt+Shift+3',run:()=>setFr('mobile')},
@@ -92,7 +93,7 @@ if(mod&&(e.code==='KeyK'||e.code==='Slash')){e.preventDefault();if(modal==='cmd'
 if(mod&&e.code==='KeyS'){e.preventDefault();toast('Сохраняется автоматически');return}
 if(mod&&e.code==='Backslash'){e.preventDefault();setHide(v=>!v);return}
 if(pv)return;
-if(typing||modal)return;
+if(typing||(modal&&modal!=='more'))return;
 if(e.code==='KeyP'&&!mod&&!e.altKey&&!e.shiftKey){e.preventDefault();openPreview();return}
 if(mod&&e.code==='KeyZ'){e.preventDefault();e.shiftKey?s.redo():s.undo();return}
 if(mod&&e.code==='KeyY'){e.preventDefault();s.redo();return}
@@ -133,10 +134,8 @@ return<div className={'app'+(hide?' nosb':'')}>
 <i className="vr"/>
 <button className="btn ic" onClick={()=>s.undo()} title="Отменить (Ctrl+Z)"><Undo2 size={16}/></button><button className="btn ic" onClick={()=>s.redo()} title="Повторить (Ctrl+Shift+Z)"><Redo2 size={16}/></button>
 <i className="vr"/>
-{!ed&&pr&&<button className="btn ic sec2" onClick={()=>openForm('type')} title="Сохранить структуру как тип сайта"><BookmarkPlus size={16}/></button>}
-{!ed&&<><button className="btn ic sec2" onClick={backup} title="Скачать копию"><Download size={16}/></button></>}
-{!ed&&<><button className="btn ic sec2" onClick={()=>tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):file.current?.click()} title="Загрузить копию"><Upload size={16}/></button><input ref={file} type="file" accept=".json" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f){setPend(f);setModal('rst')}}}/></>}
-{!ed&&pr&&<button className="btn pri" onClick={openPreview} title="Просмотр для заказчика (P)"><Eye size={16}/>Просмотр</button>}{!ed&&pr&&<button className="btn" onClick={()=>setModal('share')} title="Отдать заказчику"><Share2 size={16}/><span className="tl">Экспорт</span></button>}{!ed&&pr&&<button className="btn" onClick={()=>aiPack(pr)} title="Скачать brief.md и project.json"><Sparkles size={16}/><span className="tl">Для ИИ</span></button>}
+{!ed&&<div className="more"><button className={'btn ic'+(modal==='more'?' on':'')} onClick={()=>setModal(modal==='more'?'':'more')} title="Ещё: копия, тип сайта" aria-label="Ещё"><MoreHorizontal size={16}/></button>{modal==='more'&&<><div className="more-bg" onClick={()=>setModal('')}/><div className="more-m">{pr&&<button onClick={()=>openForm('type')}><BookmarkPlus size={16}/><span>Сохранить как тип сайта</span></button>}<button onClick={()=>{setModal('');backup()}}><Download size={16}/><span>Скачать копию</span></button><button onClick={()=>{setModal('');tabMode==='ro'?toast('Проект открыт в другой вкладке: забери управление'):file.current?.click()}}><Upload size={16}/><span>Загрузить копию</span></button></div></>}<input ref={file} type="file" accept=".json" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f){setPend(f);setModal('rst')}}}/></div>}
+{!ed&&pr&&<button className="btn pri" onClick={openPreview} title="Просмотр для заказчика (P)"><Eye size={16}/>Просмотр</button>}{!ed&&pr&&<button className="btn" onClick={()=>setModal('share')} title="Отдать заказчику"><Share2 size={16}/><span className="tl">Экспорт</span></button>}{!ed&&pr&&<button className="btn" onClick={()=>setModal('ai')} title="Промпт для нейросети: Claude, v0, Lovable, Cursor"><Sparkles size={16}/><span className="tl">Для ИИ</span></button>}
 <button className="btn ic mobonly" onClick={()=>setModal('set')} title="Настройки"><Settings size={16}/></button>
 {ed&&<><i className="vr"/><button className="btn" onClick={cancelEdit} title="Откатить все правки в этом блоке">Не сохранять</button><button className="btn pri" onClick={()=>s.exitEdit(true)} title="Ctrl+Enter">Сохранить</button></>}
 <span className={'status'+(s.saveErr?' e':tabMode==='ro'?' r':s.status==='saving'?' s':'')}><i/>{s.saveErr?'Не сохранено':tabMode==='ro'?'Только чтение':s.status==='saving'?'Сохраняю':'Сохранено'}</span></div>
@@ -151,13 +150,14 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 <div className="pal-list">{list.map((c,i)=><button key={c.l} className={i===cur?'on':''} onMouseEnter={()=>setCi(i)} onClick={()=>exec(c)}><span>{c.l}</span>{c.k&&<kbd>{c.k}</kbd>}</button>)}{!list.length&&<p className="hint">Ничего не найдено</p>}</div></div></div>}
 {modal==='add'&&<Ask title="Новый блок" onClose={close}><div className="addm"><button type="button" className="am dash" onClick={()=>{addAndEdit('Блок');close()}}><span className="amic"><Plus size={20}/></span><b>Создать с нуля</b><small>Пустой блок. Откроется редактор: рисуй элементы сам</small></button><button type="button" className="am" onClick={()=>setModal('block')}><span className="amic"><LayoutTemplate size={20}/></span><b>Из библиотеки</b><small>Готовые макеты и твои шаблоны по группам</small></button></div></Ask>}
 {(modal==='check'||modal==='letter')&&pr&&<Suspense fallback={null}><CheckDialog pr={pr} tab0={modal==='letter'?'letter':'check'} onGo={i=>{s.setSheet(i.sheetId);s.enterEdit(i.blockId);if(i.elId)s.setEl(i.elId);if(i.dev)setFr(i.dev);close()}} onClose={close}/></Suspense>}
+{modal==='ai'&&pr&&<Ask title="Для нейросети" wide onClose={close}><Suspense fallback={<p className="hint">Загрузка…</p>}><AiDialog pr={pr} typeName={tName(pr)}/></Suspense></Ask>}
 {modal==='pdf'&&pr&&<Suspense fallback={null}><ReportDialog pr={pr} dev={fr} onClose={close}/></Suspense>}
 {modal==='share'&&pr&&<Ask title="Экспорт" wide onClose={close}><p className="txt">Размер для файла и PDF: {FW[fr]} px (переключается сверху)</p><div className="addm">
 <button type="button" className="am" onClick={()=>setModal('check')}><span className="amic"><ListChecks size={20}/></span><b>Проверка перед экспортом</b><small>Пустые тексты, ссылки в никуда, формы без обязательных полей, блоки без задачи текста. Список с переходом к месту</small></button>
 <button type="button" className="am" onClick={()=>setModal('letter')}><span className="amic"><Mail size={20}/></span><b>Письмо заказчику</b><small>Готовый текст: название, ссылка, вопросы. Кнопка «Скопировать»</small></button>
 <button type="button" className="am" onClick={()=>{saveHtml();close()}}><span className="amic"><Eye size={20}/></span><b>Интерактив (HTML)</b><small>Один файл: кликабельные переходы, попапы, переключение размеров. Открывается без интернета, ссылкой делится как любой файл на хостинге. Заметок внутри нет</small></button>
 <button type="button" className="am" onClick={()=>setModal('pdf')}><span className="amic"><Share2 size={20}/></span><b>PDF-отчёт</b><small>Обложка с логотипом, оглавление, каждый блок со снимком, текстами и таблицей характеристик. A4 или Letter, предпросмотр, выбор листов, заметки по желанию</small></button>
-<button type="button" className="am" onClick={()=>{aiPack(pr);close()}}><span className="amic"><Sparkles size={20}/></span><b>Всё для нейросети</b><small>brief.md, spec.json и project.json тремя файлами</small></button>
+<button type="button" className="am" onClick={()=>setModal('ai')}><span className="amic"><Sparkles size={20}/></span><b>Для нейросети</b><small>Готовый промпт под Claude, v0, Lovable или Cursor: бриф, структура, стиль, что нельзя менять</small></button>
 <button type="button" className="am" onClick={()=>{saveMd(pr);close()}}><span className="amic"><Pencil size={20}/></span><b>ТЗ (Markdown)</b><small>Читаемое задание: блоки по порядку, тексты, статус «обязательно/опционально», адаптив</small></button>
 <button type="button" className="am" onClick={()=>{saveSpec(pr);close()}}><span className="amic"><Sparkles size={20}/></span><b>Спецификация (JSON)</b><small>Для ИИ-агентов: страницы, блоки, тексты, токены стиля, размеры по устройствам, переходы</small></button></div></Ask>}
 {modal==='imp'&&<Ask title="Импорт структуры из майнд-карты" wide onClose={close}><form onSubmit={e=>{e.preventDefault();const n=name.trim()||'Новый проект';if(!outline.trim())return;s.importOutline(n,outline);toast('Проект собран из текста');close()}}>

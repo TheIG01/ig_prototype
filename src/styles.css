@@ -733,3 +733,14 @@ html,body{overflow:hidden}.app,.main,.work{min-height:0;overflow:hidden}
 .ptabs button{flex:1;border:0;background:transparent;padding:6px 4px;border-radius:8px;font:inherit;font-size:12.5px;font-weight:600;color:#64748B;cursor:pointer}
 .ptabs button:hover{color:#0F172A}
 .ptabs button.on{background:#fff;color:var(--acc);box-shadow:0 1px 2px rgba(15,23,42,.12)}
+
+/* 1.59: меню «Ещё» в верхней панели, окно «Для нейросети» */
+.top .more{position:relative;flex:none}.top .more .btn.on{background:var(--acc-s);color:var(--acc)}
+.more-bg{position:fixed;inset:0;z-index:40}
+.more-m{position:fixed;top:54px;right:12px;z-index:41;min-width:230px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(15,23,42,.14);padding:6px;display:flex;flex-direction:column;animation:fadeIn .12s ease}
+.more-m button{display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border:0;background:transparent;border-radius:8px;color:#334155;font:500 13px Inter,sans-serif;cursor:pointer;text-align:left;white-space:nowrap}
+.more-m button:hover{background:var(--acc-s);color:var(--acc)}
+.aid-seg{margin-bottom:10px;width:fit-content}
+.aid-t{width:100%;min-height:300px;max-height:52vh;resize:vertical;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow:auto}
+.aid-n{margin:6px 0 10px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}

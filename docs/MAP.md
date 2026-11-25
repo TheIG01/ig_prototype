@@ -747,3 +747,5 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 - `measure.ts`, `store.ts`: `hug:'b'` (по ширине и высоте). `ElPanel.tsx`: Hug/Fixed по осям. `ui.ts`, `Settings.tsx`: «Новые элементы».
 
 - 1.58 `ElPanel.tsx`: `PanelTabs`, `TAB_OF`, `Sec` фильтрует по вкладке. `ui.ts`: `hp` (отступы Hug). `measure.ts`: `hugSize` берёт `getUi().hp`. `Settings.tsx`: «Отступы Hug».
+
+- 1.59: `src/lib/aiPrompt.ts` (промпт под сервис: `aiPrompt`, `aiFiles`, `AI_SVCS`), `src/features/shell/AiDialog.tsx` (окно «Для нейросети», грузится лениво из `Shell.tsx`). В `Shell.tsx`: меню «Ещё» вместо трёх иконок, модалки `ai` и `more`. Стили в конце `styles.css`.
