@@ -15,4 +15,7 @@ if(r.blur!==undefined&&(!num(r.blur)||r.blur<=0))delete r.blur;
 if(r.lt!==undefined&&r.lt!=='ul'&&r.lt!=='ol'&&r.lt!=='ck')delete r.lt;
 if(r.ln!==undefined&&typeof r.ln!=='string')delete r.ln;
 if(r.cm!==undefined&&(typeof r.cm!=='string'||!r.cm.trim()))delete r.cm;
+/* 1.55: настройки поля формы и компонент */
+if(r.ff!==undefined){const f=r.ff as Record<string,unknown>|null;if(!f||typeof f!=='object'||typeof f.k!=='string')delete r.ff;else{for(const k of ['nm','hint','def','mask','err'])if(f[k]!==undefined&&typeof f[k]!=='string')delete f[k];if(f.req!==undefined&&f.req!==1)delete f.req;if(f.opts!==undefined&&!(Array.isArray(f.opts)&&f.opts.every(x=>typeof x==='string')))delete f.opts}}
+if(r.cp!==undefined){const c=r.cp as Record<string,unknown>|null;if(!c||typeof c!=='object'||typeof c.k!=='string')delete r.cp;else{if(c.items!==undefined&&!(Array.isArray(c.items)&&c.items.every(x=>typeof x==='string')))delete c.items;if(c.v!==undefined&&!num(c.v))delete c.v;if(c.on!==undefined&&c.on!==1)delete c.on}}
 if(r.rt!==undefined){const a=r.rt as unknown;const ok=Array.isArray(a)&&a.every(l=>Array.isArray(l)&&l.every(x=>!!x&&typeof x==='object'&&typeof (x as {t?:unknown}).t==='string'));if(!ok)delete r.rt}}

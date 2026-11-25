@@ -1,4 +1,4 @@
-import {uid} from './uid';import {fixEl} from './migrateEl';import {buildByName,emptyBuild,fresh} from './tpl';import {normalizeQuiz} from './quiz';import {defStyle} from './art';
+import {uid} from './uid';import {fixCm} from './comments';import {fixEl} from './migrateEl';import {buildByName,emptyBuild,fresh} from './tpl';import {normalizeQuiz} from './quiz';import {defStyle} from './art';
 import type {Data,Block,BlockTpl,El} from '../store';import type {Dev} from './dev';
 export {uid};
 export const noEls=():Record<Dev,El[]>=>({desktop:[],tablet:[],mobile:[]});
@@ -22,6 +22,6 @@ for(const t of d.blockTpls){if(t.tags!==undefined&&!(Array.isArray(t.tags)&&(t.t
 return d as Data}
 const DV:Dev[]=['desktop','tablet','mobile'];
 /** Any block, any schema version: guarantee id, text, h and els for all three sizes. */
-function fixBlock(b:any){const n=emptyBuild();b.id??=uid();b.title??='Блок';if(b.title==='Оффер')b.title='1 экран';b.text??='';if(b.quiz)b.quiz=normalizeQuiz(b.quiz);
+function fixBlock(b:any){const n=emptyBuild();b.id??=uid();b.title??='Блок';if(b.title==='Оффер')b.title='1 экран';b.text??='';fixCm(b);if(b.fm!==undefined){const f=b.fm;if(!f||typeof f!=='object'){delete b.fm}else{for(const k of ['to','consent','thanks'])if(f[k]!==undefined&&typeof f[k]!=='string')delete f[k]}}if(b.quiz)b.quiz=normalizeQuiz(b.quiz);
 b.h={...n.h,...(b.h??{})};b.els={...n.els,...(b.els??{})};
 for(const dv of DV){if(!Array.isArray(b.els[dv]))b.els[dv]=[];else for(const e of b.els[dv])fixEl(e);if(typeof b.h[dv]!=='number')b.h[dv]=n.h[dv]}}

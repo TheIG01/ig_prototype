@@ -3,7 +3,7 @@
 import {isRich,richHtml,linkOf,linkInfo,RICH_CSS} from './rich';
 import type {Project,Block,El} from '../store';
 import {FW,DEVN} from './dev';import type {Dev} from './dev';
-import {artHtml,resolve,styleCss,ROLES,lineAttr} from './art';import {quizFrame} from './quiz';import {typo} from './typo';import {getUi} from './ui';import {BASE_CSS} from './share';
+import {artHtml,resolve,styleCss,ROLES,lineAttr} from './art';import {quizFrame} from './quiz';import {typo} from './typo';import {getUi} from './ui';import {BASE_CSS} from './share';import {cmNums} from './comments';
 
 export type PageSize='a4'|'letter';
 export interface ReportOpts{size:PageSize;dev:Dev;notes:boolean;sheets?:string[];ver:string}
@@ -14,7 +14,7 @@ const esc=(s:unknown)=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt
 export function wrapLines(t:string,n:number):string[]{const out:string[]=[];for(const raw of t.replace(/\r/g,'').split('\n')){let line='';for(let w of raw.split(/ +/)){while(w.length>n){if(line){out.push(line);line=''}out.push(w.slice(0,n));w=w.slice(n)}
 if(!line)line=w;else if((line+' '+w).length<=n)line+=' '+w;else{out.push(line);line=w}}out.push(line)}return out}
 const cut=(t:string,n:number)=>t.length>n?t.slice(0,n-1)+'…':t;
-const TN:Record<string,string>={text:'Текст',rect:'Блок',btn:'Кнопка',input:'Поле',img:'Картинка',line:'Линия',shape:'Фигура',icon:'Иконка',mock:'Мокап',list:'Список'};
+const TN:Record<string,string>={text:'Текст',rect:'Блок',btn:'Кнопка',input:'Поле',img:'Картинка',line:'Линия',shape:'Фигура',icon:'Иконка',mock:'Мокап',list:'Список',cmp:'Компон.'};
 const RN:Record<string,string>=Object.fromEntries(ROLES);
 const typeName=(e:El)=>e.t==='text'&&e.role&&RN[e.role]?RN[e.role]:TN[e.t]||e.t;
 const reqTxt=(b:Block)=>b.req==='opt'?'опционально':'обязательно';
@@ -26,7 +26,7 @@ const elHtml=(e0:El,p:Project,ty:ReturnType<typeof getUi>['ty'])=>{const rich=is
 const st='left:'+e.x+'px;top:'+(e.t==='line'?e.y-6:e.y)+'px;width:'+e.w+'px;height:'+(e.t==='line'?12:e.h)+'px;'+(r.fs?'font-size:'+r.fs+'px;':'')+(r.b?'font-weight:700;':'')+(e.al==='c'?'text-align:center;justify-content:center;':e.al==='r'?'text-align:right;justify-content:flex-end;':'')+styleCss(e0,p.style);
 return'<div class="el '+e.t+'" style="'+st+'">'+(e.t==='line'?'<i'+lineAttr(e)+'></i>':rich?richHtml(e0,{tf:q=>typo(q,ty)}):a||esc(r.text))+'</div>'};
 /** снимок блока или нескольких блоков подряд, масштаб k */
-const shot=(bs:Block[],d:Dev,k:number,p:Project,w=FW[d])=>{const ty=getUi().ty;let y=0;let inner='';const ys:number[]=[];for(const b of bs){const g=geo(b,d);ys.push(y);inner+=g.els.map(e=>elHtml({...e,y:e.y+y},p,ty)).join('');y+=g.h}
+const shot=(bs:Block[],d:Dev,k:number,p:Project,w=FW[d])=>{const ty=getUi().ty;const nums=cmNums(p.sheets.flatMap(x=>x.blocks));let y=0;let inner='';const ys:number[]=[];for(const b of bs){const g=geo(b,d);ys.push(y);inner+=g.els.map(e=>elHtml({...e,y:e.y+y},p,ty)).join('')+(b.cmt??[]).filter(c=>c.dev===d).map(c=>'<i class="cmk'+(c.done?' dn':'')+'" style="left:'+c.x+'px;top:'+(y+c.y)+'px">'+(nums.get(c.id)??'')+'</i>').join('');y+=g.h}
 return{h:y*k,ys,html:'<div class="fw" style="width:'+w*k+'px;height:'+y*k+'px"><div class="fi" style="width:'+w+'px;height:'+y+'px;transform:scale('+k+')">'+inner+'</div></div>'}};
 
 interface Atom{h:number;html:string;blk?:string;kw?:boolean;grp?:string}
@@ -41,6 +41,7 @@ const lines=(t:string,n=Math.floor(cw/7.8))=>wrapLines(t,n);
 /** ===== содержимое: атомы, каждый блок с новой страницы ===== */
 const pages:{html:string;pre:string}[]=[];
 const cap=(t:string)=>({h:28,kw:true,html:'<h4>'+esc(t)+'</h4>'});
+const nums=cmNums(p.sheets.flatMap(x=>x.blocks));
 const block=(b:Block,s:{name:string;kind:string},i:number):Atom[][]=>{
 const a:Atom[]=[];const g=geo(b,o.dev);const els=g.els;const id=b.id;
 const maxH=Math.min(ch*.5,520);const k=Math.min(cw/FW[o.dev],maxH/Math.max(1,g.h),1);const sh=shot([b],o.dev,k,p);
@@ -61,6 +62,8 @@ for(const d of ['desktop','tablet','mobile'] as Dev[]){const on=!b.dv||b.dv.incl
 const tx=els.filter(e=>e.text&&e.t!=='line'&&e.t!=='img').slice().sort((q,r)=>q.y-r.y||q.x-r.x);
 if(tx.length){a.push(cap('Тексты блока'));for(const e of tx){const L=lines('['+typeName(e)+'] '+T(e.text),Math.floor(cw/7.2));L.forEach((l,j)=>a.push({h:17,blk:id,kw:j<L.length-1,html:'<div class="ln">'+(j?'&nbsp;&nbsp;&nbsp;':'')+esc(l)+'</div>'}))}}
 if(o.notes&&b.text.trim()){a.push(cap('Заметки и пожелания'));for(const l of lines(b.text.trim()))a.push({h:17,blk:id,html:'<div class="ln nn">'+esc(l)+'</div>'})}
+/* комментарии */
+const cms=b.cmt??[];if(cms.length){a.push(cap('Комментарии'));for(const c of cms){const L=lines('№'+(nums.get(c.id)??'')+' · '+DEVN[c.dev]+' · '+(c.done?'решено':'открыто')+': '+c.msgs.map(m=>(m.by||'Автор')+': '+m.text).join(' → '),Math.floor(cw/7.2));L.forEach((l,j)=>a.push({h:17,blk:id,kw:j<L.length-1,html:'<div class="ln'+(c.done?' dn':'')+'">'+(j?'&nbsp;&nbsp;&nbsp;':'')+esc(l)+'</div>'}))}}
 /* таблица характеристик */
 if(els.length){a.push(cap('Таблица характеристик элементов'));a.push({...tblHead,blk:id});
 els.slice().sort((q,r)=>q.y-r.y||q.x-r.x).forEach((e0,j)=>{const e=resolve(e0,p.style);const f=[e.fs?e.fs+' px':'',e.b?'жирный':'',e.al==='c'?'центр':e.al==='r'?'справа':'',e.c||e.fill||''].filter(Boolean).join(' · ')||'—';

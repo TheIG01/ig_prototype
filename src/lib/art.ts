@@ -2,7 +2,7 @@ import {fxMap} from './elFx';
 // Shared drawing code: the editor, the thumbnails, the preview iframe and the exported HTML/PDF all use these functions,
 // so a shape looks identical everywhere. Pure functions, no DOM.
 import type {El} from '../store';
-import {ICONS} from './icons';
+import {ICONS} from './icons';import {ffHtml} from './ff';import {cmpHtml} from './cmp';
 
 export type Role='h1'|'h2'|'h3'|'p'|'sm';
 export interface PStyle{palette:string[];head:string;body:string;roles:Record<Role,{fs:number;b:boolean}>}
@@ -15,9 +15,9 @@ const stack=(f:string)=>`'${f}',${f==='Playfair Display'?'Georgia,serif':f==='Je
 export const SHAPES:[string,string][]=[['rect','Квадрат'],['round','Скруглённая'],['pill','Пилюля'],['circle','Круг'],['tri','Треугольник'],['diamond','Ромб'],['poly','Многоугольник'],['star','Звезда'],['arrow','Стрелка'],['bubble','Облачко'],['tag','Плашка-указатель'],['ribbon','Лента'],['fold','Уголок'],['para','Параллелограмм'],['cross','Крест'],['ellipse','Эллипс'],['capsule','Капсула'],['arr1','Стрелка'],['arr2','Двойная стрелка'],['elbow','Стрелка с изломом'],['arc','Стрелка дугой']];
 export const MOCKS:[string,string][]=[['phone','Телефон'],['browser','Окно браузера'],['laptop','Ноутбук'],['tablet','Планшет']];
 export const BULLETS:[string,string][]=[['dot','Точки'],['dash','Тире'],['num','Номера'],['check','Галочки']];
-export const NAME_NEW:Record<string,string>={shape:'Фигура',icon:'Иконка',mock:'Мокап',list:'Список'};
+export const NAME_NEW:Record<string,string>={shape:'Фигура',icon:'Иконка',mock:'Мокап',list:'Список',cmp:'Компонент'};
 /** types that are drawn as inline SVG/HTML instead of plain text */
-export const ART=new Set(['shape','icon','mock','list']);
+export const ART=new Set(['shape','icon','mock','list','cmp']);
 
 const n2=(v:number)=>Math.round(v*100)/100;
 const pts=(a:[number,number][])=>a.map(p=>n2(p[0])+','+n2(p[1])).join(' ');
@@ -68,7 +68,8 @@ function listHtml(e:El):string{const bu=e.bu??'dot';const lines=e.text.split('\n
 return `<div style="display:flex;flex-direction:column;gap:.55em;width:100%">`+lines.map((l,k)=>`<div style="display:flex;gap:.7em;align-items:flex-start"><span style="flex:none;min-width:1.1em;opacity:.85">${bu==='num'?(k+1)+'.':bu==='dash'?'—':bu==='check'?CHECK:'•'}</span><span>${esc(l)}</span></div>`).join('')+'</div>'}
 
 /** inner markup of shape / icon / mock / list; '' for other types */
-export function artHtml(e:El):string{
+export function artHtml(e:El,live=false):string{
+if(e.t==='input')return ffHtml(e,live);if(e.t==='cmp')return cmpHtml(e);
 if(e.t==='shape'){const lab=e.text?`<span style="position:relative;padding:8px;width:100%;pointer-events:none">${esc(e.text)}</span>`:'';
 return `<svg width="${n2(e.w)}" height="${n2(e.h)}" viewBox="0 0 ${n2(e.w)} ${n2(e.h)}" style="position:absolute;left:0;top:0;display:block;overflow:visible">${shapeSvg(e)}</svg>${lab}`}
 if(e.t==='icon'){const col=e.c??'#0F172A';return `<svg width="${n2(e.w)}" height="${n2(e.h)}" viewBox="0 0 24 24" fill="none" stroke="${col}" stroke-width="${e.sw??2}" stroke-linecap="round" stroke-linejoin="round" style="display:block">${ICONS[e.ic??'star']??ICONS.star}</svg>`}
@@ -87,6 +88,7 @@ export function styleMap(e0:El,st?:PStyle):Record<string,string>{
 const e=resolve(e0,st);const o:Record<string,string>={};const t=e.t;
 if(ART.has(t)&&t!=='list'){o['background']='none';o['border']='0';o['padding']='0';o['overflow']='visible';o['display']=t==='shape'?'flex':'block';if(t==='shape'){o['position']='absolute';if(!e.al){o['justify-content']='center';o['text-align']='center'}}}
 if(t==='list'){o['align-items']='flex-start';o['overflow']='visible'}
+if(t==='input'&&e.ff&&(e.ff.hint||e.ff.err))o['overflow']='visible';
 if(e.op!==undefined&&e.op<1)o['opacity']=String(e.op);
 if(e.lh!==undefined)o['line-height']=String(e.lh);
 if(e.ls)o['letter-spacing']=e.ls+'px';

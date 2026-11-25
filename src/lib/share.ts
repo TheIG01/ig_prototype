@@ -1,12 +1,12 @@
 // One renderer for everything the client sees: in-app preview (iframe), downloadable HTML, PDF report (print).
 import type {Project} from '../store';
-import type {Dev} from './dev';import {artHtml,resolve,styleCss,lineAttr} from './art';import type {El} from '../store';import {quizFrame} from './quiz';import {typo} from './typo';import {isRich,richHtml,parseLink,hrefOf,escH,RICH_CSS} from './rich';import {getUi} from './ui';
+import type {Dev} from './dev';import {artHtml,resolve,styleCss,lineAttr} from './art';import type {El} from '../store';import {quizFrame} from './quiz';import {typo} from './typo';import {isRich,richHtml,parseLink,hrefOf,escH,RICH_CSS} from './rich';import {getUi} from './ui';import CMP_CSS from './forms.css?raw';import {cmNums,cmWhen} from './comments';
 /** quizFrame вставляется в страницу как QF (см. buildHtml) */
 declare const QF:(c:unknown,s:unknown,d:string)=>{h:number;els:{id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;c?:string;fill?:string;stroke?:string;sw?:number;r?:number;op?:number;role?:string;qa?:string}[];kinds:string[]};
 /** Runs inside the generated page, so it must not reference anything outside itself. */
 function runtime(){
 type E={id:string;t:string;x:number;y:number;w:number;h:number;text:string;fs?:number;b?:boolean;al?:string;acc?:boolean;go?:string;lk?:string;a?:string;k?:string;tg?:string;hid?:1};
-type B={id:string;title:string;text:string;sv?:{g:string;i:number;tab:boolean};dv?:string[];h:Record<string,number>;els:Record<string,E[]>;quiz?:{auto:boolean;steps:{multi?:boolean;skip?:boolean}[];phone:{mins:number};load:{lines:string[]}}};
+type B={id:string;title:string;text:string;sv?:{g:string;i:number;tab:boolean};dv?:string[];fb?:1;th?:string;cm?:{n:number;dev:string;x:number;y:number;done?:1;ln:string[]}[];h:Record<string,number>;els:Record<string,E[]>;quiz?:{auto:boolean;steps:{multi?:boolean;skip?:boolean}[];phone:{mins:number};load:{lines:string[]}}};
 type QS={pos:number;ans:number[][];phone:string;consent:boolean;err:string;li:number;t0:number};
 const qs:Record<string,QS>={};const qst=(b:B):QS=>qs[b.id]||(qs[b.id]={pos:0,ans:[],phone:'',consent:true,err:'',li:0,t0:0});
 const geo=(b:B)=>{if(b.quiz){const o=QF(b.quiz,qst(b),dev);return{h:o.h,els:o.els as unknown as E[]}}return{h:b.h[dev],els:b.els[dev].filter(e=>!e.hid)}};
@@ -18,7 +18,7 @@ const FW:Record<string,number>={desktop:1440,tablet:768,mobile:390};
 const esc=(s:unknown)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'} as Record<string,string>)[c]);
 let dev=document.body.getAttribute('data-start')||(innerWidth<600?'mobile':innerWidth<1000?'tablet':'desktop');
 const firstPage=P.sheets.find(s=>s.kind!=='popup')||P.sheets[0];
-let sid=firstPage?firstPage.id:'';let hist:string[]=[];let pop='';let hint=true;const tabs:Record<string,number>={};let fade=false;const sc:Record<string,number>={};let pins:{y0:number;y1:number;e:E}[]=[];let lastW=innerWidth;
+let sid=firstPage?firstPage.id:'';let hist:string[]=[];let pop='';let hint=true;const tabs:Record<string,number>={};let cmOn=true;let fade=false;const sc:Record<string,number>={};let pins:{y0:number;y1:number;e:E;b:B}[]=[];let lastW=innerWidth;
 const vis=(b:B)=>!b.sv||!b.sv.tab||(tabs[b.sv.g]||0)===b.sv.i;
 const ids:Record<string,boolean>={};for(const s of P.sheets)ids[s.id]=true;
 const cur=()=>P.sheets.find(s=>s.id===sid)||P.sheets[0];
@@ -32,17 +32,19 @@ const st='left:'+e.x+'px;top:'+((e.t==='line'?e.y-6:e.y)+dy)+'px;width:'+e.w+'px
 const big=e.t==='btn'&&!tp&&e.w>=180&&e.h>=44;return '<div class="el '+e.t+(go?' go':'')+(big?' big':'')+(tp?' tg'+(on?' tgon':''):'')+'" style="'+st+'"'+(e.go&&ids[e.go]?' data-go="'+e.go+'"':'')+(e.lk||'')+(tp?' data-tg="'+esc(e.tg||'')+'"':'')+'>'+(e.t==='line'?'<i'+(e.a||'')+'></i>':e.a?e.a:esc(e.text))+'</div>'};
 const box=(blocks:B[])=>{let y=0,x0=1e9,x1=0,y0=1e9,y1=0;for(const b of blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;const g=geo(b);for(const e of g.els){x0=Math.min(x0,e.x);x1=Math.max(x1,e.x+e.w);y0=Math.min(y0,y+e.y);y1=Math.max(y1,y+e.y+e.h)}y+=g.h}return x1>x0?{x0:x0-24,x1:x1+24,y0:y0-24,y1:y1+24}:{x0:0,x1:FW[dev],y0:0,y1:y}};
 const frame=(blocks:B[],k:number,lines:boolean,c?:{x0:number;x1:number;y0:number;y1:number})=>{let y=0,inner='';
-for(const b of blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;const g=geo(b);const h=g.h;inner+=g.els.map(e=>b.quiz?qel(e,y,b.id):el(e,y)).join('');y+=h;if(lines)inner+='<i class="bd" style="top:'+y+'px"></i>'}
+for(const b of blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;const g=geo(b);const h=g.h;const eh=g.els.map(e=>b.quiz?qel(e,y,b.id):el(e,y)).join('');inner+=(b.fb&&!b.quiz?'<div class="fb" data-fb="'+b.id+'"'+(b.th?' data-th="'+esc(b.th)+'"':'')+'>'+eh+'</div>':eh)+((cmOn||mode==='report')&&b.cm?b.cm.filter(c=>c.dev===dev).map(c=>'<i class="cmk'+(c.done?' dn':'')+'" data-t="'+esc(c.ln.join(' · '))+'" style="left:'+c.x+'px;top:'+(y+c.y)+'px">'+c.n+'</i>').join(''):'');y+=h;if(lines)inner+='<i class="bd" style="top:'+y+'px"></i>'}
 const cx=c?c.x0:0,cy=c?c.y0:0,cw=c?c.x1-c.x0:FW[dev],ch=c?c.y1-c.y0:y;
 return '<div class="fw" style="width:'+cw*k+'px;height:'+ch*k+'px"><div class="fi" style="width:'+FW[dev]+'px;height:'+y+'px;transform:translate('+(-cx*k)+'px,'+(-cy*k)+'px) scale('+k+')">'+inner+'</div></div>'};
+const cml=(b:B)=>{const a=(b.cm||[]).filter(c=>c.dev===dev);return a.length?'<ul class="cl">'+a.map(c=>'<li class="'+(c.done?'dn':'')+'"><b>'+c.n+'.</b> '+esc(c.ln.join(' · '))+(c.done?' (решено)':'')+'</li>').join('')+'</ul>':''};
 const report=()=>{const k=dev==='desktop'?980/1440:dev==='tablet'?.85:1;const notes=document.body.getAttribute('data-notes')==='1';
 app.innerHTML='<section class="cover"><h1>'+esc(P.name)+'</h1><p>Прототип · '+dev+' '+FW[dev]+' px · '+new Date().toLocaleDateString('ru-RU')+'</p></section>'+
-P.sheets.map(s=>'<section><h2>'+(s.kind==='popup'?'Попап: ':'Страница: ')+esc(s.name)+'</h2>'+s.blocks.filter(b=>!b.dv||b.dv.indexOf(dev)>=0).map((b,i)=>'<figure><figcaption>'+(i+1)+'. '+esc(b.title)+'</figcaption>'+frame([b],k,false)+(notes&&b.text.trim()?'<p class="nt">'+esc(b.text)+'</p>':'')+'</figure>').join('')+'</section>').join('')};
+P.sheets.map(s=>'<section><h2>'+(s.kind==='popup'?'Попап: ':'Страница: ')+esc(s.name)+'</h2>'+s.blocks.filter(b=>!b.dv||b.dv.indexOf(dev)>=0).map((b,i)=>'<figure><figcaption>'+(i+1)+'. '+esc(b.title)+'</figcaption>'+frame([b],k,false)+cml(b)+(notes&&b.text.trim()?'<p class="nt">'+esc(b.text)+'</p>':'')+'</figure>').join('')+'</section>').join('')};
+const cmBtn=()=>{const n=cur().blocks.reduce((a,b)=>a+(b.cm?b.cm.length:0),0);return n?'<button data-act="cm" class="'+(cmOn?'on':'')+'">Комментарии: '+n+'</button>':''};
 const bar=()=>'<header><button data-act="back"'+(hist.length||pop||parent!==window?'':' disabled')+'>‹ Назад</button><b>'+esc(P.name)+'</b><span>'+esc(cur().name)+'</span><i class="sp"></i><nav>'+
-['desktop','tablet','mobile'].map(d=>'<button data-dev="'+d+'" class="'+(d===dev?'on':'')+'">'+(d==='desktop'?'Desktop':d==='tablet'?'Tablet':'Mobile')+'</button>').join('')+'</nav><button data-act="hint" class="'+(hint?'on':'')+'">Подсветка ссылок</button></header>';
+['desktop','tablet','mobile'].map(d=>'<button data-dev="'+d+'" class="'+(d===dev?'on':'')+'">'+(d==='desktop'?'Desktop':d==='tablet'?'Tablet':'Mobile')+'</button>').join('')+'</nav>'+cmBtn()+'<button data-act="hint" class="'+(hint?'on':'')+'">Подсветка ссылок</button></header>';
 const mainBtn=(b:B):E|undefined=>{if(b.quiz)return undefined;const a=b.els.mobile.filter(e=>e.t==='btn'&&!e.tg&&e.text);return a.find(e=>e.acc)||a.sort((p,q)=>q.w*q.h-p.w*p.h)[0]};
 const proto=()=>{const W=FW[dev];const w=Math.min(innerWidth-(innerWidth>700?48:0),W);const sh=cur();const ps=pop?P.sheets.find(s=>s.id===pop):undefined;
-pins=[];if(dev==='mobile'&&sh){let y=0;for(const b of sh.blocks.filter(vis)){if(b.dv&&b.dv.indexOf(dev)<0)continue;const g=geo(b);const e=mainBtn(b);if(e)pins.push({y0:y,y1:y+g.h,e});y+=g.h}}
+pins=[];if(dev==='mobile'&&sh){let y=0;for(const b of sh.blocks.filter(vis)){if(b.dv&&b.dv.indexOf(dev)<0)continue;const g=geo(b);const e=mainBtn(b);if(e)pins.push({y0:y,y1:y+g.h,e,b});y+=g.h}}
 app.className=hint?'hint':'';
 app.innerHTML=bar()+'<main'+(fade?' class="fd"':'')+'>'+(sh?frame(sh.blocks.filter(vis),w/W,false):'')+'</main><div class="pin" id="pin"></div>'+(ps?'<div class="ov" data-act="close"><div class="pp">'+(()=>{const c=box(ps.blocks.filter(vis));return frame(ps.blocks.filter(vis),Math.min(Math.min(innerWidth*.92,720)/(c.x1-c.x0),1),false,c)})()+'<button class="x" data-act="close">×</button></div></div>':'')};
 const pinUpd=()=>{const pn=document.getElementById('pin');if(!pn)return;const fi=document.querySelector('.fi') as HTMLElement|null;if(!fi||!pins.length||pop){if(pn)pn.className='pin';return}
@@ -50,11 +52,11 @@ const r=fi.getBoundingClientRect();const k=r.width/FW[dev];const vb=innerHeight;
 for(const p of pins){const t=r.top+p.y0*k,b=r.top+p.y1*k;if(t<mid&&b>mid){hit=p;break}}
 if(!hit){pn.className='pin';return}
 const bt=r.top+(hit.y0+hit.e.y)*k,bb=bt+hit.e.h*k;const seen=bt>=0&&bb<=vb-8;
-const key=hit.e.text+'|'+(hit.e.go||'')+'|'+(hit.e.lk||'')+'|'+(hit.e.tg||'');if(pn.getAttribute('data-k')!==key){pn.setAttribute('data-k',key);pn.innerHTML='<button class="pb"'+(hit.e.go&&ids[hit.e.go]?' data-go="'+hit.e.go+'"':'')+(hit.e.lk||'')+(hit.e.tg?' data-tg="'+esc(hit.e.tg)+'"':'')+'>'+esc(hit.e.text)+'</button>'}
+const key=hit.e.text+'|'+(hit.e.go||'')+'|'+(hit.e.lk||'')+'|'+(hit.e.tg||'')+'|'+hit.b.id;if(pn.getAttribute('data-k')!==key){pn.setAttribute('data-k',key);pn.innerHTML='<button class="pb"'+(hit.b.fb?' data-fbid="'+hit.b.id+'"':'')+(hit.e.go&&ids[hit.e.go]?' data-go="'+hit.e.go+'"':'')+(hit.e.lk||'')+(hit.e.tg?' data-tg="'+esc(hit.e.tg)+'"':'')+'>'+esc(hit.e.text)+'</button>'}
 pn.className='pin'+(seen&&hit!==pins[0]?'':' on')};
 const render=()=>{if(mode==='report')report();else{proto();fade=false;pinUpd()}};
 let raf=0;const tick=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;if(mode!=='report')pinUpd()})};
-let tt=0;const toast=(m:string)=>{let n=document.getElementById('tt');if(!n){n=document.createElement('div');n.id='tt';document.body.appendChild(n)}n.textContent=m;n.className='on';clearTimeout(tt);tt=window.setTimeout(()=>{n!.className=''},1800)};
+let tt=0;const toast=(m:string,ms=1800)=>{let n=document.getElementById('tt');if(!n){n=document.createElement('div');n.id='tt';document.body.appendChild(n)}n.textContent=m;n.className='on';clearTimeout(tt);tt=window.setTimeout(()=>{n!.className=''},ms)};
 /* квиз: шаги, ответы, телефон, загрузка и таймер работают по настройкам блока */
 const qfind=(bid:string)=>{for(const s of P.sheets)for(const b of s.blocks)if(b.id===bid)return b;return undefined};
 const qkinds=(b:B)=>QF(b.quiz,qst(b),dev).kinds;
@@ -70,7 +72,36 @@ if(act==='consent'){S.consent=!S.consent;S.err='';render();return}
 if(act==='submit'){if(S.phone.replace(/\D/g,'').length<10){S.err='phone';render();return}if(!S.consent){S.err='consent';render();return}qadv(b);return}
 if(act==='restart'){delete qs[bid];render()}};
 setInterval(()=>{document.querySelectorAll('[data-qa^="timer:"]').forEach(n=>{const b=qfind(n.getAttribute('data-qb')||'');if(!b||!b.quiz)return;const S=qst(b);if(!S.t0)S.t0=Date.now();const left=Math.max(0,b.quiz.phone.mins*60-Math.floor((Date.now()-S.t0)/1000));const v=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');n.textContent=(n.textContent||'').replace(/\d\d:\d\d/,v)})},1000);
-document.addEventListener('input',e=>{const t=e.target as HTMLInputElement;if(t&&t.getAttribute&&t.getAttribute('data-qa')==='phone'){const b=qfind(t.getAttribute('data-qb')||'');if(b)qst(b).phone=t.value}});
+/* поля формы: маска, проверка, сообщения об ошибках; компоненты: radio, check, switch, rating, tooltip, аккордеон, табы */
+const mDig=(m:string,v:string)=>{const pre=((m.match(/^[^_#9]*/)||[''])[0]).replace(/\D/g,'');let d=v.replace(/\D/g,'');if(pre&&d.indexOf(pre)===0)d=d.slice(pre.length);return d};
+const mFmt=(m:string,v:string)=>{const d=mDig(m,v);let o='',p='',i=0;for(const c of m){if(c==='_'||c==='#'||c==='9'){if(i>=d.length)break;o+=p+d[i++];p=''}else p+=c}return o};
+const ffShow=(w:Element,msg:string)=>{const q=w.closest('.el');if(q)q.classList.toggle('bad',!!msg);const h=w.querySelector('.ff-h');if(h)h.textContent=msg||h.getAttribute('data-h')||''};
+const ffMsg=(w:Element):string=>{const k=w.getAttribute('data-k')||'';const req=w.hasAttribute('data-req');const m=w.getAttribute('data-mask')||'';const nm=w.getAttribute('data-nm')||'';const er=w.getAttribute('data-err')||'';const q=nm?' «'+nm+'»':'';
+if(k==='hidden')return'';
+if(k==='choice')return req&&!w.querySelector('input:checked')?er||'Выбери вариант'+(nm?' в поле «'+nm+'»':''):'';
+if(k==='check'){const c=w.querySelector('input') as HTMLInputElement|null;return req&&c&&!c.checked?er||'Поставь галочку'+(nm?' «'+nm+'»':''):''}
+if(k==='file'){const f=w.querySelector('input') as HTMLInputElement|null;return req&&f&&!(f.files&&f.files.length)?er||'Прикрепи файл'+q:''}
+const c=w.querySelector('.ff-i') as HTMLInputElement|null;if(!c)return'';const v=c.value.trim();
+if(!v)return req?er||'Заполни поле'+q:'';
+const bad=er||'Проверь поле'+q;
+if(m){if(mDig(m,v).length<(m.match(/[_#9]/g)||[]).length)return bad}else if(k==='tel'&&v.replace(/\D/g,'').length<10)return bad;
+if(k==='email'&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v))return bad;
+return''};
+const ffCheck=(root:Element):string=>{let first='';root.querySelectorAll('.ff-w').forEach(w=>{const m=ffMsg(w);ffShow(w,m);if(m&&!first)first=m});return first};
+const cpa=(t:HTMLElement):boolean=>{const r=t.closest('[data-cp]');if(!r)return false;const k=r.getAttribute('data-cp');
+if(k==='radio'){const o=t.closest('.cp-o');if(o){r.querySelectorAll('.cp-o').forEach(n=>n.classList.remove('on'));o.classList.add('on')}return true}
+if(k==='check'){const o=t.closest('.cp-o');if(o)o.classList.toggle('on');return true}
+if(k==='switch'){const o=r.querySelector('.cp-sw');if(o)o.classList.toggle('on');return true}
+if(k==='rating'){const s=t.closest('.cp-s');if(s){const n=+(s.getAttribute('data-i')||'0');const cur=r.querySelectorAll('.cp-s.on').length;const to=n===cur?0:n;r.querySelectorAll('.cp-s').forEach(x=>x.classList.toggle('on',+(x.getAttribute('data-i')||'0')<=to))}return true}
+if(k==='tooltip'){r.classList.toggle('open');return true}
+if(k==='accordion'){const a=t.closest('.cp-ah');if(a&&a.parentElement)a.parentElement.classList.toggle('open');return true}
+if(k==='tabs'){const b=t.closest('.cp-tb');if(b){const i=b.getAttribute('data-i');r.querySelectorAll('.cp-tb,.cp-tp').forEach(x=>x.classList.toggle('on',x.getAttribute('data-i')===i))}return true}
+return true};
+document.addEventListener('input',e=>{const t=e.target as HTMLInputElement;if(!t||!t.getAttribute)return;if(t.getAttribute('data-qa')==='phone'){const b=qfind(t.getAttribute('data-qb')||'');if(b)qst(b).phone=t.value}
+const w=t.closest?t.closest('.ff-w'):null;if(w){const m=w.getAttribute('data-mask');if(m&&t.classList.contains('ff-i'))t.value=mFmt(m,t.value);ffShow(w,'')}
+if(t.classList&&t.classList.contains('cp-rg')&&t.parentElement){const o=t.parentElement.querySelector('.cp-h b');if(o)o.textContent=t.value}});
+document.addEventListener('change',e=>{const t=e.target as HTMLInputElement;const w=t&&t.closest?t.closest('.ff-w'):null;if(!w)return;ffShow(w,'');if(t.type==='file'){const sp=w.querySelector('span[data-t]');if(sp)sp.textContent=t.files&&t.files.length?t.files[0].name:sp.getAttribute('data-t')||''}});
+document.addEventListener('focusout',e=>{const t=e.target as HTMLElement;if(!t||!t.classList||!t.classList.contains('ff-i'))return;const w=t.closest('.ff-w');if(w)ffShow(w,ffMsg(w))});
 const go=(id:string)=>{const s=P.sheets.find(x=>x.id===id);if(!s)return;fade=true;if(s.kind==='popup')pop=id;else{sc[sid]=scrollY;if(sid!==id)hist.push(sid);sid=id;pop='';scrollTo(0,0)}render()};
 const goBlk=(bid:string)=>{const s=P.sheets.find(x=>x.blocks.some(b=>b.id===bid));if(!s)return;if(s.kind==='popup'){go(s.id);return}if(sid!==s.id||pop)go(s.id);
 setTimeout(()=>{let y=0;for(const b of s.blocks){if(b.dv&&b.dv.indexOf(dev)<0)continue;if(!vis(b))continue;if(b.id===bid)break;y+=geo(b).h}
@@ -78,6 +109,10 @@ const fi=document.querySelector('.fi') as HTMLElement|null;if(!fi)return;const q
 const ext=(u:string)=>{if(parent!==window){toast('Адрес откроется в готовом сайте: '+u.replace(/^mailto:|^tel:/,''));return}if(/^(tel|mailto):/.test(u))location.href=u;else open(u,'_blank','noopener')};
 const back=()=>{if(pop){pop='';render();return}const p=hist.pop();if(p){sc[sid]=scrollY;sid=p;fade=true;render();scrollTo(0,sc[p]||0);tick()}else if(parent!==window)parent.postMessage('igp-close','*')};
 document.addEventListener('click',e=>{if(mode==='report')return;const t=e.target as HTMLElement;
+const pk=t.closest('.cmk');if(pk){toast(pk.getAttribute('data-t')||'',6000);return}
+if(cpa(t))return;
+const bt0=t.closest('.el.btn'),pb0=t.closest('.pb');const fbId=pb0?pb0.getAttribute('data-fbid'):null;const fb=bt0&&!bt0.hasAttribute('data-tg')?bt0.closest('[data-fb]'):fbId?document.querySelector('[data-fb="'+fbId+'"]'):null;
+if(fb){const m=ffCheck(fb);if(m){toast(m);return}const th=fb.getAttribute('data-th')||'';if(th){toast(th,3200);const o=bt0||pb0;if(o&&!o.closest('[data-go],[data-blk],[data-x]')&&!o.hasAttribute('data-go')&&!o.hasAttribute('data-blk')&&!o.hasAttribute('data-x'))return}}
 const qa=t.closest('[data-qa]');if(qa&&qa.tagName!=='INPUT'){qact(qa.getAttribute('data-qb')||'',qa.getAttribute('data-qa')||'');return}if(qa)return;
 const tb=t.closest('[data-tg]');if(tb){const q=(tb.getAttribute('data-tg')||'').split(':');tabs[q[0]]=+q[1];fade=true;render();return}
 const bk=t.closest('[data-blk]');if(bk){goBlk(bk.getAttribute('data-blk')||'');return}
@@ -89,7 +124,8 @@ const d=t.closest('[data-dev]');if(d){dev=d.getAttribute('data-dev')||dev;render
 const a=t.closest('[data-act]');if(!a)return;const act=a.getAttribute('data-act');
 if(act==='close'){if(t===a||t.classList.contains('x')){pop='';render()}}
 else if(act==='back')back()
-else if(act==='hint'){hint=!hint;render()}});
+else if(act==='hint'){hint=!hint;render()}
+else if(act==='cm'){cmOn=!cmOn;render()}});
 addEventListener('keydown',e=>{if(mode!=='report'&&e.altKey&&e.key==='ArrowLeft'){back();return}if(e.key!=='Escape'||mode==='report')return;if(pop){pop='';render()}else if(parent!==window)parent.postMessage('igp-close','*')});
 addEventListener('resize',()=>{if(innerWidth!==lastW){lastW=innerWidth;render()}else tick()});addEventListener('scroll',tick,{passive:true});
 render()}
@@ -130,13 +166,13 @@ body[data-mode=report] .pin,body[data-mode=report] .el.btn::after{display:none}
 body[data-mode=report]{background:#fff;padding:0 4px}.cover{padding:36px 0 12px}.cover h1{margin:0 0 6px;font:700 30px Inter,system-ui,sans-serif}.cover p{margin:0;color:#64748B}
 section h2{font:700 18px Inter,sans-serif;margin:28px 0 12px;break-after:avoid}figure{margin:0 0 20px;break-inside:avoid}figcaption{font:600 12px Inter,sans-serif;color:#64748B;margin-bottom:6px}
 body[data-mode=report] .fw{margin:0;box-shadow:none;border:1px solid #CBD5E1}.nt{white-space:pre-wrap;font-size:12px;color:#334155;margin:8px 0 0}
-@page{size:A4 landscape;margin:12mm}`+RICH_CSS+`.rtl{cursor:pointer}.hint .rtl{outline:2px dashed #2F6BFF;outline-offset:2px}`;
+@page{size:A4 landscape;margin:12mm}`+RICH_CSS+`.rtl{cursor:pointer}.hint .rtl{outline:2px dashed #2F6BFF;outline-offset:2px}`+CMP_CSS+`.fb{position:absolute;left:0;top:0;width:0;height:0}.cmk{position:absolute;z-index:5;width:22px;height:22px;margin:-24px 0 0 -11px;border-radius:11px 11px 11px 0;background:#2F6BFF;color:#fff;font:700 11px/22px Inter,system-ui,sans-serif;text-align:center;border:2px solid #fff;box-sizing:content-box;cursor:pointer;font-style:normal}.cmk.dn{background:#94A3B8}.cl{margin:6px 0 0;padding:0;list-style:none;font-size:12px;color:#334155}.cl li{margin:2px 0}.cl .dn,.ln.dn{text-decoration:line-through;color:#94A3B8}`;
 export function buildHtml(p:Project,mode:'proto'|'report',o:{dev?:Dev;notes?:boolean}={}){
-const ty=getUi().ty;const sheetIds=new Set(p.sheets.map(x=>x.id));const blkIds=new Set(p.sheets.flatMap(x=>x.blocks.map(b=>b.id)));
+const nums=cmNums(p.sheets.flatMap(x=>x.blocks));const hasFf=(b:{els:Record<Dev,El[]>})=>(['desktop','tablet','mobile'] as const).some(d=>b.els[d].some(e=>e.t==='input'&&!!e.ff));const ty=getUi().ty;const sheetIds=new Set(p.sheets.map(x=>x.id));const blkIds=new Set(p.sheets.flatMap(x=>x.blocks.map(b=>b.id)));
 const attr=(h:string):string=>{const l=parseLink(h);if(!l||!l.v.trim())return'';const v=l.v.trim();if(l.k==='sheet')return sheetIds.has(v)?' data-go="'+escH(v)+'"':'';if(l.k==='block')return blkIds.has(v)?' data-blk="'+escH(v)+'"':'';return' data-x="'+escH(hrefOf(l))+'"'};
 const ex=(a:El[])=>a.map(e0=>{const e=e0.text?{...e0,text:typo(e0.text,ty)}:e0;const l=parseLink(e0.ln);const go=l?(l.k==='sheet'&&sheetIds.has(l.v)?l.v:undefined):e0.go;const lk=l&&l.k!=='sheet'?attr(e0.ln as string):'';
-return{...resolve(e,p.style),go,...(lk?{lk}:{}),a:e0.t==='line'?lineAttr(e0):isRich(e0)?richHtml(e0,{tf:q=>typo(q,ty),link:attr}):artHtml(e),k:styleCss(e0,p.style)}});
-const data={name:p.name,sheets:p.sheets.map(s=>({id:s.id,name:s.name,kind:s.kind,blocks:s.blocks.map(b=>({id:b.id,dv:b.dv,sv:b.sv?{g:b.sv.g,i:b.sv.i,tab:b.sv.tab}:undefined,title:b.title,quiz:b.quiz,text:mode==='report'&&o.notes?b.text:'',h:b.h,els:b.quiz?{desktop:[],tablet:[],mobile:[]}:{desktop:ex(b.els.desktop),tablet:ex(b.els.tablet),mobile:ex(b.els.mobile)}}))}))};
+return{...resolve(e,p.style),go,...(lk?{lk}:{}),a:e0.t==='line'?lineAttr(e0):isRich(e0)?richHtml(e0,{tf:q=>typo(q,ty),link:attr}):artHtml(e,mode==='proto'),k:styleCss(e0,p.style)+(mode==='proto'&&e0.t==='input'&&e0.ff?.k==='hidden'?'display:none;':'')}});
+const data={name:p.name,sheets:p.sheets.map(s=>({id:s.id,name:s.name,kind:s.kind,blocks:s.blocks.map(b=>({id:b.id,dv:b.dv,sv:b.sv?{g:b.sv.g,i:b.sv.i,tab:b.sv.tab}:undefined,title:b.title,quiz:b.quiz,text:mode==='report'&&o.notes?b.text:'',h:b.h,...(!b.quiz&&hasFf(b)?{fb:1}:{}),...(b.fm?.thanks?.trim()?{th:b.fm.thanks.trim()}:{}),...(b.cmt?.length?{cm:b.cmt.map(c=>({n:nums.get(c.id)??0,dev:c.dev,x:c.x,y:c.y,...(c.done?{done:1}:{}),ln:c.msgs.map(m=>(m.by||'Автор')+', '+cmWhen(m.at)+': '+m.text)}))}:{}),els:b.quiz?{desktop:[],tablet:[],mobile:[]}:{desktop:ex(b.els.desktop),tablet:ex(b.els.tablet),mobile:ex(b.els.mobile)}}))}))};
 const json=JSON.stringify(data).replace(/</g,'\\u003c');
 const esc=p.name.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'} as Record<string,string>)[c]);
 return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc} · прототип</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;700&family=Montserrat:wght@500;700&family=Playfair+Display:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"><style>${BASE_CSS}</style></head><body data-mode="${mode}" data-start="${o.dev??''}" data-notes="${o.notes?'1':''}"><div id="app"></div><script id="d" type="application/json">${json}</script><script>const QF=(${quizFrame.toString()});(${runtime.toString()})()</script></body></html>`}

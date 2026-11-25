@@ -719,3 +719,13 @@
 - `builtinItems` — стр. 50
 
 _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера строк сдвинулись на несколько строк; новое в них: `putEls`, `editBlockTpl` (store), клавиши Alt+2, Shift+I, Ctrl+Alt+K, Ctrl+Alt+B и `selEls`, `openLib`, `putLib` (Canvas)._
+
+### 1.55 новые файлы
+- `src/lib/ff.ts`: `FF`, `FF_KINDS`, `ffPatch`, `ffHtml(e,live)` (поля формы, рисунок и живые поля)
+- `src/lib/cmp.ts`: `CP`, `CMP_KINDS`, `cmpPatch`, `cmpHtml` (10 компонентов)
+- `src/lib/comments.ts`: `Cm`, `cmNums`, `cmMd`, `cmJson`, `fixCm`, подпись автора
+- `src/lib/formDesc.ts`: описание полей, компонентов и формы для ТЗ
+- `src/lib/forms.css`: стили полей и компонентов (холст, просмотр, HTML, PDF)
+- `src/features/canvas/FormSecs.tsx`: `FieldSec`, `CmpSec`, `FormSec` (панели)
+- `src/features/canvas/Comments.tsx`, `cm.css`: `CmLayer` (пины), `CmPanel`, `useCmKeys` (клавиша C)
+- Правки: `store.ts` (`El.ff`, `El.cp`, `Block.fm`, `Block.cmt`, `ET cmp`, `cmAdd/cmReply/cmDone/cmDel`), `share.ts` (runtime: маска, проверка, компоненты, пины), `art.ts`, `elStyle.tsx`, `Insert.tsx` (вкладка «Формы»), `export.ts`, `report.ts`, `migrate*.ts`

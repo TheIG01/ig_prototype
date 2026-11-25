@@ -1,7 +1,7 @@
 import {normRot} from '../../lib/elFx';
 import {useEffect,useRef,useState,lazy,Suspense} from 'react';
 import {pickIds,modsOf,curSel} from '../../lib/select';import {matchingIds,invertIds,wholeGroup} from '../../lib/layerKeys';import {useLayerUi} from '../../lib/layerUi';
-import {MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye,Download,FlipHorizontal,FlipVertical,Link2,Frame as FrameI} from 'lucide-react';import {FRAME,wrapInFrame} from '../../lib/frame';
+import {MessageCircle,MousePointer2,Type,Square,RectangleHorizontal,TextCursorInput,Image as Img,Minus,Plus,Copy,Trash2,Maximize,X,ArrowUp,ArrowDown,Smartphone,Bold,AlignLeft,AlignCenter,AlignRight,LayoutTemplate,Pencil,Settings,Shapes,Eye,Download,FlipHorizontal,FlipVertical,Link2,Frame as FrameI} from 'lucide-react';import {FRAME,wrapInFrame} from '../../lib/frame';
 import type {LucideIcon} from 'lucide-react';
 import {useStore,FW,blockTops,onDev,DEVS} from '../../store';
 import {requestDelBlock,DevIcon} from '../blocks/DelBlock';
@@ -10,7 +10,7 @@ import {download,blockMd,blockFile} from '../../lib/export';
 import type {El,ET,Dev,Block} from '../../store';
 import {toast} from '../../lib/toast';
 import {TIPS} from '../../lib/tpl';import {checkBlock} from '../../lib/textcheck';
-import {VList} from './VList';import {LayerBtns} from './LayerBtns';const QuizEditor=lazy(()=>import('../quiz/QuizEditor').then(m=>({default:m.QuizEditor})));import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel,Color} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {RichEdit} from './RichEdit';import {hasAnyLink} from '../../lib/rich';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';import {BlockPad} from './BlockPad';import {calcResize} from '../../lib/resizeCalc';import {quickPatch} from '../../lib/quickKeys';
+import {VList} from './VList';import {LayerBtns} from './LayerBtns';const QuizEditor=lazy(()=>import('../quiz/QuizEditor').then(m=>({default:m.QuizEditor})));import {elStyle,elInner} from './elStyle';import {ElPanel,StylePanel,Color} from './ElPanel';import {InsertPanel} from './Insert';import {NAME_NEW} from '../../lib/art';import {MultiPanel} from './MultiPanel';import {RichEdit} from './RichEdit';import {FormSec} from './FormSecs';import {CmLayer,CmPanel,CM0,useCmKeys} from './Comments';import './cm.css';import type {CmState} from './Comments';import {hasAnyLink} from '../../lib/rich';import {InlineEdit,INLINE} from './InlineEdit';import {stageGroup} from '../../lib/tplSteps';import {teamN} from '../../lib/tplTeam';import {Ruler,ViewMenu} from './Rulers';import {useUi,saveUi,getUi} from '../../lib/ui';import {uid} from '../../lib/uid';import {BlockPad} from './BlockPad';import {calcResize} from '../../lib/resizeCalc';import {quickPatch} from '../../lib/quickKeys';
 const TOOLS:[ET|'sel',string,LucideIcon][]=[['sel','Выбор',MousePointer2],['text','Текст',Type],['rect','Прямоугольник',Square],['btn','Кнопка',RectangleHorizontal],['input','Поле ввода',TextCursorInput],['img','Изображение',Img],['line','Линия',Minus]];
 const NAME:Record<ET,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW} as Record<ET,string>;
 const STY=['fs','b','al','acc','fill','stroke','sw','r','op','c'] as const;let styClip:Partial<El>|null=null;
@@ -25,7 +25,7 @@ type Drag={id:string;m:'move'|'bh'|'draw'|'rs'|'box'|'rot';items?:{id:string;x:n
 const stop=(e:React.PointerEvent)=>e.stopPropagation();
 
 export function Canvas({dev,W,onAdd}:{dev:Dev;W:number;onAdd:(after?:string)=>void}){
-const {s,sh,st}=useSheet();const ui=useUi();const [vm,setVm]=useState(false);const [ins,setIns]=useState(false);const [libN,setLibN]=useState(0);const [libSave,setLibSave]=useState(0);const [tool,setTool]=useState<ET|'sel'>('sel');const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);const [arm,setArm]=useState<Partial<El>>({});const [mq,setMq]=useState<{x:number;y:number;w:number;h:number}|null>(null);const [gd,setGd]=useState<{v:number[];h:number[]}|null>(null);
+const {s,sh,st}=useSheet();const ui=useUi();const [vm,setVm]=useState(false);const [ins,setIns]=useState(false);const [libN,setLibN]=useState(0);const [libSave,setLibSave]=useState(0);const [tool,setTool]=useState<ET|'sel'>('sel');const [cm,setCm]=useState<CmState>(CM0);useCmKeys(setCm);const [z,setZ]=useState(.8);const [pan,setPan]=useState(false);const [arm,setArm]=useState<Partial<El>>({});const [mq,setMq]=useState<{x:number;y:number;w:number;h:number}|null>(null);const [gd,setGd]=useState<{v:number[];h:number[]}|null>(null);
 const pick=(t:ET|'sel',ex:Partial<El>={})=>{setTool(t);setArm(ex)};
 const wrap=useRef<HTMLDivElement>(null);const space=useRef(false);const drag=useRef<Drag|null>(null);
 const panRef=useRef<{sx:number;sy:number;l:number;t:number}|null>(null);
@@ -225,13 +225,15 @@ return<><div className="cvw"><div className="cv-head">{editing&&editB?`Блок 
 {sel&&<div className="dim" style={{left:sel.e.x+sel.e.w/2,top:sel.top+sel.e.y+(sel.e.t==='line'?6:sel.e.h)+8}}>{Math.round(sel.e.w)}{sel.e.t==='line'?'':` × ${Math.round(sel.e.h)}`}</div>}
 {!vis.length&&<div className="cv-empty">{raw.length?`На устройстве «${DEVN[dev]}» пока нет блоков. Добавь новый или скопируй с другого устройства`:'Страница пустая. Нажми «Добавить блок»: с нуля или из библиотеки'}</div>}
 {!vis.length&&!editing&&raw.length>0&&(()=>{const from=DEVS.find(d=>d!==dev&&raw.some(b=>onDev(b,d)));return from?<button className="addblk adapt" style={{left:W/2,top:230}} onPointerDown={stop} onClick={()=>{s.adaptSheet(dev,from);toast(`Блоки скопированы с ${DEVN[from]}. Подгони их под ${DEVN[dev]}`,{label:'Отменить',run:()=>s.undo()},6000)}}><DevIcon d={from} size={16}/>Скопировать все блоки: {DEVN[from]}</button>:null})()}
+<CmLayer vis={vis} tops={tops} dev={dev} W={W} H={H} cm={cm} setCm={setCm}/>
 {!editing&&<button className="addblk" style={{left:W/2,top:vis.length?total+(selB&&selBi===vis.length-1?64:28):180}} onPointerDown={stop} onClick={()=>onAdd(vis.length?vis[vis.length-1].id:undefined)}><Plus size={16}/>Добавить блок (A)</button>}
 </div></div></div></div>
 {vm&&<ViewMenu onClose={()=>setVm(false)}/>}
 {editing&&ins&&<InsertPanel onPick={place} onClose={()=>setIns(false)} lib={{n:libN,save:libSave,st,sel:selEls,onPut:putLib}}/>}
+<CmPanel dev={dev} blocks={vis} cm={cm} setCm={setCm}/>
 {editing&&tool!=='sel'&&<div className="armhint">{tool==='line'?'Потяни, чтобы провести линию':'Потяни на холсте, чтобы нарисовать'} · клик — размер по умолчанию · Shift — пропорции · Alt — без сетки · Esc — отмена</div>}
 <div className="tools">{editing&&<>{TOOLS.map(([k,l,I])=><button key={k} data-k={HK[k]} className={tool===k?'on':''} title={`${l} (${HK[k]})`} onClick={()=>pick(k)}><I size={18}/></button>)}<button data-k="F" className={tool==='rect'&&arm.nm==='Фрейм'?'on':''} title="Фрейм (F). Выдели элементы и нажми Ctrl+Alt+G, чтобы собрать их во фрейм" onClick={()=>pick('rect',FRAME)}><FrameI size={18}/></button><button data-k="E" className={ins||['shape','icon','mock','list'].includes(tool)?'on':''} title="Элементы: фигуры, иконки, мокапы (E)" onClick={()=>setIns(v=>!v)}><Shapes size={18}/></button><i className="vr"/></>}
-<button title="Уменьшить (−)" onClick={()=>setZ(clampZ(z-.1))}><Minus size={16}/></button><button className="zv" title="100% (Shift+0)" onClick={()=>setZ(1)}>{Math.round(z*100)}%</button><button title="Увеличить (+)" onClick={()=>setZ(clampZ(z+.1))}><Plus size={16}/></button><button title="Вписать (Shift+1)" onClick={fit}><Maximize size={16}/></button><i className="vr"/><button className={vm?'on':''} title="Вид: линейки, сетка, направляющие, колонки" onClick={()=>setVm(v=>!v)}><Eye size={18}/></button></div></>}
+<button title="Уменьшить (−)" onClick={()=>setZ(clampZ(z-.1))}><Minus size={16}/></button><button className="zv" title="100% (Shift+0)" onClick={()=>setZ(1)}>{Math.round(z*100)}%</button><button title="Увеличить (+)" onClick={()=>setZ(clampZ(z+.1))}><Plus size={16}/></button><button title="Вписать (Shift+1)" onClick={fit}><Maximize size={16}/></button><i className="vr"/><button className={cm.on?'on':''} title="Комментарии (C)" onClick={()=>setCm(q=>({...q,on:!q.on,show:true,draft:null}))}><MessageCircle size={18}/></button><button className={vm?'on':''} title="Вид: линейки, сетка, направляющие, колонки" onClick={()=>setVm(v=>!v)}><Eye size={18}/></button></div></>}
 
 /** этапы: число 3–7 и доп. блок в этап */
 function StepsSec({b}:{b:Block}){const s=useStore();const sv=b.sv!;
@@ -274,7 +276,7 @@ return<aside className="panel"><div className="stk"><div className="ph"><b>Бл�
 <BlockPad b={b} dev={dev}/>{b.sv&&!b.sv.x&&<StepsSec b={b}/>}{teamN(b.title)!==null&&!b.sv&&<TeamSec b={b}/>}{(!b.sv||b.sv.x)&&<StageSec b={b}/>}
 {dev==='mobile'&&b.h.mobile>844&&<p className="warn">Блок выше экрана телефона (844 px). Правило: один блок = один экран</p>}
 {!editing&&<button className="btn pri" onClick={()=>s.enterEdit(b.id)}><Pencil size={16}/>Редактировать блок</button>}</div>
-<BlockLook b={b} dev={dev} st={pr?.style}/>
+<BlockLook b={b} dev={dev} st={pr?.style}/><FormSec b={b}/>
 
 {b.quiz&&<div className="sec"><button className="btn pri" onClick={()=>setQz(true)}><Settings size={16}/>Настроить квиз</button><p className="hint">Вопросы, ответы, шкала, консультант, подарки, телефон и финал. Макет пересобирается сам. В просмотре (P) квиз проходится по кнопкам</p><button className="btn" title="Блок станет обычным: элементы правятся руками, настройки квиза пропадут" onClick={()=>{s.unlinkQuiz(b.id);toast('Блок отвязан от настроек квиза',{label:'Отменить',run:()=>s.undo()},5000)}}>Отвязать от настроек</button></div>}
 {qz&&b.quiz&&<Suspense fallback={null}><QuizEditor b={b} onClose={()=>setQz(false)}/></Suspense>}

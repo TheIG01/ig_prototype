@@ -5,7 +5,7 @@ import type {El,Dev,Block} from '../../store';
 import {SHAPES,MOCKS,BULLETS,ROLES,FONTS,NAME_NEW,resolve} from '../../lib/art';
 import type {PStyle,Role} from '../../lib/art';
 import {ICON_LIST} from '../../lib/icons';
-import {checkText} from '../../lib/textcheck';import {Prev} from './Insert';import {RotSec,CornersRow,StrokeSec,FxSec,SelColors} from './FxSecs';import {LayPanel} from './LayPanel';import {ElSettings} from './ElSettings';import {LinkEditor} from './LinkEditor';import {linkOf} from '../../lib/rich';
+import {checkText} from '../../lib/textcheck';import {Prev} from './Insert';import {RotSec,CornersRow,StrokeSec,FxSec,SelColors} from './FxSecs';import {LayPanel} from './LayPanel';import {FieldSec,CmpSec} from './FormSecs';import {ElSettings} from './ElSettings';import {LinkEditor} from './LinkEditor';import {linkOf} from '../../lib/rich';
 
 const NM:Record<string,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW};
 const HEX=/^#[0-9a-f]{6}$/i;
@@ -70,6 +70,7 @@ return<aside className="panel ep"><div className="ph"><b>{NM[t]}</b><span>Эле
 {(e.sh==='poly'||e.sh==='star')&&<Range label={e.sh==='star'?'Лучей':'Углов'} value={e.n??(e.sh==='star'?5:6)} min={3} max={12} onChange={v=>set({n:v})}/>}</Sec>}
 {t==='icon'&&<Sec t="Иконка"><label className="search"><Search size={14}/><input placeholder="Найти иконку" value={q} onChange={ev=>setQ(ev.target.value)}/></label><div className="ins-g c7 sc mini">{icons.map(([id,ru])=><button key={id} className={'cell ic'+(e.ic===id?' on':'')} title={ru} onClick={()=>set({ic:id})}><Prev e={{...e,ic:id,w:22,h:22,c:'#0F172A'}}/></button>)}</div></Sec>}
 {t==='mock'&&<Sec t="Устройство"><div className="btnrow">{MOCKS.map(([k,l])=><button key={k} className={'btn'+((e.mk??'phone')===k?' on':'')} onClick={()=>set({mk:k})}>{l}</button>)}</div></Sec>}
+{t==='input'&&<FieldSec e={e} set={set}/>}{t==='cmp'&&<CmpSec e={e} set={set}/>}
 {t==='list'&&<Sec t="Маркеры"><div className="btnrow">{BULLETS.map(([k,l])=><button key={k} className={'btn'+((e.bu??'dot')===k?' on':'')} onClick={()=>set({bu:k})}>{l}</button>)}</div></Sec>}
 
 {(hasR||t!=='line')&&<Sec t="Вид"><Range label="Прозрачность" value={Math.round((e.op??1)*100)} min={5} max={100} unit="%" onChange={v=>set({op:v>=100?undefined:v/100})}/>
