@@ -11,6 +11,7 @@ import {STEPS,STEPS_TIPS} from './tplSteps';
 import {TEAM,TEAM_TIPS} from './tplTeam';
 import {MGR,MGR_TIPS} from './tplManager';
 import {QUIZ,QUIZ_TIPS} from './tplQuiz';
+import {EXTRA,EXTRA_TIPS} from './tplExtra';
 import type {QuizCfg} from './quiz';
 type Al='l'|'c'|'r';
 export type Node=
@@ -95,6 +96,7 @@ export const TPLS:Tpl[]=[
 ...TEAM,
 ...MGR,
 ...QUIZ,
+...EXTRA,
 {name:'Преимущества: заголовок слева',cat:'Доверие',spec:[{k:'side',a:[H2('Выгоды в цифрах'),{k:'p',t:'Получите результат за счёт конкретных свойств'},{k:'btn',t:'Получить расчёт'}],b:[cols(2,2,card({k:'img',h:56,t:'Иконка'},{k:'h3',t:'Выгода в цифрах'},{k:'p',t:'Получите … за счёт …'}))]}]},
 {name:'Услуги: заголовок слева',cat:'Продажа',spec:[{k:'side',a:[H2('Услуги и цены'),{k:'p',t:'Выбери услугу и получи расчёт за 1 минуту'},{k:'btn',t:'Получить расчёт'}],b:[{k:'li',t:'Услуга 1',r:'от 10 000 ₽'},{k:'li',t:'Услуга 2',r:'от 10 000 ₽'},{k:'li',t:'Услуга 3',r:'от 10 000 ₽'},{k:'li',t:'Услуга 4',r:'от 10 000 ₽'}]}]},
 {name:'Этапы: заголовок слева',cat:'Прочее',spec:[{k:'side',a:[H2('Как работаем'),{k:'p',t:'4 шага от заявки до результата'},{k:'btn',t:'Начать проект'}],b:[{k:'cols',n:4,per:1,item:[card({k:'h3',t:'Этап {i}'},{k:'p',t:'Что делаем и что получает клиент'})]}]}]},
@@ -134,7 +136,7 @@ card({k:'h3',t:'Цена фиксируется в смете'},{k:'p',t:'Сум
 {name:'Список',cat:'Прочее',spec:[{k:'li',t:'Товар 1',r:'0 ₽'},{k:'li',t:'Товар 2',r:'0 ₽'},{k:'li',t:'Товар 3',r:'0 ₽'}]},
 {name:'Итого',cat:'Прочее',spec:[card({k:'p',t:'Товары: 0 ₽'},{k:'p',t:'Доставка: 0 ₽'},{k:'h2',t:'Итого: 0 ₽'},{k:'btn',t:'Оформить заказ',full:true})]}];
 export const CATS=[...new Set(TPLS.map(t=>t.cat))];
-export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...STEPS_TIPS,...GUAR_TIPS,...SOCIAL_TIPS,...TEAM_TIPS,...MGR_TIPS,...QUIZ_TIPS,'Отзывы':REVIEWS_TIPS['Отзывы: результат'],
+export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...STEPS_TIPS,...GUAR_TIPS,...SOCIAL_TIPS,...TEAM_TIPS,...MGR_TIPS,...QUIZ_TIPS,...EXTRA_TIPS,'Отзывы':REVIEWS_TIPS['Отзывы: результат'],
 'Шапка':['Шапка занимает до 10% первого экрана','Логотип, дескриптор, телефон и «Заказать звонок»'],
 'Преимущества':['Формула: «Получите … за счёт …»','Иконка и заголовок 3 уровня работают лучше сплошного текста'],
 'Форма заявки':['Только телефон, остальное выяснит менеджер','Подсказка над полем, маска номера не нужна','Если есть поле, нужна галочка согласия','Форма каждые 2–3 блока, но не одинаковая','Текст кнопки совпадает с заголовком формы'],
