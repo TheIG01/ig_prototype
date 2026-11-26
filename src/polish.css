@@ -57,13 +57,13 @@
 
 /* --- окна: ровные отступы, шапка и подвал не уезжают --- */
 .modal{overflow:auto;overscroll-behavior:contain}
-.sheet{max-height:min(90vh,100%);overflow:auto;scrollbar-width:thin}
+.sheet{max-height:min(90vh,100%);overflow-x:hidden;overflow-y:auto;scrollbar-width:thin}
 .sheet h2{display:flex;align-items:center;gap:8px;min-width:0;line-height:1.25}
 .sheet .btnrow,.sheet .acts{flex-wrap:wrap}
-.set-row{gap:16px;align-items:center}
-.set-row>div{min-width:0;flex:1}
+.set-row{gap:10px 16px;align-items:center;flex-wrap:wrap}
+.set-row>div:first-child{min-width:0;flex:1 1 210px}
 .set-row p{margin:2px 0 0;color:var(--mute)}
-.set-row .inp,.set-row .seg,.set-row .btn{flex:none;max-width:55%}
+.set-row .inp,.set-row .seg,.set-row .btn{flex:none;max-width:100%}
 
 /* --- меню «Ещё», подсказки, тосты --- */
 .more-m{max-height:70vh;overflow:auto;min-width:220px}
@@ -100,3 +100,25 @@ html{scroll-behavior:smooth}
 .rp-stats div{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:center}
 .rp-stats b{display:block;font-size:18px;line-height:1.2}
 .rp-stats span{font-size:11px;color:var(--mute)}
+
+/* --- гид по функциям (класс раньше совпадал с направляющими холста и ломал вёрстку) --- */
+.gdoc{display:block;position:static}
+.gdoc h4{margin:18px 0 8px;font:700 13px Inter,system-ui,sans-serif;color:var(--acc);text-transform:none;letter-spacing:0}
+.gdoc h4:first-child{margin-top:4px}
+.gdoc p{margin:0;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.5;color:var(--ink2,#334155)}
+.gdoc p:last-child{border-bottom:0}
+.gdoc p b{display:block;background:none;color:var(--text);font-weight:600;padding:0;margin-bottom:2px;position:static}
+
+/* --- горячие клавиши: две колонки без пустых провалов --- */
+.keys-g{display:block;columns:2;column-gap:40px}
+.keys-g>div{break-inside:avoid;margin-bottom:6px}
+.keys-g h4{margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em;font-size:11px}
+.krow span{min-width:0}.krow kbd{flex:none;white-space:nowrap}
+@media(max-width:700px){.keys-g{columns:1}}
+
+/* --- панель блока: одинаковые отступы у всех полей --- */
+.sec .sec{padding-left:0;padding-right:0;border-bottom:0}
+.sec>.btn:not(.ic){width:100%;justify-content:center}
+.panel details.fold2>textarea.inp{margin:0 14px 12px;width:calc(100% - 28px);box-sizing:border-box}
+.panel details.fold2>.inp{margin-left:14px;margin-right:14px}
+.panel .sec .fld>.inp{width:100%}

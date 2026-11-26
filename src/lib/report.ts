@@ -83,7 +83,7 @@ flush()};
 const tok:Record<string,number>={};const titles:Record<string,string>={};
 const sheetStart:Record<string,number>={};
 /** сначала экраны, их номера страниц нужны оглавлению: считаем смещение позже */
-const ovPages:string[]=[];
+const ovPages:string[]=[];const bsMap=new Map<string,Block[]>();
 for(const s of sheets){const bs=s.blocks.filter(b=>!b.dv||b.dv.includes(o.dev));
 /* обзор экрана */
 const mapW=Math.min(300,cw*.42);const k=Math.min(mapW/FW[o.dev],(ch-90)/Math.max(1,bs.reduce((q,b)=>q+geo(b,o.dev).h,0)),.6);const sh=shot(bs,o.dev,k,p);
@@ -92,17 +92,17 @@ const rows=bs.slice(0,Math.floor((ch-60)/30)).map((b,i)=>{titles[b.id]=b.title;r
 const more=bs.length>Math.floor((ch-60)/30)?'<p class="muted">Ещё блоков: '+(bs.length-Math.floor((ch-60)/30))+'. Полный список в оглавлении.</p>':'';
 for(const b of bs)titles[b.id]=b.title;
 ovPages.push('<div class="sh"><h2>'+(s.kind==='popup'?'Попап':'Страница')+': '+esc(T(s.name))+'</h2><p class="muted">'+dn+' '+FW[o.dev]+' px · блоков: '+bs.length+'</p><div class="ovw"><div class="map" style="width:'+Math.round(FW[o.dev]*k)+'px;height:'+Math.round(sh.h)+'px">'+(bs.length?sh.html+badges:'')+'</div><div class="ovl">'+(bs.length?rows+more:'<p class="muted">На этом устройстве блоков нет.</p>')+'</div></div></div>');
-(s as unknown as {_bs:Block[]})._bs=bs}
+bsMap.set(s.id,bs)}
 /* оглавление и страница стиля идут перед экранами */
 const entries:{l:string;t:string;id:string;sub?:boolean}[]=[{l:'Стиль проекта',t:'style',id:'style'}];
-for(const s of sheets){entries.push({l:(s.kind==='popup'?'Попап: ':'')+s.name,t:'sheet',id:'sh:'+s.id});for(const b of (s as unknown as {_bs:Block[]})._bs)entries.push({l:b.title,t:'blk',id:b.id,sub:true})}
+for(const s of sheets){entries.push({l:(s.kind==='popup'?'Попап: ':'')+s.name,t:'sheet',id:'sh:'+s.id});for(const b of bsMap.get(s.id)!)entries.push({l:b.title,t:'blk',id:b.id,sub:true})}
 const per1=Math.floor((ch-64)/26),perN=Math.floor((ch-24)/26);let tocN=1;if(entries.length>per1)tocN+=Math.ceil((entries.length-per1)/perN);
 const first=2+tocN; /* номер страницы «Стиль проекта» */
 const num:Record<string,number>={style:first};let pg=first+1;
 const body:string[]=[];
 /* раскладка экранов: считаем страницы по очереди */
 const all:{html:string}[]=[];
-for(let i=0;i<sheets.length;i++){const s=sheets[i];num['sh:'+s.id]=pg;all.push({html:ovPages[i]});pg++;const bs=(s as unknown as {_bs:Block[]})._bs;
+for(let i=0;i<sheets.length;i++){const s=sheets[i];num['sh:'+s.id]=pg;all.push({html:ovPages[i]});pg++;const bs=bsMap.get(s.id)!;
 const atoms:Atom[]=[];bs.forEach((b,j)=>atoms.push(...block(b,s,j)[0]));
 const before=pages.length;place(atoms,titles,0,tok);const made=pages.splice(before);
 /* tok хранит индекс в pages; пересчитываем номера по порядку */
@@ -118,7 +118,7 @@ const tocRow=(e:typeof entries[number])=>'<div class="toc'+(e.t==='sheet'?' top'
 const tocPages:string[]=[];for(let i=0,n=0;i<Math.max(entries.length,1);n++){const c=n?perN:per1;tocPages.push((n?'':'<h2>Оглавление</h2>')+entries.slice(i,i+c).map(tocRow).join(''));i+=c}
 /* обложка */
 const logo=ag.l?'<img class="lg" src="'+esc(ag.l)+'" alt="">':'';
-const allBs=sheets.flatMap(x=>(x as unknown as {_bs:Block[]})._bs);const nEl=allBs.reduce((q,b)=>q+geo(b,o.dev).els.length,0);const nCm=allBs.reduce((q,b)=>q+(b.cmt??[]).filter(c=>!c.done).length,0);
+const allBs=sheets.flatMap(x=>bsMap.get(x.id)!);const nEl=allBs.reduce((q,b)=>q+geo(b,o.dev).els.length,0);const nCm=allBs.reduce((q,b)=>q+(b.cmt??[]).filter(c=>!c.done).length,0);
 const stat=(n:number|string,l:string)=>'<div class=\"stc\"><b>'+n+'</b><span>'+l+'</span></div>';
 const swat=p.style.palette.slice(0,8).map(c=>'<i style=\"background:'+esc(c)+'\"></i>').join('');
 const cover='<div class=\"cov\"><div class=\"hero\"><div class=\"ag\">'+logo+(ag.n?'<b>'+esc(ag.n)+'</b>':'')+'</div><div class=\"hc\"><p class=\"kick\">Прототип сайта · Для согласования</p><h1>'+esc(T(p.name))+'</h1><p class=\"vd\">Версия '+esc(o.ver)+' · '+date+' · '+dn+', '+FW[o.dev]+' px</p></div></div><div class=\"stats\">'+stat(sheets.length,'экранов')+stat(allBs.length,'блоков')+stat(nEl,'элементов')+stat(nCm,'открытых комментариев')+'</div><div class=\"cvs\"><div><span class=\"lb\">Палитра</span><div class=\"sws\">'+swat+'</div></div><div><span class=\"lb\">Шрифты</span><p>'+esc(p.style.head)+' · '+esc(p.style.body)+'</p></div></div><div class=\"rq\">'+esc(ag.r).replace(/\n/g,'<br>')+'</div></div>';
