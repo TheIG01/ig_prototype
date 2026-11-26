@@ -73,7 +73,8 @@ const saveMd=(p:Project)=>{download(slug(p.name)+'_tz.md',briefMd(p,tName(p)),'t
 const saveSpec=(p:Project)=>{download(slug(p.name)+'_spec.json',specJson(p,tName(p)),'application/json');toast('Спецификация скачана (JSON)')};
 const backup=()=>{void downloadCopy()};
 const restore=async()=>{const f=pend;close();if(!f)return;try{importBackup(await f.text());toast('Копия загружена. Введи ПИН из этой копии');setTimeout(()=>location.reload(),1500)}catch{toast('Это не файл копии IG prototype')}};
-const submit=(e:React.FormEvent)=>{e.preventDefault();const n=name.trim();if(!n)return;
+const pickFirst=useRef<(()=>boolean)|null>(null);
+const submit=(e:React.FormEvent)=>{e.preventDefault();const n=name.trim();if(!n)return;if(modal==='block'&&pickFirst.current?.())return;
 if(modal==='proj')s.addProject(n,typeId);if(modal==='sheet')s.addSheet(n,kind);if(modal==='block')addAndEdit(n);if(modal==='type')s.saveType(n);if(modal==='tpl'&&s.blockId){s.saveBlockTpl(s.blockId,n,group.trim(),whole,parseTags(tagsIn));setTagsIn('');toast(whole?`Набор этапов «${n}» в библиотеке блоков`:`Шаблон «${n}» в библиотеке блоков`)}
 if(modal==='ren'&&ren){if(ren.k==='proj')s.renameProject(ren.id,n);else s.renameSheet(ren.id,n)}close()};
 type Cmd={l:string;k?:string;run:()=>void};
@@ -171,7 +172,7 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 <button className="btn pri" style={{width:'100%',justifyContent:'center'}}>Собрать проект</button></form></Ask>}
 {form&&<Ask title={TITLE[modal]} xl={modal==='block'} onClose={close}><form onSubmit={submit}>
 <input className="inp" autoFocus placeholder={modal==='block'?'Поиск или название нового блока':'Название'} value={name} onChange={e=>setName(e.target.value)}/>
-{modal==='block'&&<BlockPicker q={name} tpls={d.blockTpls} onPick={n=>{addAndEdit(n);close()}} onTpl={id=>{addAndEdit('',id);close()}} onDelTpl={id=>{s.delBlockTpl(id);toast('Шаблон удалён')}}/>}
+{modal==='block'&&<BlockPicker first={pickFirst} q={name} tpls={d.blockTpls} onPick={n=>{addAndEdit(n);close()}} onTpl={id=>{addAndEdit('',id);close()}} onDelTpl={id=>{s.delBlockTpl(id);toast('Шаблон удалён')}}/>}
 {modal==='tpl'&&<>{curBlk?.sv?.tab&&<label className="chk"><input type="checkbox" checked={whole} onChange={e=>setWhole(e.target.checked)}/> Сохранить весь набор этапов ({curBlk.sv.n})</label>}<input className="inp" list="grp" placeholder="Группа шаблона, например: Мои первые экраны" value={group} onChange={e=>setGroup(e.target.value)}/><input className="inp" placeholder="Теги через запятую: первый экран, форма" value={tagsIn} onChange={e=>setTagsIn(e.target.value)}/><datalist id="grp">{[...new Set(d.blockTpls.map(t=>t.cat).filter(Boolean))].map(c=><option key={c} value={c}/>)}</datalist></>}
 {modal==='proj'&&<><p className="txt steps"><b>1</b> Выбери тип сайта <b>2</b> Впиши название <b>3</b> Нажми «Создать» или Enter</p><div className="types">{types.map(t=><button type="button" key={t.id} className={typeId===t.id?'on':''} onClick={()=>{setTypeId(t.id);if(!name.trim())setName(t.name)}}>{t.name}</button>)}</div></>}
 {modal==='sheet'&&<div className="seg" style={{marginBottom:14}}>{(['page','popup'] as Kind[]).map(k=><button type="button" key={k} className={kind===k?'on':''} onClick={()=>setKind(k)}>{k==='page'?'Страница':'Попап'}</button>)}</div>}
