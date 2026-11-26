@@ -18,6 +18,7 @@ export type Node=
 |{k:'h1'|'h2'|'h3'|'p'|'sm';t:string;al?:Al}
 |{k:'btn';t:string;al?:Al;full?:boolean}
 |{k:'inp';t:string}
+|{k:'icon';t?:string}
 |{k:'img'|'rect';t?:string;h:number}
 |{k:'gap';h:number}
 |{k:'acc'|'li';t:string;r?:string}
@@ -29,11 +30,12 @@ export type Node=
 export interface Built{h:Record<Dev,number>;els:Record<Dev,El[]>;quiz?:QuizCfg}
 export interface Tpl{name:string;cat:string;spec:Node[]|((d:Dev)=>{h:number;els:El[]});quiz?:()=>QuizCfg}
 const PAD:Record<Dev,number>={desktop:120,tablet:48,mobile:20};
-const PV:Record<Dev,number>={desktop:64,tablet:48,mobile:32};
+const PV:Record<Dev,number>={desktop:80,tablet:56,mobile:40};
 const DI:Record<Dev,0|1|2>={desktop:0,tablet:1,mobile:2};
 const FS:Record<string,[number,number,number]>={h1:[48,40,30],h2:[36,32,26],h3:[20,20,18],p:[16,16,16],sm:[14,14,14]};
+const CARDS=new WeakSet<El>();
 const r8=(v:number)=>Math.ceil(v/8)*8;
-const lines=(t:string,fs:number,w:number,bold=false)=>t.split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length*fs*(bold?.68:.61)/w)),0);
+const lines=(t:string,fs:number,w:number,bold=false)=>{const cw=fs*(bold?.64:.58);return t.split('\n').reduce((a,l)=>{let n=1,cur=0;for(const wd of l.split(' ')){const len=wd.length*cw;if(cur&&cur+cw+len>w){n++;cur=len}else cur+=(cur?cw:0)+len}return a+n},0)};
 const mk=(t:ET,x:number,y:number,w:number,h:number,text='',more:Partial<El>={}):El=>({id:uid(),t,x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h),text,...more});
 const sub=(n:Node[],i:number):Node[]=>JSON.parse(JSON.stringify(n).replace(/\{i\}/g,String(i+1)));
 const shift=(a:El[],dx:number,dy:number)=>{for(const e of a){e.x=Math.round(e.x+dx);e.y=Math.round(e.y+dy)}};
@@ -42,17 +44,21 @@ function place(ns:Node[],x:number,y:number,w:number,dev:Dev,out:El[],gap=16):num
 const di=DI[dev];
 for(const n of ns){
 switch(n.k){
-case 'h1':case 'h2':case 'h3':case 'p':case 'sm':{const fs=FS[n.k][di];const h=r8(lines(n.t,fs,w,n.k[0]==='h')*fs*1.35);const more:Partial<El>={fs};if(n.k[0]==='h')more.b=true;if(n.al)more.al=n.al;out.push(mk('text',x,y,w,h,n.t,more));y+=h;break}
-case 'btn':{const bw=dev==='mobile'||n.full?w:Math.min(w,260);const bx=n.al==='c'?x+(w-bw)/2:n.al==='r'?x+w-bw:x;out.push(mk('btn',bx,y,bw,52,n.t,{fs:16}));y+=52;break}
-case 'inp':{out.push(mk('input',x,y,w,52,n.t));y+=52;break}
+case 'h1':case 'h2':case 'h3':case 'p':case 'sm':{const fs=FS[n.k][di];const h=r8(lines(n.t,fs,w,n.k[0]==='h')*fs*1.35);const more:Partial<El>={fs};if(n.k[0]==='h')more.b=true;if(n.al)more.al=n.al;out.push(mk('text',x,y,w,h,n.t,more));y+=h+(n.k==='h2'||n.k==='h1'?8:0);break}
+case 'btn':{const bw=dev==='mobile'||n.full?w:Math.min(w,260);const bh=dev==='desktop'?56:52;const bx=n.al==='c'?x+(w-bw)/2:n.al==='r'?x+w-bw:x;out.push(mk('btn',bx,y,bw,bh,n.t,{fs:16}));y+=bh;break}
+case 'inp':{const ih=dev==='desktop'?56:52;out.push(mk('input',x,y,w,ih,n.t));y+=ih;break}
 case 'img':case 'rect':{const ih=n.k==='img'?Math.round(n.h*(dev==='mobile'?.55:dev==='tablet'?.8:1)/8)*8:n.h;out.push(mk(n.k,x,y,w,ih,n.t??''));y+=ih;break}
+case 'icon':{const s=dev==='mobile'?48:56;out.push(mk('rect',x,y,s,s,n.t??'★',{fs:dev==='mobile'?18:24,al:'c'}));y+=s;break}
 case 'gap':{y+=n.h-gap;break}
 case 'acc':{out.push(mk('rect',x,y,w,56));out.push(mk('text',x+16,y+16,w-72,24,n.t,{fs:16}));out.push(mk('text',x+w-40,y+14,24,28,'+',{fs:20,b:true}));y+=56;break}
 case 'li':{out.push(mk('rect',x,y,w,64));out.push(mk('text',x+16,y+20,n.r?Math.min(w*.6,w-192):w*.6,24,n.t,{fs:16}));if(n.r)out.push(mk('text',x+w-176,y+20,160,24,n.r,{fs:16,b:true,al:'r'}));y+=64;break}
-case 'card':{const p=dev==='mobile'?16:24;const r=mk('rect',x,y,w,0);out.push(r);const e=place(n.item,x+p,y+p,w-2*p,dev,out,12);r.h=r8(e-y+p);y+=r.h;break}
+case 'card':{const p=dev==='desktop'?32:dev==='tablet'?24:20;const r=mk('rect',x,y,w,0);CARDS.add(r);out.push(r);const e=place(n.item,x+p,y+p,w-2*p,dev,out,12);r.h=r8(e-y+p);y+=r.h;break}
 case 'narrow':{const nw=Math.min(n.w,w);y=place(n.item,x+(w-nw)/2,y,nw,dev,out,gap);break}
 case 'cols':{const per=n.per??n.n;const nc=dev==='mobile'?1:dev==='tablet'?Math.min(per,2):per;const g=dev==='mobile'?16:24;const cw=(w-(nc-1)*g)/nc;let top=y;
-for(let i=0;i<n.n;i+=nc){let end=top;for(let c=0;c<nc&&i+c<n.n;c++){const it=n.items?n.items[i+c]:sub(n.item??[],i+c);end=Math.max(end,place(it,x+c*(cw+g),top,cw,dev,out,gap))}top=end+g}
+for(let i=0;i<n.n;i+=nc){let end=top;const cells:El[][]=[];for(let c=0;c<nc&&i+c<n.n;c++){const it=n.items?n.items[i+c]:sub(n.item??[],i+c);const cell:El[]=[];end=Math.max(end,place(it,x+c*(cw+g),top,cw,dev,cell,gap));cells.push(cell);out.push(...cell)}
+/* одинаковая высота карточек в ряду, кнопки уходят вниз */
+for(const cell of cells){const r=cell[0];if(!r||!CARDS.has(r))continue;const cb=Math.max(...cell.map(e=>e.y+e.h));if(r.y+r.h<cb)continue;const dd=end-cb;if(dd>0){r.h+=dd;for(const e of cell)if(e.t==='btn')e.y+=dd}}
+top=end+g}
 y=top-g;break}
 case 'side':{if(dev!=='desktop'){const e=place(n.a,x,y,w,dev,out,gap);y=place(n.b,x,e+gap,w,dev,out,gap);break}
 const g=64;const aw=Math.round((w-g)*.36);const bw=w-g-aw;const A:El[]=[],B:El[]=[];const ea=place(n.a,0,0,aw,dev,A,gap),eb=place(n.b,0,0,bw,dev,B,gap);
@@ -66,11 +72,12 @@ return y-gap}
 
 function render(ns:Node[],dev:Dev){const els:El[]=[];const end=place(ns,PAD[dev],PV[dev],FW[dev]-2*PAD[dev],dev,els);return{h:Math.max(120,r8(end+PV[dev])),els}}
 const header=(dev:Dev)=>{const W=FW[dev],P=PAD[dev];const els:El[]=[];
-if(dev==='desktop'){els.push(mk('text',P,14,200,28,'Логотип',{fs:20,b:true}));els.push(mk('text',P,44,230,40,'Собственное производство бассейнов с 2012 года',{fs:14}));els.push(mk('text',380,22,320,40,'★ 4,9 на Яндекс Картах · более 420 построенных объектов',{fs:14}));els.push(mk('rect',740,20,36,36,'TG',{fs:12}));els.push(mk('rect',784,20,36,36,'WA',{fs:12}));els.push(mk('text',740,62,200,24,'Ответим за 2 минуты',{fs:12}));els.push(mk('text',940,16,190,24,'+7 (000) 000-00-00',{fs:16,b:true,al:'r'}));els.push(mk('text',940,44,190,24,'● Сейчас работаем',{fs:12,al:'r'}));els.push(mk('btn',W-P-170,20,170,44,'Перезвоните мне',{fs:14}));return{h:96,els}}
-if(dev==='tablet'){els.push(mk('text',P,20,160,32,'Логотип',{fs:20,b:true}));els.push(mk('text',W-P-44-16-200,24,200,24,'+7 (000) 000-00-00',{fs:16,b:true,al:'r'}));els.push(mk('rect',W-P-44,14,44,44,'≡',{fs:20}));return{h:72,els}}
-els.push(mk('text',P,16,160,32,'Логотип',{fs:20,b:true}));els.push(mk('rect',W-P-40,12,40,40,'≡',{fs:20}));return{h:64,els}};
+if(dev==='desktop'){els.push(mk('text',P,14,200,28,'Логотип',{fs:20,b:true}));els.push(mk('text',P,44,230,40,'Собственное производство бассейнов с 2012 года',{fs:14}));els.push(mk('text',380,22,320,40,'★ 4,9 на Яндекс Картах · более 420 построенных объектов',{fs:14}));els.push(mk('rect',740,14,44,44,'TG',{fs:13}));els.push(mk('rect',792,14,44,44,'WA',{fs:13}));els.push(mk('text',740,64,200,24,'Ответим за 2 минуты',{fs:13}));els.push(mk('text',940,16,190,24,'+7 (000) 000-00-00',{fs:16,b:true,al:'r'}));els.push(mk('text',940,44,190,24,'● Сейчас работаем',{fs:13,al:'r'}));els.push(mk('btn',W-P-170,20,170,44,'Перезвоните мне',{fs:14}));return{h:96,els}}
+if(dev==='tablet'){els.push(mk('text',P,20,160,32,'Логотип',{fs:20,b:true}));els.push(mk('text',W-P-44-16-200,24,200,24,'+7 (000) 000-00-00',{fs:16,b:true,al:'r'}));els.push(mk('rect',W-P-44,14,44,44,'≡',{fs:16}));return{h:72,els}}
+els.push(mk('text',P,16,160,32,'Логотип',{fs:20,b:true}));els.push(mk('rect',W-P-44,10,44,44,'≡',{fs:16}));return{h:64,els}};
 
 const H2=(t:string,al?:Al):Node=>({k:'h2',t,al});
+const SUB=(t:string,al?:Al):Node=>({k:'p',t,al});
 const card=(...item:Node[]):Node=>({k:'card',item});
 const cols=(n:number,per:number,...item:Node[]):Node=>({k:'cols',n,per,item});
 const CTA:Node={k:'btn',t:'Получить расчёт'};
@@ -84,9 +91,8 @@ export const TPLS:Tpl[]=[
 ...FIRST,
 {name:'Баннер',cat:'Первый экран',spec:[card(H2('Акция: выгода в цифрах','c'),{k:'p',t:'Условия и срок действия',al:'c'},{k:'btn',t:'Получить предложение',al:'c'})]},
 {name:'Кнопка старта',cat:'Первый экран',spec:[{k:'h1',t:'Заголовок квиза с ключевым словом',al:'c'},{k:'p',t:'Ответьте на 5 простых вопросов и получите расчёт',al:'c'},{k:'btn',t:'Начать',al:'c'}]},
-{name:'Преимущества',cat:'Доверие',spec:[H2('Выгоды работы с нами'),cols(4,4,card({k:'img',h:56,t:'Иконка'},{k:'h3',t:'Выгода в цифрах'},{k:'p',t:'Получите … за счёт …'}))]},
-{name:'Кейсы',cat:'Доверие',spec:[H2('Кейсы'),cols(3,3,card({k:'img',h:200,t:'Фото'},{k:'h3',t:'Название кейса'},{k:'p',t:'Задача → результат в цифрах'}))]},
-{name:'Команда',cat:'Доверие',spec:[H2('Команда'),cols(4,4,card({k:'img',h:200,t:'Фото'},{k:'h3',t:'Имя Фамилия'},{k:'sm',t:'Должность'}))]},
+{name:'Преимущества',cat:'Доверие',spec:[H2('Выгоды работы с нами'),SUB('Четыре причины доверить нам вашу задачу'),cols(4,4,card({k:'icon'},{k:'h3',t:'Выгода в цифрах'},{k:'p',t:'Получите … за счёт …'}))]},
+{name:'Кейсы',cat:'Доверие',spec:[H2('Кейсы'),SUB('Реальные задачи клиентов и результат в цифрах'),cols(3,3,card({k:'img',h:200,t:'Фото'},{k:'h3',t:'Название кейса'},{k:'p',t:'Задача → результат в цифрах'}))]},
 {name:'О компании',cat:'Доверие',spec:[{k:'split',a:[H2('О компании'),{k:'p',t:'Чем занимаемся, сколько лет на рынке, главные цифры'},{k:'p',t:'Почему нам доверяют: гарантии, сертификаты, опыт'}],b:[{k:'img',h:360,t:'Фото'}]}]},
 {name:'История',cat:'Доверие',spec:[{k:'split',a:[H2('История'),{k:'p',t:'Как начинали и чего достигли'}],b:[{k:'img',h:320,t:'Фото'}]}]},
 ...REVIEWS,
@@ -97,10 +103,10 @@ export const TPLS:Tpl[]=[
 ...MGR,
 ...QUIZ,
 ...EXTRA,
-{name:'Преимущества: заголовок слева',cat:'Доверие',spec:[{k:'side',a:[H2('Выгоды в цифрах'),{k:'p',t:'Получите результат за счёт конкретных свойств'},{k:'btn',t:'Получить расчёт'}],b:[cols(2,2,card({k:'img',h:56,t:'Иконка'},{k:'h3',t:'Выгода в цифрах'},{k:'p',t:'Получите … за счёт …'}))]}]},
+{name:'Преимущества: заголовок слева',cat:'Доверие',spec:[{k:'side',a:[H2('Выгоды в цифрах'),{k:'p',t:'Получите результат за счёт конкретных свойств'},{k:'btn',t:'Получить расчёт'}],b:[cols(2,2,card({k:'icon'},{k:'h3',t:'Выгода в цифрах'},{k:'p',t:'Получите … за счёт …'}))]}]},
 {name:'Услуги: заголовок слева',cat:'Продажа',spec:[{k:'side',a:[H2('Услуги и цены'),{k:'p',t:'Выбери услугу и получи расчёт за 1 минуту'},{k:'btn',t:'Получить расчёт'}],b:[{k:'li',t:'Услуга 1',r:'от 10 000 ₽'},{k:'li',t:'Услуга 2',r:'от 10 000 ₽'},{k:'li',t:'Услуга 3',r:'от 10 000 ₽'},{k:'li',t:'Услуга 4',r:'от 10 000 ₽'}]}]},
-{name:'Этапы: заголовок слева',cat:'Прочее',spec:[{k:'side',a:[H2('Как работаем'),{k:'p',t:'4 шага от заявки до результата'},{k:'btn',t:'Начать проект'}],b:[{k:'cols',n:4,per:1,item:[card({k:'h3',t:'Этап {i}'},{k:'p',t:'Что делаем и что получает клиент'})]}]}]},
-{name:'FAQ: заголовок слева',cat:'Конверсия',spec:[{k:'side',a:[H2('Вопросы и ответы'),{k:'p',t:'Ответы на главные сомнения перед заявкой'},{k:'btn',t:'Задать вопрос'}],b:[{k:'acc',t:'Вопрос 1'},{k:'acc',t:'Вопрос 2'},{k:'acc',t:'Вопрос 3'},{k:'acc',t:'Вопрос 4'}]}]},
+{name:'Этапы: заголовок слева',cat:'Этапы',spec:[{k:'side',a:[H2('Как работаем'),{k:'p',t:'4 шага от заявки до результата'},{k:'btn',t:'Начать проект'}],b:[{k:'cols',n:4,per:1,item:[card({k:'h3',t:'Этап {i}'},{k:'p',t:'Что делаем и что получает клиент'})]}]}]},
+{name:'FAQ: заголовок слева',cat:'Формы и контакты',spec:[{k:'side',a:[H2('Вопросы и ответы'),{k:'p',t:'Ответы на главные сомнения перед заявкой'},{k:'btn',t:'Задать вопрос'}],b:[{k:'acc',t:'Вопрос 1'},{k:'acc',t:'Вопрос 2'},{k:'acc',t:'Вопрос 3'},{k:'acc',t:'Вопрос 4'}]}]},
 {name:'Отзывы: заголовок слева',cat:'Отзывы',spec:[{k:'side',a:[H2('Отзывы клиентов'),{k:'p',t:'Реальные истории с цифрами и ссылкой на оригинал'},{k:'btn',t:'Смотреть все отзывы'}],b:[{k:'cols',n:3,per:1,items:[
 [card({k:'h3',t:'Алексей, Подмосковье'},{k:'p',t:'Сдали за 38 дней вместо 45'},{k:'sm',t:'«Прораб присылал фото каждый день в 18:00»'})],
 [card({k:'h3',t:'Марина, Казань'},{k:'p',t:'Доплат по смете: 0 ₽'},{k:'sm',t:'«Цена из договора осталась прежней до сдачи»'})],
@@ -110,44 +116,45 @@ card({k:'h3',t:'25 лет на конструкцию'},{k:'p',t:'Бесплат
 card({k:'h3',t:'5 000 ₽ за каждый день просрочки'},{k:'p',t:'Штраф за срыв сроков прописан в договоре'}),
 card({k:'h3',t:'Цена фиксируется в смете'},{k:'p',t:'Сумма в договоре остаётся прежней до сдачи объекта'}),
 {k:'img',h:120,t:'Договор с печатью'}]}]},
-{name:'Услуги',cat:'Продажа',spec:[H2('Услуги'),cols(3,3,card({k:'img',h:160,t:'Фото'},{k:'h3',t:'Услуга {i}'},{k:'p',t:'Результат для клиента'},{k:'btn',t:'Подробнее'}))]},
-{name:'Список услуг',cat:'Продажа',spec:[H2('Услуги и цены'),{k:'li',t:'Услуга 1',r:'от 10 000 ₽'},{k:'li',t:'Услуга 2',r:'от 10 000 ₽'},{k:'li',t:'Услуга 3',r:'от 10 000 ₽'},{k:'li',t:'Услуга 4',r:'от 10 000 ₽'}]},
-{name:'Тарифы',cat:'Продажа',spec:[H2('Тарифы'),cols(3,3,card({k:'h3',t:'Тариф {i}'},{k:'h2',t:'Цена ₽'},{k:'p',t:'• Что входит\n• Что входит\n• Что входит'},{k:'btn',t:'Выбрать',full:true}))]},
-{name:'Хиты',cat:'Продажа',spec:[H2('Хиты продаж'),cols(4,4,card({k:'img',h:180,t:'Фото'},{k:'p',t:'Название товара'},{k:'h3',t:'Цена ₽'},{k:'btn',t:'В корзину',full:true}))]},
-{name:'Категории',cat:'Продажа',spec:[H2('Категории'),cols(4,4,card({k:'img',h:140,t:'Фото'},{k:'h3',t:'Категория'}))]},
+{name:'Услуги',cat:'Продажа',spec:[H2('Услуги'),SUB('Выберите, что нужно, и получите расчёт за 1 минуту'),cols(3,3,card({k:'img',h:160,t:'Фото'},{k:'h3',t:'Услуга {i}'},{k:'p',t:'Результат для клиента'},{k:'btn',t:'Подробнее'}))]},
+{name:'Список услуг',cat:'Продажа',spec:[H2('Услуги и цены'),SUB('Ориентировочные цены, точный расчёт после замера'),{k:'li',t:'Услуга 1',r:'от 10 000 ₽'},{k:'li',t:'Услуга 2',r:'от 10 000 ₽'},{k:'li',t:'Услуга 3',r:'от 10 000 ₽'},{k:'li',t:'Услуга 4',r:'от 10 000 ₽'}]},
+{name:'Тарифы',cat:'Продажа',spec:[H2('Тарифы'),SUB('Прозрачная цена без скрытых доплат'),cols(3,3,card({k:'h3',t:'Тариф {i}'},{k:'h2',t:'Цена ₽'},{k:'p',t:'• Что входит\n• Что входит\n• Что входит'},{k:'btn',t:'Выбрать',full:true}))]},
+{name:'Хиты',cat:'Продажа',spec:[H2('Хиты продаж'),SUB('То, что покупают чаще всего'),cols(4,4,card({k:'img',h:180,t:'Фото'},{k:'p',t:'Название товара'},{k:'h3',t:'Цена ₽'},{k:'btn',t:'В корзину',full:true}))]},
+{name:'Категории',cat:'Продажа',spec:[H2('Категории'),SUB('Выберите раздел и найдите нужное за минуту'),cols(4,4,card({k:'img',h:140,t:'Фото'},{k:'h3',t:'Категория'}))]},
 {name:'Сетка товаров',cat:'Продажа',spec:[cols(8,4,card({k:'img',h:180,t:'Фото'},{k:'p',t:'Название товара'},{k:'h3',t:'Цена ₽'},{k:'btn',t:'В корзину',full:true}))]},
-{name:'Похожие',cat:'Продажа',spec:[H2('Похожие товары'),cols(4,4,card({k:'img',h:160,t:'Фото'},{k:'p',t:'Название товара'},{k:'h3',t:'Цена ₽'}))]},
+{name:'Похожие',cat:'Продажа',spec:[H2('Похожие товары'),SUB('Это тоже смотрят вместе с выбранным товаром'),cols(4,4,card({k:'img',h:160,t:'Фото'},{k:'p',t:'Название товара'},{k:'h3',t:'Цена ₽'}))]},
 {name:'Галерея',cat:'Продажа',spec:[cols(6,3,{k:'img',h:240,t:'Фото {i}'})]},
 {name:'Описание',cat:'Продажа',spec:[{k:'split',a:[{k:'img',h:440,t:'Фото товара'}],b:[H2('Название товара'),{k:'p',t:'Описание: главные свойства и выгоды'},{k:'h3',t:'Цена ₽'},{k:'btn',t:'В корзину'}]}]},
-{name:'Форма заявки',cat:'Конверсия',spec:[{k:'split',a:[H2('Получите расчёт за 1 минуту'),{k:'p',t:'Что получит человек после отправки'}],b:[formCard]}]},
-{name:'Форма',cat:'Конверсия',spec:[{k:'narrow',w:520,item:[card({k:'h2',t:'Оставьте заявку'},{k:'p',t:'Что будет после отправки'},{k:'sm',t:'Введите телефон'},{k:'inp',t:'+7 (___) ___-__-__'},{k:'btn',t:'Оставить заявку',full:true},{k:'sm',t:'☐ Я принимаю условия передачи информации'})]}]},
-{name:'Контакты',cat:'Конверсия',spec:[{k:'split',a:[H2('Контакты'),{k:'p',t:'+7 (000) 000-00-00'},{k:'p',t:'Город, улица, дом'},{k:'p',t:'info@company.ru'},{k:'btn',t:'Заказать звонок'}],b:[{k:'img',h:320,t:'Карта'}]}]},
-{name:'FAQ',cat:'Конверсия',spec:[H2('Вопросы и ответы'),{k:'acc',t:'Вопрос 1'},{k:'acc',t:'Вопрос 2'},{k:'acc',t:'Вопрос 3'},{k:'acc',t:'Вопрос 4'}]},
-{name:'Подтверждение',cat:'Конверсия',spec:[{k:'h1',t:'Спасибо, заявка принята',al:'c'},{k:'p',t:'Что будет дальше: менеджер позвонит в течение 15 минут',al:'c'},{k:'btn',t:'Вернуться на сайт',al:'c'}]},
-{name:'Прогресс',cat:'Квиз',spec:[{k:'rect',h:16},{k:'sm',t:'Шаг 1 из 5'}]},
-{name:'Вопрос',cat:'Квиз',spec:[{k:'h2',t:'Простой вопрос без экспертизы',al:'c'}]},
-{name:'Варианты',cat:'Квиз',spec:[cols(4,4,card({k:'img',h:120,t:'Картинка'},{k:'p',t:'Вариант {i}',al:'c'})),{k:'sm',t:'Не забудь вариант «Не знаю / нужна консультация»',al:'c'}]},
-{name:'Далее',cat:'Квиз',spec:[{k:'btn',t:'Далее',al:'c'},{k:'sm',t:'Назад',al:'c'}]},
-{name:'Бонус',cat:'Квиз',spec:[{k:'split',a:[H2('Подарок закреплён за этим номером'),{k:'p',t:'Куда отправить расчёт?'}],b:[{k:'img',h:300,t:'Подарок'}]}]},
-{name:'Проблемы',cat:'Прочее',spec:[H2('Знакомые проблемы?'),cols(3,3,card({k:'h3',t:'Проблема клиента'},{k:'p',t:'Как она мешает жить и зарабатывать'}))]},
-{name:'Как работаем',cat:'Прочее',spec:[H2('Как работаем'),cols(4,4,card({k:'h2',t:'{i}'},{k:'h3',t:'Этап {i}'},{k:'p',t:'Что делаем и что получает клиент'}))]},
-{name:'Карта',cat:'Прочее',spec:[{k:'img',h:400,t:'Карта'}]},
-{name:'Фильтры',cat:'Прочее',spec:[cols(4,4,{k:'inp',t:'Фильтр {i}'})]},
-{name:'Список',cat:'Прочее',spec:[{k:'li',t:'Товар 1',r:'0 ₽'},{k:'li',t:'Товар 2',r:'0 ₽'},{k:'li',t:'Товар 3',r:'0 ₽'}]},
-{name:'Итого',cat:'Прочее',spec:[card({k:'p',t:'Товары: 0 ₽'},{k:'p',t:'Доставка: 0 ₽'},{k:'h2',t:'Итого: 0 ₽'},{k:'btn',t:'Оформить заказ',full:true})]}];
-export const CATS=[...new Set(TPLS.map(t=>t.cat))];
+{name:'Форма заявки',cat:'Формы и контакты',spec:[{k:'split',a:[H2('Получите расчёт за 1 минуту'),{k:'p',t:'Что получит человек после отправки'}],b:[formCard]}]},
+{name:'Форма',cat:'Формы и контакты',spec:[{k:'narrow',w:520,item:[card({k:'h2',t:'Оставьте заявку'},{k:'p',t:'Что будет после отправки'},{k:'sm',t:'Введите телефон'},{k:'inp',t:'+7 (___) ___-__-__'},{k:'btn',t:'Оставить заявку',full:true},{k:'sm',t:'☐ Я принимаю условия передачи информации'})]}]},
+{name:'Контакты',cat:'Формы и контакты',spec:[{k:'split',a:[H2('Контакты'),{k:'p',t:'+7 (000) 000-00-00'},{k:'p',t:'Город, улица, дом'},{k:'p',t:'info@company.ru'},{k:'btn',t:'Заказать звонок'}],b:[{k:'img',h:320,t:'Карта'}]}]},
+{name:'FAQ',cat:'Формы и контакты',spec:[H2('Вопросы и ответы'),SUB('Ответы на главные сомнения перед заявкой'),{k:'acc',t:'Вопрос 1'},{k:'acc',t:'Вопрос 2'},{k:'acc',t:'Вопрос 3'},{k:'acc',t:'Вопрос 4'}]},
+{name:'Подтверждение',cat:'Формы и контакты',spec:[{k:'h1',t:'Спасибо, заявка принята',al:'c'},{k:'p',t:'Что будет дальше: менеджер позвонит в течение 15 минут',al:'c'},{k:'btn',t:'Вернуться на сайт',al:'c'}]},
+{name:'Квиз-шаг: Прогресс',cat:'Квизы',spec:[{k:'rect',h:16},{k:'sm',t:'Шаг 1 из 5'}]},
+{name:'Квиз-шаг: Вопрос',cat:'Квизы',spec:[{k:'h2',t:'Простой вопрос без экспертизы',al:'c'}]},
+{name:'Квиз-шаг: Варианты',cat:'Квизы',spec:[cols(4,4,card({k:'img',h:120,t:'Картинка'},{k:'p',t:'Вариант {i}',al:'c'})),{k:'sm',t:'Не забудь вариант «Не знаю / нужна консультация»',al:'c'}]},
+{name:'Квиз-шаг: Далее',cat:'Квизы',spec:[{k:'btn',t:'Далее',al:'c'},{k:'sm',t:'Назад',al:'c'}]},
+{name:'Квиз-шаг: Бонус',cat:'Квизы',spec:[{k:'split',a:[H2('Подарок закреплён за этим номером'),{k:'p',t:'Куда отправить расчёт?'}],b:[{k:'img',h:300,t:'Подарок'}]}]},
+{name:'Проблемы',cat:'Доверие',spec:[H2('Знакомые проблемы?'),SUB('С этим сталкивается большинство наших клиентов'),cols(3,3,card({k:'icon',t:'!'},{k:'h3',t:'Проблема клиента'},{k:'p',t:'Как она мешает жить и зарабатывать'}))]},
+{name:'Карта',cat:'Формы и контакты',spec:[{k:'img',h:400,t:'Карта'}]},
+{name:'Фильтры',cat:'Продажа',spec:[cols(4,4,{k:'inp',t:'Фильтр {i}'})]},
+{name:'Список',cat:'Продажа',spec:[{k:'li',t:'Товар 1',r:'0 ₽'},{k:'li',t:'Товар 2',r:'0 ₽'},{k:'li',t:'Товар 3',r:'0 ₽'}]},
+{name:'Итого',cat:'Продажа',spec:[card({k:'p',t:'Товары: 0 ₽'},{k:'p',t:'Доставка: 0 ₽'},{k:'h2',t:'Итого: 0 ₽'},{k:'btn',t:'Оформить заказ',full:true})]}];
+const ORDER=['Шапка и подвал','Первый экран','Доверие','Продажа','Этапы','Гарантии','Отзывы','Соц. доказательства','Команда','Менеджер','Лид-магниты','Квизы','Формы и контакты'];
+export const CATS=[...ORDER.filter(c=>TPLS.some(t=>t.cat===c)),...new Set(TPLS.map(t=>t.cat).filter(c=>!ORDER.includes(c)))];
 export const TIPS:Record<string,string[]>={...FIRST_TIPS,...REVIEWS_TIPS,...STEPS_TIPS,...GUAR_TIPS,...SOCIAL_TIPS,...TEAM_TIPS,...MGR_TIPS,...QUIZ_TIPS,...EXTRA_TIPS,'Отзывы':REVIEWS_TIPS['Отзывы: результат'],
 'Шапка':['Шапка занимает до 10% первого экрана','Логотип, дескриптор, телефон и «Заказать звонок»'],
 'Преимущества':['Формула: «Получите … за счёт …»','Иконка и заголовок 3 уровня работают лучше сплошного текста'],
 'Форма заявки':['Только телефон, остальное выяснит менеджер','Подсказка над полем, маска номера не нужна','Если есть поле, нужна галочка согласия','Форма каждые 2–3 блока, но не одинаковая','Текст кнопки совпадает с заголовком формы'],
 'Форма':['Только телефон, остальное выяснит менеджер','Всплывающая форма без картинок','Кнопка большая и контрастная'],
-'Вопрос':['4–6 вопросов, от простого к сложному','Покупатель не эксперт: вопросы простые'],
-'Варианты':['Добавь вариант «Не знаю / нужна консультация»','Руками вводят только телефон'],
-'Бонус':['Перед телефоном спроси, куда отправить результат','Напомни про подарок: он закреплён за этим номером'],
+'Квиз-шаг: Вопрос':['4–6 вопросов, от простого к сложному','Покупатель не эксперт: вопросы простые'],
+'Квиз-шаг: Варианты':['Добавь вариант «Не знаю / нужна консультация»','Руками вводят только телефон'],
+'Квиз-шаг: Бонус':['Перед телефоном спроси, куда отправить результат','Напомни про подарок: он закреплён за этим номером'],
 'Подтверждение':['Прогревающая страница: что будет дальше, преимущества, отзывы'],
 'FAQ':['Раскрывающиеся блоки вместо слайдеров'],
 'Преимущества: заголовок слева':['Заголовок и призыв слева, выгоды справа: глаз идёт слева направо','Заголовок и текст ближе друг к другу, чем к карточкам'],'FAQ: заголовок слева':['Заголовок слева, раскрывающиеся ответы справа'],'Отзывы: заголовок слева':['Заголовок и призыв слева, истории клиентов справа','Каждый отзыв: имя, цифра результата и короткая цитата'],'Гарантии: заголовок слева':['Цифра в заголовке равна числу гарантий в блоке','Условия и суммы цифрами, документ рядом как доказательство'],'Тарифы':['Чем больше блок влияет на конверсию, тем крупнее элемент']};
 export function buildTpl(t:Tpl):Built{const h={} as Record<Dev,number>,els={} as Record<Dev,El[]>;
 for(const d of ['desktop','tablet','mobile'] as Dev[]){const r=typeof t.spec==='function'?t.spec(d):render(t.spec,d);h[d]=r.h;els[d]=r.els}return{h,els,quiz:t.quiz?.()}}
-export const buildByName=(name:string):Built|null=>{if(name==='Оффер')name='1 экран';if(name==='Отзывы')name='Отзывы: результат';const t=TPLS.find(x=>x.name===name);return t?buildTpl(t):null};
+const ALIAS:Record<string,string>={'Как работаем':'Этапы: карточки','Команда':'Команда: все на виду','Прогресс':'Квиз-шаг: Прогресс','Вопрос':'Квиз-шаг: Вопрос','Варианты':'Квиз-шаг: Варианты','Далее':'Квиз-шаг: Далее','Бонус':'Квиз-шаг: Бонус'};
+export const buildByName=(name:string):Built|null=>{if(ALIAS[name])name=ALIAS[name];if(name==='Оффер')name='1 экран';if(name==='Отзывы')name='Отзывы: результат';const t=TPLS.find(x=>x.name===name);return t?buildTpl(t):null};
 export {emptyBuild,fresh} from './tplCore';

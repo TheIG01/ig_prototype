@@ -8,10 +8,10 @@ import type {El,ET} from '../store';
 export interface Out{h:number;els:El[]}
 /** .el в CSS: Inter 500, line-height 1.3, overflow hidden, текст по центру по вертикали. Высота текста считается по этому правилу */
 export const r4=(v:number)=>Math.ceil(v/4)*4;
-export const th=(t:string,fs:number,w:number,b=false)=>r4(t.split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length*fs*(b?.66:.58)/w)),0)*fs*1.3);
+export const th=(t:string,fs:number,w:number,b=false)=>{const cw=fs*(b?.66:.6);const n=t.split('\n').reduce((a,l)=>{let k=1,cur=0;for(const wd of l.split(' ')){const len=wd.length*cw;if(cur&&cur+cw+len>w){k++;cur=len}else cur+=(cur?cw:0)+len}return a+k},0);return r4(n*fs*1.3)};
 export function ctx(){const els:El[]=[];
 const add=(t:ET,x:number,y:number,w:number,h:number,text='',more:Partial<El>={})=>{els.push({id:uid(),t,x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h),text,...more})};
-const tx=(text:string,x:number,y:number,w:number,fs:number,more:Partial<El>={})=>{const h=th(text,fs,w,!!more.b);add('text',x,y,w,h,text,{fs,...more});return y+h};
+const tx=(text:string,x:number,y:number,w:number,fs:number,more:Partial<El>={})=>{fs=Math.max(13,fs);const h=th(text,fs,w,!!more.b);add('text',x,y,w,h,text,{fs,...more});return y+h};
 /** плашка: рамка и текст по центру по вертикали (текст внутри рамки, а не в углу) */
 const plate=(x:number,y:number,w:number,h:number,text:string,fs=14,b=false,al?:'l'|'c')=>{add('rect',x,y,w,h);add('text',x+16,y+8,w-32,h-16,text,{fs,...(b?{b:true}:{}),...(al?{al}:{})})};
 return{els,add,tx,plate}}
@@ -55,7 +55,7 @@ let y0=y+(hh-(ty+4+dy))/2;y0=c.tx(t,X+16+ic+12,y0,tw,16,{b:true})+4;c.tx(d,X+16+
 }}
 let h=0;
 if(m){const bh=96;h=Math.max(SCR.mobile,r4(y+8+bh));const by=h-bh;
-c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,16,'Закреплено внизу экрана',{fs:11});
+c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,20,'Закреплено внизу экрана',{fs:13});
 c.add('btn',X,by+26,w-2*44-16,52,sticky,{fs:14,acc:true});
 c.add('rect',X+w-2*44-8,by+26,44,52,'TG',{fs:14,al:'c'});c.add('rect',X+w-44,by+26,44,52,'WA',{fs:14,al:'c'})}
 else h=Math.max(SCR[dev],r4(y+40));
@@ -88,7 +88,7 @@ y=c.tx(LEAD,LX,y,LW,16)+16;
 c.add('btn',LX,y,520,64,CTAT,{fs:18,acc:true});y+=64+8;
 c.tx(NOTE,LX,y,690,14);
 c.add('img',880,32,440,560,PHOTO);
-c.plate(836,480,260,80,'Рассрочка 0% на 12 месяцев',14,true);
+c.plate(884,480,260,80,'Рассрочка 0% на 12 месяцев',14,true);
 bens(c,628,BEN);
 return{h:SCR.desktop,els:c.els}};
 const quizM:Part[]=[{k:'h1',t:H1},{k:'bul',a:BUL,ma:BULM},{k:'lead',t:LEAD,mt:LEADM},{k:'img',t:PHOTO},{k:'ben',a:BEN},{k:'cta',t:CTAT}];

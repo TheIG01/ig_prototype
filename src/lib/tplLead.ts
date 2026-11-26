@@ -27,7 +27,7 @@ const SCR:Record<Dev,number>={desktop:DH,tablet:952,mobile:780};
 const CONSENT='☐ Я принимаю условия передачи информации';
 /** высота текста с запасом: кириллица в Inter 500 шире среднего, лучше лишняя строка, чем наложение */
 const tl=(t:string,fs:number,w:number,b:boolean)=>t.split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length*fs*(b?.7:.62)/w)),0);
-const tx=(c:C,t:string,x:number,y:number,w:number,fs:number,more:{b?:boolean;al?:'l'|'c'|'r'}={})=>{const h=r4(tl(t,fs,w,!!more.b)*fs*1.3);c.add('text',x,y,w,h,t,{fs,...more});return y+h};
+const tx=(c:C,t:string,x:number,y:number,w:number,fs:number,more:{b?:boolean;al?:'l'|'c'|'r'}={})=>{fs=Math.max(13,fs);const h=r4(tl(t,fs,w,!!more.b)*fs*1.3);c.add('text',x,y,w,h,t,{fs,...more});return y+h};
 
 /** ряд кнопок-вариантов: короткие в сетку, длинные («Не знаю / нужна консультация») отдельной строкой */
 function chips(c:C,x:number,y:number,w:number,a:string[],sel:number,hh:number){

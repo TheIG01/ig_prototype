@@ -21,7 +21,7 @@ function foot(c:C,d:Dev,y:number){if(d==='mobile')return y;const W=FW[d],bw=d===
 c.add('btn',x,y,bw,64,CTAT,{fs:18,acc:true});y+=64+8;return c.tx(NOTE,x,y,bw,14,{al:'c'})}
 function fin(c:C,d:Dev,y:number):Out{if(d!=='mobile')return{h:r4(y+48),els:c.els};
 const W=FW.mobile,X=20,w=W-40,bh=96,h=Math.max(r4(y+8+bh),700),by=h-bh,bw=44;
-c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,16,'Закреплено внизу экрана',{fs:12});
+c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,20,'Закреплено внизу экрана',{fs:13});
 c.add('btn',X,by+26,w-2*bw-16,52,CTAT,{fs:14,acc:true});
 c.add('rect',X+w-2*bw-8,by+26,bw,52,'TG',{fs:14,al:'c'});c.add('rect',X+w-bw,by+26,bw,52,'WA',{fs:14,al:'c'});
 return{h,els:c.els}}
@@ -60,7 +60,7 @@ const VID=[{n:'Алексей Морозов',r:'Подмосковье · ба�
 function vcard(c:C,x:number,y:number,w:number,v:typeof VID[0],big=false){const ih=Math.round(w*9/16/4)*4;
 c.add('img',x,y,w,ih,'Видеоотзыв: '+v.n);const pl=big?72:56;
 c.add('btn',x+(w-pl)/2,y+(ih-pl)/2,pl,pl,'▶',{fs:big?24:20,acc:true,al:'c'});
-c.add('rect',x+w-64,y+ih-36,52,24,v.t,{fs:12,al:'c'});
+c.add('btn',x+w-72,y+ih-38,60,26,v.t,{fs:13});
 let yy=y+ih+12;yy=c.tx(v.n,x,yy,w,16,{b:true})+2;yy=c.tx(v.r,x,yy,w,14)+6;yy=c.tx(v.q,x,yy,w,15)+4;return yy-y}
 const FILT=['Все видео','Бассейны с подогревом','Дачи','Коммерция'];
 function chips(c:C,d:Dev,y:number){const ws=FILT.map(t=>Math.ceil(t.length*14*.6)+40),g=12,tot=ws.reduce((a,b)=>a+b,0)+g*(ws.length-1);let x=(FW[d]-tot)/2;

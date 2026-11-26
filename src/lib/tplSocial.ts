@@ -22,7 +22,7 @@ const CTAH='Расчёт бесплатный, ответим за 15 минут
 
 /** высота текста с запасом: Inter 500, строка 1.3, обычный 0.62 em на знак, жирный 0.70 em */
 const thS=(t:string,fs:number,w:number,b=false)=>r4(t.split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length*fs*(b?.70:.62)/w)),0)*fs*1.3);
-const tx=(c:C,t:string,x:number,y:number,w:number,fs:number,m:M={})=>{const h=thS(t,fs,w,!!m.b);c.add('text',x,y,w,h,t,{fs,...m});return y+h};
+const tx=(c:C,t:string,x:number,y:number,w:number,fs:number,m:M={})=>{fs=Math.max(13,fs);const h=thS(t,fs,w,!!m.b);c.add('text',x,y,w,h,t,{fs,...m});return y+h};
 /** текст по центру по вертикали внутри рамки высотой h */
 const ct=(c:C,t:string,x:number,y:number,w:number,h:number,fs:number,m:M={})=>{const q=thS(t,fs,w,!!m.b);c.add('text',x,y+(h-q)/2,w,q,t,{fs,...m})};
 const btn=(c:C,x:number,y:number,w:number,h:number,t:string,fs=16,acc=true)=>c.add('btn',x,y,w,h,t,{fs,...(acc?{acc:true}:{})});
@@ -47,7 +47,7 @@ function fin(c:C,d:Dev,y:number,ctam:string):Out{
 y=tx(c,NOTE,XX(d),y,FW[d]-2*XX(d),13,{c:GR,...(d==='mobile'?{}:{al:'c' as const})})+4;
 if(d!=='mobile')return{h:r4(y+32),els:c.els};
 const W=FW.mobile,X=20,w=W-40,bh=96,h=Math.max(780,r4(y+8+bh)),by=h-bh;
-c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,16,'Закреплено внизу экрана',{fs:12});
+c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,20,'Закреплено внизу экрана',{fs:13});
 btn(c,X,by+26,w-104,52,ctam,14);
 c.add('rect',X+w-96,by+26,44,52,'TG',{fs:14,al:'c'});c.add('rect',X+w-44,by+26,44,52,'WA',{fs:14,al:'c'});
 return{h,els:c.els}}

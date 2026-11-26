@@ -50,7 +50,7 @@ const box=(c:C,x:number,y:number,w:number,h:number)=>c.add('rect',x,y,w,h,'',{r:
 
 /** закреплённая панель мобилки: главная кнопка и мессенджеры */
 function bar(c:C,h:number,txt:string){const W=FW.mobile,X=20,w=W-40,by=h-96;
-c.add('rect',0,by,W,96);c.add('text',X,by+6,w,16,'Закреплено внизу экрана',{fs:12});
+c.add('rect',0,by,W,96);c.add('text',X,by+6,w,20,'Закреплено внизу экрана',{fs:13});
 c.add('btn',X,by+26,w-104,52,txt,{fs:14,acc:true});
 c.add('rect',X+w-96,by+26,44,52,'TG',{fs:14,al:'c'});c.add('rect',X+w-44,by+26,44,52,'WA',{fs:14,al:'c'})}
 const done=(c:C,d:Dev,y:number,txt:string):Out=>{

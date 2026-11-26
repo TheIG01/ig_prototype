@@ -40,7 +40,7 @@ const B:It[]=[
 // ---------- общие части ----------
 /** закреплённая панель мобилки: главная кнопка и мессенджеры */
 function bar(c:C,h:number,txt:string){const W=FW.mobile,X=20,w=W-40,by=h-96;
-c.add('rect',0,by,W,96);c.add('text',X,by+6,w,16,'Закреплено внизу экрана',{fs:12});
+c.add('rect',0,by,W,96);c.add('text',X,by+6,w,20,'Закреплено внизу экрана',{fs:13});
 c.add('btn',X,by+26,w-104,52,txt,{fs:14,acc:true});
 c.add('rect',X+w-96,by+26,44,52,'TG',{fs:14,al:'c'});c.add('rect',X+w-44,by+26,44,52,'WA',{fs:14,al:'c'})}
 const done=(c:C,d:Dev,y:number,txt:string):Out=>{
@@ -56,7 +56,7 @@ const fit=(f:(sub:boolean)=>Out,d:Dev):Out=>{const a=f(true);return a.h<=CAP[d]?
 /** строка выгоды: иконка слева, заголовок и описание справа; возвращает нижнюю границу */
 function row(c:C,x:number,y:number,w:number,b:It,ic:number,ft:number,fd:number,short:boolean):number{
 const tw=w-ic-16,d=short?b.dm:b.d;const hh=th(b.t,ft,tw,true)+4+th(d,fd,tw);const rh=Math.max(ic,hh);
-c.add('img',x,y+(rh-ic)/2,ic,ic,ic>=48?'Иконка':'',ic>=48?{fs:12}:{});
+c.add('img',x,y+(rh-ic)/2,ic,ic,ic>=48?'Иконка':'',ic>=48?{fs:13}:{});
 const ty=T(c,b.t,x+ic+16,y+(rh-hh)/2,tw,ft,{b:true})+4;T(c,d,x+ic+16,ty,tw,fd);
 return y+rh}
 
@@ -166,7 +166,7 @@ const p=14,iw=w-2*p,bw=Math.round(iw*.8);
 c.add('rect',x,y,w,0,'',{r:28});const fr=c.els[c.els.length-1];
 let yy=y+p;
 c.add('img',x+p,yy,36,36,'',{r:18});
-T(c,'Виктория, менеджер',x+p+48,yy,iw-48,14,{b:true});T(c,'в сети',x+p+48,yy+20,iw-48,12);
+T(c,'Виктория, менеджер',x+p+48,yy,iw-48,14,{b:true});T(c,'в сети',x+p+48,yy+22,iw-48,13);
 yy+=36+12;
 for(const [who,t] of MSG.slice(0,n)){
 if(t==='img'){c.add('img',x+p,yy,bw,ih,'Фото процесса',{r:12});yy+=ih+8;continue}

@@ -86,7 +86,7 @@ const D=dev==='desktop',T=dev==='tablet',M=dev==='mobile';
 const nq=c.steps.length,hb=c.bridge.on;
 const kinds:string[]=[];for(let i=0;i<nq;i++)kinds.push('q');if(hb)kinds.push('bridge');kinds.push('phone');if(c.load.on)kinds.push('load');kinds.push('thanks');
 const units=nq+(hb?1:0)+1;
-const ln=(t:string,fs:number,w:number,b?:boolean)=>t.split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length*fs*(b?.66:.58)/Math.max(8,w))),0);
+const ln=(t:string,fs:number,w:number,b?:boolean)=>{const cw=fs*(b?.66:.6),W=Math.max(8,w);return t.split('\n').reduce((a,l)=>{let k=1,cur=0;for(const wd of l.split(' ')){const len=wd.length*cw;if(cur&&cur+cw+len>W){k++;cur=len}else cur+=(cur?cw:0)+len}return a+k},0)};
 const th=(t:string,fs:number,w:number,b?:boolean)=>Math.ceil(ln(t,fs,w,b)*fs*1.3/4)*4;
 const pl=(n:number,f:string[])=>{const a=Math.abs(n)%100,b=a%10;return a>10&&a<20?f[2]:b===1?f[0]:b>1&&b<5?f[1]:f[2]};
 const money=(n:number,u:string)=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00A0')+(u==='%'?'%':'\u00A0'+u);

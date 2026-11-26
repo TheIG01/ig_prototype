@@ -41,7 +41,7 @@ function foot(c:C,d:Dev,y:number){if(d==='mobile')return y;const W=FW[d],bw=d===
 c.add('btn',x,y,bw,64,CT,{fs:18,acc:true});y+=64+8;return c.tx(NOTE,x,y,bw,14,{al:'c'})}
 function fin(c:C,d:Dev,y:number):Out{if(d!=='mobile')return{h:r4(y+48),els:c.els};
 const W=FW.mobile,X=20,w=W-40,bh=96,h=Math.max(r4(y+8+bh),700),by=h-bh,bw=44;
-c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,16,'Закреплено внизу экрана',{fs:12});
+c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,20,'Закреплено внизу экрана',{fs:13});
 c.add('btn',X,by+26,w-2*bw-16,52,CT,{fs:14,acc:true});
 c.add('rect',X+w-2*bw-8,by+26,bw,52,'TG',{fs:14,al:'c'});c.add('rect',X+w-bw,by+26,bw,52,'WA',{fs:14,al:'c'});
 return{h,els:c.els}}
