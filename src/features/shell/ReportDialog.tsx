@@ -19,7 +19,7 @@ useEffect(applyZoom,[z,html]);
 useEffect(()=>{const k=(e:KeyboardEvent)=>{if(e.key==='Escape')onClose()};addEventListener('keydown',k);return()=>removeEventListener('keydown',k)},[onClose]);
 const pages=useMemo(()=>(html.match(/class="pg/g)||[]).length,[html]);
 const print=async()=>{const w=fr.current?.contentWindow;const doc=fr.current?.contentDocument;if(!w||!doc||!html)return;try{await doc.fonts.ready}catch{/* шрифты не дождались */}
-const b=doc.body;const old=(b.style as CSSStyleDeclaration&{zoom:string}).zoom;(b.style as CSSStyleDeclaration&{zoom:string}).zoom='';toast('Откроется печать: выбери «Сохранить как PDF», поля «Нет», фон включён',undefined,6000);setTimeout(()=>{w.focus();w.print();(b.style as CSSStyleDeclaration&{zoom:string}).zoom=old},300)};
+const b=doc.body;const old=(b.style as CSSStyleDeclaration&{zoom:string}).zoom;(b.style as CSSStyleDeclaration&{zoom:string}).zoom='';toast('Откроется печать: «Сохранить как PDF», поля «Нет», включи «Фоновая графика»',undefined,6000);setTimeout(()=>{w.focus();w.print();(b.style as CSSStyleDeclaration&{zoom:string}).zoom=old},300)};
 const tgl=(id:string)=>setPick(a=>a.includes(id)?a.filter(x=>x!==id):[...a,id]);
 const none=!pick.length;
 return<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><div className="sheet wide xl rp-sheet"><h2>PDF-отчёт для заказчика</h2>
@@ -29,6 +29,7 @@ return<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&onClose
 <label className="rp-l">Версия отчёта</label><input className="inp" maxLength={12} value={ver} onChange={e=>setVer(e.target.value)}/>
 <div className="set-row" style={{padding:'8px 0'}}><div><b>Заметки команды</b><p>Тексты и пожелания под каждым блоком</p></div><input type="checkbox" className="sw" checked={notes} onChange={e=>setNotes(e.target.checked)}/></div>
 <label className="rp-l">Листы в отчёте</label><div className="rp-sh">{pr.sheets.map(s=><label key={s.id} className="rp-c"><input type="checkbox" checked={pick.includes(s.id)} onChange={()=>tgl(s.id)}/><span>{s.kind==='popup'?'Попап: ':''}{s.name}</span></label>)}</div>
-<p className="txt" style={{margin:'8px 0 0'}}>{err?err:none?'Выбери хотя бы один лист':'Страниц в отчёте: '+pages+'. Логотип и реквизиты агентства вносятся в Настройках.'}</p>
+<div className="rp-stats"><div><b>{pages||'—'}</b><span>страниц</span></div><div><b>{pick.length}</b><span>листов</span></div><div><b>{SIZES[size].name}</b><span>формат</span></div></div>
+<p className="txt" style={{margin:'12px 0 0'}}>{err?err:none?'Выбери хотя бы один лист':'Логотип и реквизиты агентства вносятся в Настройках. Цвет отчёта берётся из палитры проекта.'}</p>
 </div><div className="rp-v" ref={pane}>{html&&<iframe ref={fr} title="Предпросмотр отчёта" srcDoc={html} sandbox="allow-same-origin allow-modals" onLoad={applyZoom}/>}</div></div>
 <div className="rp-f"><button className="btn" onClick={onClose}><X size={16}/>Закрыть</button><button className="btn pri" disabled={none||!html||!!err} onClick={print}><Printer size={16}/>Сохранить PDF</button></div></div></div>}

@@ -1,0 +1,102 @@
+/* ===== v1.69 «Аккуратный интерфейс»: финальная полировка. Подключается последним, только уточняет существующие стили ===== */
+
+/* --- верхняя панель: ничего не слазит, лишнее прокручивается, подписи сжимаются --- */
+.top{scrollbar-width:none;gap:6px}
+.top::-webkit-scrollbar{display:none}
+.top .ttl{max-width:min(260px,28vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;min-width:0;border-radius:10px;padding:4px 8px;margin-left:-8px;transition:background var(--t)}
+.top .ttl:hover:not(:disabled){background:var(--acc-s)}
+.top .crumb{max-width:min(320px,26vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;min-width:0;color:var(--mute)}
+.top .status{flex:none;padding:4px 10px;border-radius:999px;background:#F1F5F9;white-space:nowrap}
+.top .status i{box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+.top .status.s i{box-shadow:0 0 0 3px rgba(245,158,11,.2)}
+.top .vr{align-self:center}
+@container (max-width:1080px){.top .btn .tl{display:none}.top .btn:has(.tl){width:36px;padding:0;justify-content:center}}
+@container (max-width:900px){.top .crumb{display:none}}
+
+/* --- левая колонка и панель свойств --- */
+.side{gap:2px;scrollbar-width:thin}
+.side h3{margin:18px 8px 6px;text-transform:uppercase;letter-spacing:.06em;font-size:11px;font-weight:700}
+.row{min-width:0;min-height:36px}
+.row>svg{flex:none}
+.row span,.row b{min-width:0}
+.row.on{box-shadow:none;background:var(--acc-s);position:relative}
+.row.on::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--acc)}
+.row small,.tag{flex:none;white-space:nowrap}
+.panel{scrollbar-width:thin}
+.panel .ph{position:sticky;top:0;z-index:3;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;min-width:0}
+.panel .ph b{flex:none}
+.panel .sec{border-bottom:1px solid var(--line)}
+.panel .sec:last-child{border-bottom:0}
+.panel .inp,.panel .num,.panel select{min-width:0;max-width:100%}
+.panel .grid2,.panel .grid4{min-width:0}
+.panel .grid2>*,.panel .grid4>*{min-width:0}
+.panel .fld{min-width:0}
+.panel .fld span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.panel .btn{max-width:100%}
+.panel .btn:not(.ic){overflow:hidden;text-overflow:ellipsis}
+.sec h4{margin:0}
+.sec.fold .sh{border-radius:10px;transition:background var(--t)}
+.sec.fold .sh:hover{background:#F8FAFC}
+
+/* --- нижняя панель инструментов --- */
+.tools{max-width:calc(100% - 24px);overflow-x:auto;overflow-y:visible;scrollbar-width:none;gap:2px}
+.tools::-webkit-scrollbar{display:none}
+.tools button{flex:none}
+.tools .vr{flex:none;width:1px;background:var(--line);height:22px}
+.tools button svg{flex:none}
+.tools button:hover:not(.on){transform:translateY(-1px)}
+.tools button[title]:focus-visible{outline-offset:-2px}
+@media(max-width:560px){.tools{bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:4px}.tools button{width:38px;height:38px}}
+
+/* --- блоки на холсте: панель действий блока всегда внутри и читаема --- */
+.band .bt{max-width:calc(100% - 20px);flex-wrap:nowrap;white-space:nowrap}
+.band .bt button{flex:none}
+.band.sel{outline-offset:-2px}
+.cv-head{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.addblk{transition:background var(--t),border-color var(--t),color var(--t)}
+
+/* --- окна: ровные отступы, шапка и подвал не уезжают --- */
+.modal{overflow:auto;overscroll-behavior:contain}
+.sheet{max-height:min(90vh,100%);overflow:auto;scrollbar-width:thin}
+.sheet h2{display:flex;align-items:center;gap:8px;min-width:0;line-height:1.25}
+.sheet .btnrow,.sheet .acts{flex-wrap:wrap}
+.set-row{gap:16px;align-items:center}
+.set-row>div{min-width:0;flex:1}
+.set-row p{margin:2px 0 0;color:var(--mute)}
+.set-row .inp,.set-row .seg,.set-row .btn{flex:none;max-width:55%}
+
+/* --- меню «Ещё», подсказки, тосты --- */
+.more-m{max-height:70vh;overflow:auto;min-width:220px}
+.more-m button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;white-space:nowrap}
+.more-m button span{overflow:hidden;text-overflow:ellipsis}
+.toast{max-width:min(92vw,560px);overflow-wrap:anywhere}
+
+/* --- формы --- */
+.inp,.num,select.inp{transition:border-color var(--t),box-shadow var(--t),background var(--t)}
+.inp:focus,.num:focus-within,select.inp:focus{border-color:var(--acc);box-shadow:var(--ring);outline:0}
+.inp::placeholder{color:#94A3B8}
+textarea.inp{resize:vertical;min-height:64px}
+
+/* --- единый фокус и скроллбары --- */
+button:focus-visible,.row:focus-visible,.seg button:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:10px}
+.stage{scrollbar-width:thin}
+html{scroll-behavior:smooth}
+
+/* --- окно PDF-отчёта --- */
+.rp-sheet{padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:92vh}
+.rp-sheet>h2{padding:18px 24px 14px;margin:0;border-bottom:1px solid var(--line)}
+.rp-sheet .rp{flex:1;min-height:0;margin:0;gap:0}
+.rp-o{padding:18px 22px;background:#fff;border-right:1px solid var(--line);overflow:auto;scrollbar-width:thin}
+.rp-l{display:block;margin:16px 0 8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.rp-l:first-child{margin-top:0}
+.rp-v{background:linear-gradient(#E8EAEE,#DDE1E8);padding:12px;border-radius:0}
+.rp-v iframe{border-radius:10px;box-shadow:0 10px 30px rgba(15,23,42,.18);background:#E8EAEE}
+.rp-sh{display:flex;flex-direction:column;gap:2px;max-height:200px;overflow:auto;padding:4px;border:1px solid var(--line);border-radius:12px}
+.rp-c{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;min-width:0}
+.rp-c:hover{background:var(--acc-s)}
+.rp-c span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rp-f{display:flex;justify-content:flex-end;gap:8px;padding:14px 24px;border-top:1px solid var(--line);background:#fff}
+.rp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 0}
+.rp-stats div{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:center}
+.rp-stats b{display:block;font-size:18px;line-height:1.2}
+.rp-stats span{font-size:11px;color:var(--mute)}
