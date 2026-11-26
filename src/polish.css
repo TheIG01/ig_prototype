@@ -122,3 +122,39 @@ html{scroll-behavior:smooth}
 .panel details.fold2>textarea.inp{margin:0 14px 12px;width:calc(100% - 28px);box-sizing:border-box}
 .panel details.fold2>.inp{margin-left:14px;margin-right:14px}
 .panel .sec .fld>.inp{width:100%}
+
+/* ===== сессия 65, УЛУЧШИ: токены и доступность (только уточняет, ничего не ломает) ===== */
+:root{--fs-1:12px;--fs-2:13px;--fs-3:14px;--fs-4:16px;--fs-5:20px;--h-row:36px;--h-ctl:32px;--tap:44px}
+/* касание 44 px на сенсорных экранах */
+@media (pointer:coarse){
+.btn,.row,.tools button,.seg button,.libn button,.pcs{min-height:var(--tap)}
+.btn.ic,.tools button,.pcs{min-width:var(--tap)}
+.inp,.num,select{min-height:var(--tap);font-size:var(--fs-4)}
+}
+/* клавиатурный фокус виден везде, мышью не мешает */
+:focus:not(:focus-visible){outline:0}
+.inp:focus-visible,.num:focus-visible,select:focus-visible,textarea:focus-visible{outline:0;border-color:var(--acc);box-shadow:var(--ring)}
+.btn[disabled],button:disabled{cursor:not-allowed}
+/* меньше движения, если так просит система */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* ===== сессия 66, УЛУЧШИ шаг 6: узкие окна и меню «Ещё» ===== */
+.more-m{max-width:calc(100vw - 24px);box-sizing:border-box}
+.more-m button{min-height:var(--h-row)}
+@media (max-width:560px){
+.more-m{left:12px;right:12px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-height:60vh;border-radius:16px;box-shadow:0 -8px 32px rgba(15,23,42,.18);padding:8px}
+.more-m button{min-height:var(--tap);font-size:var(--fs-3)}
+.more-bg{background:rgba(15,23,42,.28)}
+}
+@media (pointer:coarse){.more-m button{min-height:var(--tap)}}
+
+/* ===== сессия 67, УЛУЧШИ шаг 5: быстрая библиотека ===== */
+/* карточки вне экрана не рисуются; Thumb уже в memo. Если у карточки режет тень, убери этот блок */
+.libm .pcw{content-visibility:auto;contain-intrinsic-size:auto 180px}
+
+/* ===== сессия 69, УЛУЧШИ шаг 6: касания и прокрутка (только добавляет) ===== */
+button,.btn,.row,.seg button,.tools button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.side,.panel,.more-m,.sheet,.rp-o{overscroll-behavior:contain}
+.side,.panel{scrollbar-gutter:stable}
+.sheet h2,.rp-sheet>h2{text-wrap:balance}
+@media (pointer:coarse){.rp-c,.set-row .btn,.sec.fold .sh{min-height:var(--tap)}}
