@@ -777,7 +777,13 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 `CNote`, `NOTES_KIND`, `parseNotes` (разбор файла заметок), `applyNotes` (ставит `Cm` в блоки по `block`, id пина `cn`+id заметки, повтор не дублирует). Вызывается из `CmPanel` (`features/canvas/Comments.tsx`, кнопка «Заметки заказчика», `replaceProject`).
 - Сторона заказчика: `src/lib/share.ts`, внутри `runtime`: `nm`, `nts`, `ntBtn`, `ntOpen`, `ntDl`, `nsave`; стили `#nf`, `.cmk.nt` в конце `BASE_CSS`. Только в скачанном HTML (`parent===window`), в просмотре внутри приложения кнопок нет.
 
+### `src/lib/tplFirst3.ts` — 11 первых экранов (гарантия, кейс, таймер, первый вопрос квиза, чат, поиск, боль-решение, тарифы, сравнение, состав цены, срочный выезд), подключён в `tplExtra.ts`
+
 ### `src/lib/tplFirst2.ts` — 26 первых экранов (ПК вручную, планшет и мобилка через `stack` из tplFirst.ts), подключён в `tplExtra.ts`
 
 ### `src/lib/tplScale.ts` — 7 блоков группы «Масштаб» (от и до), ПК вручную, планшет и мобилка общей стопкой `stk`, подключён в `tplExtra.ts`; проверка `scripts/checkScale.ts`
 - `src/lib/tplCerts.ts`: группа «Сертификаты», 7 блоков (CERTS, CERTS_TIPS), подключена в `tplExtra.ts`; проверка `scripts/checkCerts.ts`.
+
+- `src/lib/tplFirst4.ts`: первые экраны, часть 4 (8 шаблонов), подключены в `tplExtra.ts`
+
+- `src/lib/tplFirst5.ts`: первые экраны, часть 5 (9 блоков: остаток подарков, лист ожидания, два формата, плашка выгоды, вопрос по центру, запись на время, проверка адреса, выбор подарка, аудит по ссылке); экспорт FIRST5, FIRST5_TIPS, подключён в tplExtra.ts
