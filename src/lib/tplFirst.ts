@@ -1,6 +1,6 @@
 // Первые экраны: 4 варианта, собранных из 20 лучших референсов по правилам первого экрана автора. Блок идёт ПОСЛЕ шапки (шапка до 10% экрана).
 // ПК: ручная раскладка 1440x820. Планшет 768 и мобилка 390 собираются стопкой из одних и тех же частей.
-// Мобилка: один блок = один экран телефона, главная кнопка закреплена внизу вместе с кнопками мессенджеров.
+// Мобилка: один блок = один экран телефона, внизу закреплена ОДНА главная кнопка (остальные кнопки блока живут в самом блоке).
 import {uid} from './uid';
 import {FW} from './dev';
 import type {Dev} from './dev';
@@ -25,11 +25,16 @@ export type Part=
 |{k:'img';t:string}
 |{k:'plate';t:string}
 |{k:'chips';a:string[]}
-|{k:'ben';a:[string,string][]};
+|{k:'ben';a:[string,string][]}
+|{k:'stats';a:[string,string][]}
+|{k:'steps';a:string[]}
+|{k:'vid';t:string}
+|{k:'two';a:string[]}
+|{k:'inps';a:string[]};
 
 const SCR:Record<Dev,number>={desktop:820,tablet:952,mobile:780};
 /** стопка для планшета и мобилки: один блок = один экран, на мобилке кнопка закреплена внизу */
-function stack(parts:Part[],dev:Dev):Out{const c=ctx();const m=dev==='mobile';const W=FW[dev];const X=m?20:48;const w=W-2*X;let y=m?20:40;let sticky='';
+export function stack(parts:Part[],dev:Dev):Out{const c=ctx();const m=dev==='mobile';const W=FW[dev];const X=m?20:48;const w=W-2*X;let y=m?20:40;let sticky='';
 const bw=m?w:Math.min(w,440);
 for(const p of parts){
 switch(p.k){
@@ -48,16 +53,20 @@ if(p.inp){c.add('input',X+pad,yy,iw,m?48:56,p.inp);yy+=(m?48:56)+10}
 if(m)sticky=p.btn;else{c.add('btn',X+pad,yy,Math.min(iw,400),56,p.btn,{fs:16,acc:true});yy+=56+10}
 if(p.note)yy=c.tx(p.note,X+pad,yy,iw,12)+2;
 const ch=r4(yy-top+pad-8);c.els.unshift({id:uid(),t:'rect',x:X,y:top,w,h:ch,text:''});y=top+ch+12;break}
+case 'stats':{const per=m?2:p.a.length,g=m?10:12,tw=(w-(per-1)*g)/per;for(let i=0;i<p.a.length;i+=per){const row=p.a.slice(i,i+per);const hh=r4(Math.max(...row.map(([b,t])=>8+th(b,18,tw-16,true)+2+th(t,13,tw-16)+8)));row.forEach(([b,t],j)=>{const x0=X+j*(tw+g);c.add('rect',x0,y,tw,hh);const yy=c.tx(b,x0+8,y+8,tw-16,18,{b:true});c.tx(t,x0+8,yy+2,tw-16,13)});y+=hh+g}y+=2;break}
+case 'steps':{if(m){y=c.tx(p.a.map((a,i)=>(i+1)+'. '+a).join('   '),X,y,w,14,{b:true})+10;break}const n=p.a.length,g=12,tw=(w-(n-1)*g)/n;p.a.forEach((a,i)=>c.plate(X+i*(tw+g),y,tw,72,(i+1)+'. '+a,14,true,'c'));y+=72+12;break}
+case 'vid':{const vh=m?200:320;c.add('img',X,y,w,vh,p.t);c.add('rect',X+(w-56)/2,y+(vh-56)/2,56,56,'▶',{fs:20,al:'c'});y+=vh+12;break}
+case 'two':{const g=12,tw=(w-g)/2,ih=m?200:320;p.a.forEach((a,i)=>c.add('img',X+i*(tw+g),y,tw,ih,a));y+=ih+12;break}
+case 'inps':{const per=m?1:2,g=10,tw=(w-(per-1)*g)/per,ih=m?48:52;p.a.forEach((a,i)=>c.add('input',X+(i%per)*(tw+g),y+Math.floor(i/per)*(ih+g),tw,ih,a));y+=Math.ceil(p.a.length/per)*(ih+g)+2;break}
 case 'ben':{if(m){y=c.tx(p.a.map(a=>a[0]).join(' · '),X,y,w,13,{b:true})+8;break}
 for(const [t,d] of p.a){const ic=40,tw=w-(ic+44);const ty=th(t,16,tw,true),dy=th(d,14,tw);const hh=r4(Math.max(72,16+ty+4+dy+16));
 c.add('rect',X,y,w,hh);c.add('img',X+16,y+(hh-ic)/2,ic,ic,'Иконка');
 let y0=y+(hh-(ty+4+dy))/2;y0=c.tx(t,X+16+ic+12,y0,tw,16,{b:true})+4;c.tx(d,X+16+ic+12,y0,tw,14);y+=hh+10}break}
 }}
 let h=0;
-if(m){const bh=96;h=Math.max(SCR.mobile,r4(y+8+bh));const by=h-bh;
+if(m){const bh=88;h=Math.max(SCR.mobile,r4(y+8+bh));const by=h-bh;
 c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,20,'Закреплено внизу экрана',{fs:13});
-c.add('btn',X,by+26,w-2*44-16,52,sticky,{fs:14,acc:true});
-c.add('rect',X+w-2*44-8,by+26,44,52,'TG',{fs:14,al:'c'});c.add('rect',X+w-44,by+26,44,52,'WA',{fs:14,al:'c'})}
+c.add('btn',X,by+28,w,52,sticky,{fs:15,acc:true})}
 else h=Math.max(SCR[dev],r4(y+40));
 return{h,els:c.els}}
 
