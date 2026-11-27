@@ -20,7 +20,11 @@ export type C=ReturnType<typeof ctx>;
 export type Part=
 |{k:'h1'|'sub'|'lead'|'note';t:string;mt?:string|null}
 |{k:'bul';a:string[];ma?:string[]}
-|{k:'cta';t:string}
+|{k:'cta';t:string;n?:string}
+|{k:'cta2';t:string}
+|{k:'rate';t:string}
+|{k:'logos';t:string}
+|{k:'gifts';a:string[]}
 |{k:'card';title:string;lines?:string[];inp?:string;btn:string;note?:string}
 |{k:'img';t:string}
 |{k:'plate';t:string}
@@ -34,15 +38,19 @@ export type Part=
 
 const SCR:Record<Dev,number>={desktop:820,tablet:952,mobile:780};
 /** стопка для планшета и мобилки: один блок = один экран, на мобилке кнопка закреплена внизу */
-export function stack(parts:Part[],dev:Dev):Out{const c=ctx();const m=dev==='mobile';const W=FW[dev];const X=m?20:48;const w=W-2*X;let y=m?20:40;let sticky='';
+function stackS(parts:Part[],dev:Dev,sc:number):Out{const c=ctx();const m=dev==='mobile';const W=FW[dev];const X=m?20:48;const w=W-2*X;let y=m?20:40;let sticky='',stickyN='';
 const bw=m?w:Math.min(w,440);
 for(const p of parts){
 switch(p.k){
 case 'h1':y=c.tx(m&&p.mt?p.mt:p.t,X,y,w,m?24:34,{b:true})+12;break;
 case 'sub':case 'lead':case 'note':{if(m&&p.mt===null)break;const fs=p.k==='note'?13:m?14:p.k==='sub'?18:16;y=c.tx(m&&p.mt?p.mt:p.t,X,y,w,fs)+(m?10:14);break}
 case 'bul':{const a=m&&p.ma?p.ma:p.a;for(const l of a)y=c.tx('✓ '+l,X,y,w,m?14:16)+(m?6:8);y+=m?4:6;break}
-case 'cta':if(m)sticky=p.t;else{c.add('btn',X,y,bw,56,p.t,{fs:16,acc:true});y+=56+14}break;
-case 'img':{const ih=m?176:152;c.add('img',X,y,w,ih,p.t);y+=ih+12;break}
+case 'cta':if(m){sticky=p.t;stickyN=p.n??''}else{c.add('btn',X,y,bw,56,p.t,{fs:16,acc:true});y+=56+(p.n?8:14);if(p.n)y=c.tx(p.n,X,y,bw,13)+12}break;
+case 'cta2':{const bh=m?48:52;c.add('btn',X,y,bw,bh,p.t,{fs:15});y+=bh+12;break}
+case 'rate':y=c.tx(p.t,X,y,w,m?14:15,{b:true})+(m?8:10);break;
+case 'logos':{const n=m?3:4,g=10,lw=(w-(n-1)*g)/n,lh=m?36:44;y=c.tx(p.t,X,y,w,13,{b:true})+6;for(let i=0;i<n;i++)c.add('img',X+i*(lw+g),y,lw,lh,'Лого '+(i+1));y+=lh+12;break}
+case 'gifts':{if(m){y=c.tx('Подарки: '+p.a.join(' · '),X,y,w,13,{b:true})+8;break}const n=p.a.length,g=12,gw=(w-(n-1)*g)/n;p.a.forEach((a,i)=>{const x0=X+i*(gw+g);c.add('rect',x0,y,gw,64);c.add('img',x0+12,y+16,32,32,'Иконка');c.add('text',x0+56,y+8,gw-68,48,a,{fs:14,b:true})});y+=64+12;break}
+case 'img':{const ih=m?Math.round(176*sc):152;c.add('img',X,y,w,ih,p.t);y+=ih+12;break}
 case 'plate':{const ph=m?48:56;c.plate(X,y,m?w:Math.min(w,400),ph,p.t,14,true);y+=ph+12;break}
 case 'chips':{if(m){y=c.tx(p.a.join(' · '),X,y,w,14,{b:true})+10}else{const g=12,cw=(w-2*g)/3;p.a.forEach((a,i)=>c.plate(X+i*(cw+g),y,cw,64,a,14,true,'c'));y+=64+12}break}
 case 'card':{const pad=m?16:24,iw=w-2*pad;const top=y;let yy=y+pad;
@@ -55,8 +63,8 @@ if(p.note)yy=c.tx(p.note,X+pad,yy,iw,12)+2;
 const ch=r4(yy-top+pad-8);c.els.unshift({id:uid(),t:'rect',x:X,y:top,w,h:ch,text:''});y=top+ch+12;break}
 case 'stats':{const per=m?2:p.a.length,g=m?10:12,tw=(w-(per-1)*g)/per;for(let i=0;i<p.a.length;i+=per){const row=p.a.slice(i,i+per);const hh=r4(Math.max(...row.map(([b,t])=>8+th(b,18,tw-16,true)+2+th(t,13,tw-16)+8)));row.forEach(([b,t],j)=>{const x0=X+j*(tw+g);c.add('rect',x0,y,tw,hh);const yy=c.tx(b,x0+8,y+8,tw-16,18,{b:true});c.tx(t,x0+8,yy+2,tw-16,13)});y+=hh+g}y+=2;break}
 case 'steps':{if(m){y=c.tx(p.a.map((a,i)=>(i+1)+'. '+a).join('   '),X,y,w,14,{b:true})+10;break}const n=p.a.length,g=12,tw=(w-(n-1)*g)/n;p.a.forEach((a,i)=>c.plate(X+i*(tw+g),y,tw,72,(i+1)+'. '+a,14,true,'c'));y+=72+12;break}
-case 'vid':{const vh=m?200:320;c.add('img',X,y,w,vh,p.t);c.add('rect',X+(w-56)/2,y+(vh-56)/2,56,56,'▶',{fs:20,al:'c'});y+=vh+12;break}
-case 'two':{const g=12,tw=(w-g)/2,ih=m?200:320;p.a.forEach((a,i)=>c.add('img',X+i*(tw+g),y,tw,ih,a));y+=ih+12;break}
+case 'vid':{const vh=m?Math.round(200*sc):320;c.add('img',X,y,w,vh,p.t);c.add('rect',X+(w-56)/2,y+(vh-56)/2,56,56,'▶',{fs:20,al:'c'});y+=vh+12;break}
+case 'two':{const g=12,tw=(w-g)/2,ih=m?Math.round(200*sc):320;p.a.forEach((a,i)=>c.add('img',X+i*(tw+g),y,tw,ih,a));y+=ih+12;break}
 case 'inps':{const per=m?1:2,g=10,tw=(w-(per-1)*g)/per,ih=m?48:52;p.a.forEach((a,i)=>c.add('input',X+(i%per)*(tw+g),y+Math.floor(i/per)*(ih+g),tw,ih,a));y+=Math.ceil(p.a.length/per)*(ih+g)+2;break}
 case 'ben':{if(m){y=c.tx(p.a.map(a=>a[0]).join(' · '),X,y,w,13,{b:true})+8;break}
 for(const [t,d] of p.a){const ic=40,tw=w-(ic+44);const ty=th(t,16,tw,true),dy=th(d,14,tw);const hh=r4(Math.max(72,16+ty+4+dy+16));
@@ -65,10 +73,13 @@ let y0=y+(hh-(ty+4+dy))/2;y0=c.tx(t,X+16+ic+12,y0,tw,16,{b:true})+4;c.tx(d,X+16+
 }}
 let h=0;
 if(m){const bh=88;h=Math.max(SCR.mobile,r4(y+8+bh));const by=h-bh;
-c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,20,'Закреплено внизу экрана',{fs:13});
+c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,20,stickyN?'Закреплено внизу · '+stickyN:'Закреплено внизу экрана',{fs:13});
 c.add('btn',X,by+28,w,52,sticky,{fs:15,acc:true})}
 else h=Math.max(SCR[dev],r4(y+40));
 return{h,els:c.els}}
+
+/** мобилка: если стопка выше экрана телефона, фото и видео уменьшаются, пока первый экран не влезет в 100svh */
+export function stack(parts:Part[],dev:Dev):Out{if(dev!=='mobile')return stackS(parts,dev,1);let o=stackS(parts,dev,1);for(const sc of [.8,.62,.48]){if(o.h<=SCR.mobile)break;o=stackS(parts,dev,sc)}return o}
 
 /** ---- тексты: формула «ключевое слово + выгода 1 + выгода 2 + скидка в рублях», одно предложение без запятых, 10–20 слов ---- */
 const H1='Композитные бассейны «под ключ» напрямую от производителя со скидкой 64 000 руб.';
