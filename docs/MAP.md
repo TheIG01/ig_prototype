@@ -776,3 +776,8 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 ### `src/lib/clientNotes.ts` (1.67)
 `CNote`, `NOTES_KIND`, `parseNotes` (разбор файла заметок), `applyNotes` (ставит `Cm` в блоки по `block`, id пина `cn`+id заметки, повтор не дублирует). Вызывается из `CmPanel` (`features/canvas/Comments.tsx`, кнопка «Заметки заказчика», `replaceProject`).
 - Сторона заказчика: `src/lib/share.ts`, внутри `runtime`: `nm`, `nts`, `ntBtn`, `ntOpen`, `ntDl`, `nsave`; стили `#nf`, `.cmk.nt` в конце `BASE_CSS`. Только в скачанном HTML (`parent===window`), в просмотре внутри приложения кнопок нет.
+
+### `src/lib/tplFirst2.ts` — 26 первых экранов (ПК вручную, планшет и мобилка через `stack` из tplFirst.ts), подключён в `tplExtra.ts`
+
+### `src/lib/tplScale.ts` — 7 блоков группы «Масштаб» (от и до), ПК вручную, планшет и мобилка общей стопкой `stk`, подключён в `tplExtra.ts`; проверка `scripts/checkScale.ts`
+- `src/lib/tplCerts.ts`: группа «Сертификаты», 7 блоков (CERTS, CERTS_TIPS), подключена в `tplExtra.ts`; проверка `scripts/checkCerts.ts`.
