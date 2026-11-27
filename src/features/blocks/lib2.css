@@ -64,3 +64,13 @@
 .pcw{transition:transform .15s}.pcw:hover:not(.arr){transform:translateY(-2px)}
 .pced{position:sticky;top:52px;z-index:4;box-shadow:var(--sh-1)}
 @media (prefers-reduced-motion:reduce){.pcw{transition:none}.pcw:hover:not(.arr){transform:none}}
+
+.pcw.sel .pc{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 30%,transparent);background:var(--acc-s)}
+.pcw .pcx.pce{opacity:0;transition:opacity .12s}.pcw:hover .pcx,.pcw:focus-within .pcx{opacity:1}@media (pointer:coarse){.pcw .pcx{opacity:1}}
+
+/* минимализм: компактная панель, тихие заголовки групп */
+.libset{gap:6px;font-size:12px}.libset>span{opacity:.6;margin-left:6px}
+.lgh{cursor:pointer;margin:6px 0 4px}.lgh h4{font-weight:600}
+.lgh .lgb{opacity:0;transition:opacity .12s}.lgh:hover .lgb,.lgh:focus-within .lgb{opacity:1}
+@media (pointer:coarse){.lgh .lgb{opacity:1}}
+.pchint{font-size:12px}
