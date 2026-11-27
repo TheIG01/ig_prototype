@@ -51,7 +51,7 @@ case 'rate':y=c.tx(p.t,X,y,w,m?14:15,{b:true})+(m?8:10);break;
 case 'logos':{const n=m?3:4,g=10,lw=(w-(n-1)*g)/n,lh=m?36:44;y=c.tx(p.t,X,y,w,13,{b:true})+6;for(let i=0;i<n;i++)c.add('img',X+i*(lw+g),y,lw,lh,'Лого '+(i+1));y+=lh+12;break}
 case 'gifts':{if(m){y=c.tx('Подарки: '+p.a.join(' · '),X,y,w,13,{b:true})+8;break}const n=p.a.length,g=12,gw=(w-(n-1)*g)/n;p.a.forEach((a,i)=>{const x0=X+i*(gw+g);c.add('rect',x0,y,gw,64);c.add('img',x0+12,y+16,32,32,'Иконка');c.add('text',x0+56,y+8,gw-68,48,a,{fs:14,b:true})});y+=64+12;break}
 case 'img':{const ih=m?Math.round(176*sc):152;c.add('img',X,y,w,ih,p.t);y+=ih+12;break}
-case 'plate':{const ph=m?48:56;c.plate(X,y,m?w:Math.min(w,400),ph,p.t,14,true);y+=ph+12;break}
+case 'plate':{const pw=m?w:Math.min(w,400);const ph=Math.max(m?48:56,r4(th(p.t,14,pw-32,true)+16));c.plate(X,y,pw,ph,p.t,14,true);y+=ph+12;break}
 case 'chips':{if(m){y=c.tx(p.a.join(' · '),X,y,w,14,{b:true})+10}else{const g=12,cw=(w-2*g)/3;p.a.forEach((a,i)=>c.plate(X+i*(cw+g),y,cw,64,a,14,true,'c'));y+=64+12}break}
 case 'card':{const pad=m?16:24,iw=w-2*pad;const top=y;let yy=y+pad;
 yy=c.tx(p.title,X+pad,yy,iw,m?18:22,{b:true})+6;
@@ -73,8 +73,8 @@ let y0=y+(hh-(ty+4+dy))/2;y0=c.tx(t,X+16+ic+12,y0,tw,16,{b:true})+4;c.tx(d,X+16+
 }}
 let h=0;
 if(m){const bh=88;h=Math.max(SCR.mobile,r4(y+8+bh));const by=h-bh;
-c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,20,stickyN?'Закреплено внизу · '+stickyN:'Закреплено внизу экрана',{fs:13});
-c.add('btn',X,by+28,w,52,sticky,{fs:15,acc:true})}
+c.add('rect',0,by,W,bh);c.add('text',X,by+6,w,20,stickyN||'Закреплено внизу экрана',{fs:13});
+c.add('btn',X,by+28,w,52,sticky,{fs:15,acc:true,ts:'key',nm:'Главная кнопка внизу экрана'})}
 else h=Math.max(SCR[dev],r4(y+40));
 return{h,els:c.els}}
 
@@ -135,7 +135,7 @@ const segD=():Out=>{const c=ctx();let y=48;
 y=c.tx(segH,170,y,1100,40,{b:true,al:'c'})+14;
 y=c.tx('Фиксируем цену в договоре и монтируем за 7 дней или платим неустойку',270,y,900,18,{al:'c'})+20;
 ['Для офисов и бизнес-центров','Для банков, клиник и салонов','Для частных заказчиков'].forEach((s,i)=>c.plate(LX+i*408,y,384,72,s,16,true,'c'));y+=72+20;
-y=c.tx('Пройдите тест за 1 минуту и узнайте полную стоимость по параметрам бассейна + получите каталог решений с ценами',220,y,1000,16,{al:'c'})+16;
+y=c.tx('Пройдите тест за 1 минуту и узнайте полную стоимость по параметрам помещения + получите каталог решений с ценами',220,y,1000,16,{al:'c'})+16;
 c.add('btn',290,y,420,64,'Рассчитать стоимость + получить каталог',{fs:16,acc:true});
 c.add('btn',730,y,420,64,'Бесплатная консультация специалиста',{fs:16});y+=64+10;
 y=c.tx('Бесплатно и без обязательств',LX,y,1200,14,{al:'c'})+16;

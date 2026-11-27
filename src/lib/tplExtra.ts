@@ -8,7 +8,10 @@ import {DELIVERY,DELIVERY_TIPS} from './tplDelivery';
 import {FAQ,FAQ_TIPS} from './tplFaq';
 import {SCALE,SCALE_TIPS} from './tplScale';
 import {CERTS,CERTS_TIPS} from './tplCerts';
+import {FIRST3,FIRST3_TIPS} from './tplFirst3';
+import {FIRST4,FIRST4_TIPS} from './tplFirst4';
+import {FIRST5,FIRST5_TIPS} from './tplFirst5';
 
 export interface ExtraTpl{name:string;cat:string;spec:(d:Dev)=>Out}
-export const EXTRA:ExtraTpl[]=[...FIRST2,...DELIVERY,...FAQ,...SCALE,...CERTS];
-export const EXTRA_TIPS:Record<string,string[]>={...FIRST2_TIPS,...DELIVERY_TIPS,...FAQ_TIPS,...SCALE_TIPS,...CERTS_TIPS};
+export const EXTRA:ExtraTpl[]=[...FIRST2,...FIRST3,...FIRST4,...FIRST5,...DELIVERY,...FAQ,...SCALE,...CERTS];
+export const EXTRA_TIPS:Record<string,string[]>={...FIRST2_TIPS,...FIRST3_TIPS,...FIRST4_TIPS,...FIRST5_TIPS,...DELIVERY_TIPS,...FAQ_TIPS,...SCALE_TIPS,...CERTS_TIPS};
