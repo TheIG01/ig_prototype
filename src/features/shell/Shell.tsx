@@ -6,7 +6,7 @@ import {useStore,PRESETS,FW,onDev} from '../../store';
 import {DEVS_SHORT} from '../../lib/dev';
 import {DelDialog,requestDelBlock} from '../blocks/DelBlock';
 import type {Kind,Dev,Project,Sheet,Block} from '../../store';
-import {importBackup} from '../../lib/vault';import {SaveBar,BakBar,downloadCopy} from './SaveBar';import {useTab} from '../../lib/tabs';
+import {importBackup} from '../../lib/vault';import {SaveBar,BakBar,downloadCopy} from './SaveBar';import {useTab} from '../../lib/tabs';import {startSync,stopSync} from '../../lib/sync';
 const CheckDialog=lazy(()=>import('./CheckDialog').then(m=>({default:m.CheckDialog})));
 const ReportDialog=lazy(()=>import('./ReportDialog').then(m=>({default:m.ReportDialog})));
 const SiteMapDialog=lazy(()=>import('./SiteMapDialog').then(m=>({default:m.SiteMapDialog})));
@@ -17,7 +17,7 @@ const GuideBody=lazy(()=>import('./Guide').then(m=>({default:m.GuideBody})));
 const SettingsBody=lazy(()=>import('./Settings').then(m=>({default:m.SettingsBody})));
 import {briefMd,specJson,download} from '../../lib/export';
 import {toast,dismiss,useToast} from '../../lib/toast';
-import {BlockPicker,ContentPanel,Thumb} from '../blocks/blocks';
+import {BlockPicker,ContentPanel,Thumb} from '../blocks/blocks';import {GroupPick} from '../blocks/GroupPick';import {userCats} from '../../lib/tplLib';
 import {Canvas,RightPanel} from '../canvas/Canvas';
 import {Preview} from '../preview/Preview';
 import {buildHtml} from '../../lib/share';
@@ -59,7 +59,7 @@ const openPreview=()=>{if(pr)setPv(buildHtml(pr,'proto',{dev:fr}))};
 const saveHtml=()=>{if(!pr)return;download(slug(pr.name)+'.html',buildHtml(pr,'proto',{dev:fr}),'text/html');toast('HTML-файл скачан. Открой его в браузере или залей на любой хостинг')};
 
 const cancelEdit=()=>{s.exitEdit(false);toast('Изменения блока отменены')};
-useEffect(()=>{if(s.editId&&view!=='canvas')setView('canvas')},[s.editId]);
+useEffect(()=>{if(s.editId&&view!=='canvas')setView('canvas')},[s.editId]);useEffect(()=>{void startSync();return stopSync},[]);
 const renId=useLayerUi(q=>q.renId);useEffect(()=>{if(renId){setLt('layers');setHide(false);setOpen(true)}},[renId]);
 const startRen=(k:'proj'|'sheet',id:string,cur:string)=>{setRen({k,id});setName(cur);setModal('ren')};
 const undoable=(text:string,after:()=>void)=>toast(text,{label:'Отменить',run:()=>{s.undo();after()}},6500);
@@ -172,8 +172,8 @@ view==='canvas'?<Canvas dev={fr} W={FW[fr]} onAdd={openAdd}/>:<div className="fr
 <button className="btn pri" style={{width:'100%',justifyContent:'center'}}>Собрать проект</button></form></Ask>}
 {form&&<Ask title={TITLE[modal]} xl={modal==='block'} onClose={close}><form onSubmit={submit}>
 <input className="inp" autoFocus placeholder={modal==='block'?'Поиск или название нового блока':'Название'} value={name} onChange={e=>setName(e.target.value)}/>
-{modal==='block'&&<BlockPicker first={pickFirst} q={name} tpls={d.blockTpls} onPick={n=>{addAndEdit(n);close()}} onTpl={id=>{addAndEdit('',id);close()}} onDelTpl={id=>{s.delBlockTpl(id);toast('Шаблон удалён')}}/>}
-{modal==='tpl'&&<>{curBlk?.sv?.tab&&<label className="chk"><input type="checkbox" checked={whole} onChange={e=>setWhole(e.target.checked)}/> Сохранить весь набор этапов ({curBlk.sv.n})</label>}<input className="inp" list="grp" placeholder="Группа шаблона, например: Мои первые экраны" value={group} onChange={e=>setGroup(e.target.value)}/><input className="inp" placeholder="Теги через запятую: первый экран, форма" value={tagsIn} onChange={e=>setTagsIn(e.target.value)}/><datalist id="grp">{[...new Set(d.blockTpls.map(t=>t.cat).filter(Boolean))].map(c=><option key={c} value={c}/>)}</datalist></>}
+{modal==='block'&&<BlockPicker first={pickFirst} q={name} tpls={d.blockTpls} cur={curBlk?{id:curBlk.id,title:curBlk.title}:null} onPick={n=>{addAndEdit(n);close()}} onTpl={id=>{addAndEdit('',id);close()}}/>}
+{modal==='tpl'&&<>{curBlk?.sv?.tab&&<label className="chk"><input type="checkbox" checked={whole} onChange={e=>setWhole(e.target.checked)}/> Сохранить весь набор этапов ({curBlk.sv.n})</label>}<GroupPick value={group} groups={userCats({blockTpls:d.blockTpls,tplMeta:d.tplMeta})} onChange={setGroup}/><input className="inp" placeholder="Теги через запятую: первый экран, форма" value={tagsIn} onChange={e=>setTagsIn(e.target.value)}/></>}
 {modal==='proj'&&<><p className="txt steps"><b>1</b> Выбери тип сайта <b>2</b> Впиши название <b>3</b> Нажми «Создать» или Enter</p><div className="types">{types.map(t=><button type="button" key={t.id} className={typeId===t.id?'on':''} onClick={()=>{setTypeId(t.id);if(!name.trim())setName(t.name)}}>{t.name}</button>)}</div></>}
 {modal==='sheet'&&<div className="seg" style={{marginBottom:14}}>{(['page','popup'] as Kind[]).map(k=><button type="button" key={k} className={kind===k?'on':''} onClick={()=>setKind(k)}>{k==='page'?'Страница':'Попап'}</button>)}</div>}
 <button className="btn pri" disabled={!name.trim()} style={{width:'100%',justifyContent:'center'}}>{!name.trim()&&modal==='proj'?'Впиши название, чтобы создать':modal==='ren'||modal==='type'||modal==='tpl'?'Сохранить':modal==='block'?'Создать пустой блок':'Создать'}</button></form></Ask>}

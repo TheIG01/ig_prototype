@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from 'react';
 import {useStore} from '../../store';
 import type {El,Block} from '../../store';
 import {FF_KINDS,ffKind,ffPatch} from '../../lib/ff';import type {FF} from '../../lib/ff';
-import {CMP_KINDS,cmpKind,cmpPatch} from '../../lib/cmp';import type {CP} from '../../lib/cmp';
+import {CMP_KINDS,cmpKind,cmpPatch,TAB_STYLES,tabSize} from '../../lib/cmp';import type {CP} from '../../lib/cmp';
 import {Sec,Range} from './ElPanel';
 type SetFn=(p:Partial<El>)=>void;
 /** несколько строк: правка внутри, в store уходит при выходе из поля (иначе перенос строки терялся бы) */
@@ -37,6 +37,15 @@ const up=(p:Partial<CP>)=>{if(!c)return;const n:Record<string,unknown>={...c,...
 return<Sec t="Компонент">
 <label className="fld"><span>Вид</span><select className="inp" value={k} onChange={ev=>set(cmpPatch(ev.target.value))}>{CMP_KINDS.map(x=><option key={x.k} value={x.k}>{x.l}</option>)}</select></label>
 {c&&d?.items&&<div className="fld"><span>Пункты</span><Lines key={e.id+k} value={c.items??[]} rows={6} hint={d.hint} onCommit={a=>up({items:a})}/></div>}
+{c&&k==='tabs'&&(()=>{const n=(c.items??[]).length;const o=c.o==='v'?'v':'h';const sg=(on:boolean,t:string,f:()=>void)=><button type="button" key={t} className={on?'on':''} aria-pressed={on} onClick={f}>{t}</button>;
+const fit=(p:Partial<CP>)=>{const no=(p.o??o) as 'h'|'v';const [w,h]=tabSize(n,no);up(p);if(p.o&&p.o!==o)set({w,h})};
+return<>
+<div className="fld"><span>Расположение</span><div className="seg">{sg(o==='h','Сверху',()=>fit({o:'h'}))}{sg(o==='v','Сбоку',()=>fit({o:'v'}))}</div></div>
+<div className="fld"><span>Вид</span><div className="seg">{TAB_STYLES.map(([v,t])=>sg((c.s??'line')===v,t,()=>up({s:v})))}</div></div>
+{o==='h'?<div className="fld"><span>Выравнивание</span><div className="seg">{sg((c.a??'s')==='s','Слева',()=>up({a:undefined}))}{sg(c.a==='c','Центр',()=>up({a:'c'}))}{sg(c.a==='f','Во всю ширину',()=>up({a:'f'}))}</div></div>
+:<div className="fld"><span>Сторона</span><div className="seg">{sg(c.p!=='e','Слева',()=>up({p:undefined}))}{sg(c.p==='e','Справа',()=>up({p:'e'}))}</div></div>}
+<Range label="Открыта сразу" value={Math.min(n,Math.round(c.v??0)+1)} min={1} max={Math.max(1,n)} onChange={v=>up({v:v-1||undefined})}/>
+<div className="btnrow"><button type="button" className="btn" disabled={n>=8} onClick={()=>{const a=[...(c.items??[]),`Вкладка ${n+1} | Текст вкладки ${n+1}`];up({items:a});if(o==='v')set({h:tabSize(a.length,'v')[1]})}}>+ Вкладка</button><button type="button" className="btn" disabled={n<=2} onClick={()=>{const a=(c.items??[]).slice(0,-1);up({items:a,v:Math.min(c.v??0,a.length-1)||undefined});if(o==='v')set({h:tabSize(a.length,'v')[1]})}}>− Вкладка</button></div></>})()}
 {c&&(k==='slider'||k==='progress')&&<Range label="Значение" value={c.v??50} min={0} max={100} unit={k==='progress'?'%':''} onChange={v=>up({v})}/>}
 {c&&k==='rating'&&<Range label="Звёзд" value={c.v??4} min={0} max={5} onChange={v=>up({v})}/>}
 {c&&k==='switch'&&<label className="chk"><input type="checkbox" checked={!!c.on} onChange={ev=>up({on:ev.target.checked?1:undefined})}/><span>Включён сразу</span></label>}
