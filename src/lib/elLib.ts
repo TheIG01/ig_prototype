@@ -20,8 +20,8 @@ return{els,w:Math.max(...els.map(e=>e.x+e.w)),h:Math.max(...els.map(e=>e.y+lh(e)
 /** новые id; набор из нескольких элементов собирается в группу; cm помечает происхождение */
 export const parseCi=(v?:string):{item:string;inst:string;idx:number}|null=>{if(!v)return null;const a=v.split('|');const i=Number(a[2]);return a.length===3&&Number.isInteger(i)?{item:a[0],inst:a[1],idx:i}:null};
 export function instantiate(it:{els:El[];name:string;id?:string}):El[]{const inst=uid();
-const gm:Record<string,string>={};const hasG=it.els.some(e=>e.g);const all=uid();
-return it.els.map((q,n)=>{const e={...clone(q),id:uid()};if(e.g)e.g=gm[e.g]??=uid();else if(!hasG&&it.els.length>1)e.g=all;e.cm=it.name;if(it.id)e.ci=it.id+'|'+inst+'|'+n;return e})}
+const gm:Record<string,string>={};const hasG=it.els.some(e=>e.g);const loose=it.els.filter(e=>!e.g).length;const all=uid();
+return it.els.map((q,n)=>{const e={...clone(q),id:uid()};if(e.g)e.g=gm[e.g]??=uid();else if(hasG?loose>1:it.els.length>1)e.g=all;e.cm=it.name;if(it.id)e.ci=it.id+'|'+inst+'|'+n;return e})}
 
 const tags=(v:unknown):string[]=>Array.isArray(v)?[...new Set(v.filter((x):x is string=>typeof x==='string').map(x=>x.trim().toLowerCase()).filter(Boolean))].slice(0,12):[];
 export const parseTags=(s:string)=>tags(s.split(/[,;]+/));

@@ -1,5 +1,5 @@
 import {useMemo,useState,useSyncExternalStore} from 'react';import {useLive} from '../../lib/live';
-import {X,ChevronDown,Bold,AlignLeft,AlignCenter,AlignRight,ArrowUp,ArrowDown,Copy,Trash2,Smartphone,LayoutTemplate,Search} from 'lucide-react';
+import {ScaleSec} from './ScaleSec';import {X,ChevronDown,Bold,AlignLeft,AlignCenter,AlignRight,ArrowUp,ArrowDown,Copy,Trash2,Smartphone,LayoutTemplate,Search} from 'lucide-react';
 import {useStore,FW} from '../../store';
 import type {El,Dev,Block} from '../../store';
 import {SHAPES,MOCKS,BULLETS,ROLES,FONTS,NAME_NEW,resolve} from '../../lib/art';
@@ -63,7 +63,7 @@ return<aside className="panel ep"><div className="ph"><b>{NM[t]}</b><span>Эле
 <Sec t="Положение и размер"><div className="grid2">{num('x','X')}{num('y','Y')}{num('w','Ш')}{num('h','В')}</div>
 <div className="btnrow">{(['Влево','Центр','Вправо'] as const).map((l,i)=><button key={l} className="btn" title="Выровнять по фрейму" onClick={()=>set({x:Math.max(0,[0,Math.round((FW[dev]-e.w)/2),FW[dev]-e.w][i])})}>{l}</button>)}</div>{hugRow}
 <button className="btn" title="Привязать положение и размер к шкале 4 px: отступы 4, 8, 12, 16, 24, 32, 48, 64 складываются из неё" onClick={()=>{const q=(v:number)=>Math.round(v/4)*4;set({x:q(e.x),y:q(e.y),...(e.hug?{}:{w:Math.max(4,q(e.w)),...(t==='line'?{}:{h:Math.max(4,q(e.h))})})})}}>К шкале 4 px</button></Sec>
-<RotSec e={e} set={set}/>
+<RotSec e={e} set={set}/><ScaleSec dev={dev} ids={[e.id]}/>
 
 <LayPanel dev={dev} ids={[e.id]} single/>
 {hasText&&<div className="sec"><h4>{t==='list'?'Пункты (каждый с новой строки)':'Текст'}</h4><TextBox key={e.id} value={e.text??''} onText={t=>set({text:t,rt:undefined})}/>

@@ -1,7 +1,7 @@
 import {AlignStartVertical,AlignCenterVertical,AlignEndVertical,AlignStartHorizontal,AlignCenterHorizontal,AlignEndHorizontal,AlignHorizontalSpaceBetween,AlignVerticalSpaceBetween,Group,Ungroup,Copy,Trash2,X,ArrowLeftRight,ArrowUpDown,FlipHorizontal,FlipVertical,Replace,Bold,AlignLeft,AlignCenter,AlignRight} from 'lucide-react';
 import {useStore} from '../../store';import {useLive} from '../../lib/live';import {VList} from './VList';
 import type {Dev,El} from '../../store';import {Color} from './ElPanel';import {SelColors} from './FxSecs';
-import {uid} from '../../lib/uid';
+import {uid} from '../../lib/uid';import {ScaleSec} from './ScaleSec';
 import {NAME_NEW} from '../../lib/art';import {LayPanel} from './LayPanel';import {BindRow} from './BindSecs';
 const NM:Record<string,string>={text:'Текст',rect:'Прямоугольник',btn:'Кнопка',input:'Поле ввода',img:'Изображение',line:'Линия',...NAME_NEW};
 type M='l'|'c'|'r'|'t'|'m'|'b'|'dh'|'dv';
@@ -17,7 +17,7 @@ const s=useStore();const sh=s.data?.projects.find(p=>p.id===s.projectId)?.sheets
 const els=(sh?.blocks??[]).flatMap(b=>b.els[dev]).filter(e=>ids.includes(e.id));const grouped=els.some(e=>e.g);const pal=s.data?.projects.find(p=>p.id===s.projectId)?.style.palette??[];const tx=els.filter(e=>TX.has(e.t)).map(e=>e.id),bx=els.filter(e=>BX.has(e.t)).map(e=>e.id),al=els.map(e=>e.id);
 const same=<K extends keyof El>(k:K,ids:string[]):El[K]|undefined=>{const v=els.filter(e=>ids.includes(e.id)).map(e=>e[k]);return v.every(x=>x===v[0])?v[0]:undefined};const allB=tx.length>0&&tx.every(i=>els.find(e=>e.id===i)?.b);
 const units=new Set(els.map(e=>e.g??e.id));const pair=units.size===2?[...units].map(u=>els.filter(e=>(e.g??e.id)===u).map(e=>e.id)):null;
-return<aside className="panel"><div className="ph"><b>Выбрано {ids.length}</b><span>Несколько элементов</span><button className="btn ic" onClick={()=>s.setMulti([])} aria-label="Снять выделение"><X size={14}/></button></div>
+return<aside className="panel"><div className="ph"><b>Выбрано {ids.length}</b><span>Несколько элементов</span><button className="btn ic" onClick={()=>s.setMulti([])} aria-label="Снять выделение"><X size={14}/></button></div><ScaleSec dev={dev} ids={ids}/>
 <div className="sec"><h4>Общие свойства</h4>
 {tx.length>0&&<><div className="btnrow fmt"><select className="inp" value={same('fs',tx)??''} onChange={ev=>ev.target.value&&s.patchEls(dev,tx,{fs:+ev.target.value})}><option value="" disabled>Размер: разный</option>{SZ.map(n=><option key={n} value={n}>{n} px</option>)}</select><button className={'btn ic'+(allB?' on':'')} title="Жирный" onClick={()=>s.patchEls(dev,tx,{b:allB?undefined:true})}><Bold size={16}/></button>{([['l',AlignLeft],['c',AlignCenter],['r',AlignRight]] as const).map(([k,I])=><button key={k} className={'btn ic'+(same('al',tx)===k?' on':'')} title={{l:'По левому краю',c:'По центру',r:'По правому краю'}[k]} onClick={()=>s.patchEls(dev,tx,{al:k})}><I size={16}/></button>)}</div>
 <Color label="Цвет текста" value={same('c',tx)} def="#0F172A" pal={pal} onChange={v=>s.patchEls(dev,tx,{c:v})}/></>}
