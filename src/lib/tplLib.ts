@@ -7,11 +7,11 @@ import {uid} from './uid';
 /** группа для шаблонов без группы */
 export const NOCAT='Мои шаблоны';
 /** t время последней правки порядка и групп; cats порядок своих групп; catOrd и itemOrd порядок готовых групп и макетов; fav избранное; del метки удаления (id → время) */
-export interface TplMeta{t:number;cats:string[];catOrd:string[];itemOrd:Record<string,string[]>;fav?:string[];del:Record<string,number>}
+export interface TplMeta{t:number;cats:string[];catOrd:string[];itemOrd:Record<string,string[]>;fav?:string[];hid?:string[];del:Record<string,number>}
 export interface TplPayload{v:1;tpls:BlockTpl[];meta:TplMeta}
 export const emptyMeta=():TplMeta=>({t:0,cats:[],catOrd:[],itemOrd:{},del:{}});
 export const metaView=(d:Data):TplMeta=>({...emptyMeta(),...(d.tplMeta??{})});
-const meta=(d:Data):TplMeta=>{const m=(d.tplMeta??=emptyMeta());m.cats??=[];m.catOrd??=[];m.itemOrd??={};m.del??={};return m};
+const meta=(d:Data):TplMeta=>{const m=(d.tplMeta??=emptyMeta());m.cats??=[];m.catOrd??=[];m.itemOrd??={};m.del??={};m.hid??=[];return m};
 export const catOf=(t:{cat?:string})=>t.cat||NOCAT;
 const now=()=>Date.now();
 const bump=(d:Data)=>{meta(d).t=now()};
@@ -30,6 +30,14 @@ export const renameCat=(d:Data,old:string,nw:string)=>{const n=nw.trim();if(!n||
 export const delCat=(d:Data,name:string)=>{if(name===NOCAT)return;const m=meta(d);for(const t of d.blockTpls)if(catOf(t)===name){t.cat=undefined;stamp(t)}m.cats=userCats(d).filter(c=>c!==name);if(!m.cats.includes(NOCAT)&&d.blockTpls.some(t=>!t.cat))m.cats.push(NOCAT);bump(d)};
 export const reorderCats=(d:Data,list:string[])=>{meta(d).cats=list;bump(d)};
 export const setLibOrder=(d:Data,p:{catOrd?:string[];itemOrd?:Record<string,string[]>})=>{const m=meta(d);if(p.catOrd)m.catOrd=p.catOrd;if(p.itemOrd)m.itemOrd={...m.itemOrd,...p.itemOrd};bump(d)};
+/** скрыть или вернуть готовые группы ('c:Имя') и макеты ('b:Имя') */
+export const setHidden=(d:Data,l:string[])=>{meta(d).hid=l;bump(d)};
+/** удалить сразу несколько шаблонов */
+export const delTpls=(d:Data,ids:string[])=>{const m=meta(d);const s=new Set(ids);d.blockTpls=d.blockTpls.filter(t=>!s.has(t.id));for(const i of ids)m.del[i]=now();bump(d)};
+/** переместить несколько шаблонов в группу */
+export const moveTpls=(d:Data,ids:string[],cat:string)=>{const s=new Set(ids);for(const t of d.blockTpls)if(s.has(t.id)){t.cat=cat===NOCAT?undefined:cat;stamp(t)}bump(d)};
+/** удалить группу вместе с её шаблонами */
+export const delCatAll=(d:Data,name:string)=>{const m=meta(d);const ids=d.blockTpls.filter(t=>catOf(t)===name).map(t=>t.id);d.blockTpls=d.blockTpls.filter(t=>catOf(t)!==name);for(const i of ids)m.del[i]=now();m.cats=userCats(d).filter(c=>c!==name);bump(d)};
 export const setFav=(d:Data,l:string[])=>{meta(d).fav=l;bump(d)};
 
 /** шаблон в группу cat (если задана) и перед другим шаблоном (null: в конец) */
@@ -44,7 +52,7 @@ export const delTpl=(d:Data,id:string)=>{d.blockTpls=d.blockTpls.filter(t=>t.id!
 export const restoreTpl=(d:Data,t:BlockTpl,at:number)=>{if(d.blockTpls.some(x=>x.id===t.id))return;const m=meta(d);delete m.del[t.id];const c=JSON.parse(JSON.stringify(t)) as BlockTpl;stamp(c);d.blockTpls.splice(Math.max(0,Math.min(at,d.blockTpls.length)),0,c);bump(d)};
 
 /** подпись состояния: одинаковая у двух устройств, когда у них одно и то же */
-export const sig=(tpls:BlockTpl[],m:TplMeta)=>tpls.map(t=>t.id+':'+(t.u??0)).join('|')+'#'+m.t+'#'+Object.keys(m.del).length+'#'+m.cats.join(',');
+export const sig=(tpls:BlockTpl[],m:TplMeta)=>tpls.map(t=>t.id+':'+(t.u??0)).join('|')+'#'+m.t+'#'+Object.keys(m.del).length+'#'+m.cats.join(',')+'#'+(m.hid??[]).join(',');
 export const sigD=(d:Data)=>sig(d.blockTpls,metaView(d));
 export const sigP=(p:TplPayload)=>sig(p.tpls,{...emptyMeta(),...p.meta});
 export const payloadOf=(d:Data):TplPayload=>({v:1,tpls:d.blockTpls,meta:metaView(d)});
@@ -57,4 +65,4 @@ const by=new Map<string,BlockTpl>();for(const t of d.blockTpls)by.set(t.id,t);
 for(const t of r.tpls){const l=by.get(t.id);if(!l||(t.u??0)>(l.u??0))by.set(t.id,t)}
 const rw=rm.t>m.t;const base=rw?r.tpls:d.blockTpls,other=rw?d.blockTpls:r.tpls;const out:BlockTpl[]=[];const seen=new Set<string>();
 for(const t of [...base,...other]){if(seen.has(t.id))continue;seen.add(t.id);const x=by.get(t.id);if(x&&(!(t.id in del)||del[t.id]<(x.u??0)))out.push(x)}
-d.blockTpls=out;const w=rw?rm:m;m.cats=[...w.cats];m.catOrd=[...w.catOrd];m.itemOrd=JSON.parse(JSON.stringify(w.itemOrd)) as Record<string,string[]>;if(w.fav)m.fav=[...w.fav];else delete m.fav;m.t=Math.max(m.t,rm.t);m.del=del}
+d.blockTpls=out;const w=rw?rm:m;m.cats=[...w.cats];m.catOrd=[...w.catOrd];m.itemOrd=JSON.parse(JSON.stringify(w.itemOrd)) as Record<string,string[]>;if(w.fav)m.fav=[...w.fav];else delete m.fav;m.hid=[...(w.hid??[])];m.t=Math.max(m.t,rm.t);m.del=del}
