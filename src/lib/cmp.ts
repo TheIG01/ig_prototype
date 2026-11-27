@@ -1,6 +1,17 @@
 import type {El} from '../store';
 /** Компонент для просмотра (тип `cmp`): k вид, items пункты (по строке), v число, on включён. Пункт со знаком «+» в начале отмечен или раскрыт */
-export interface CP{k:string;items?:string[];v?:number;on?:1}
+/** Табы: o ориентация (h сверху, v сбоку), s вид (line линия, pill таблетки, box папки, seg сегмент), p сторона для вертикальных (s слева, e справа), a выравнивание горизонтальных (s по левому краю, c по центру, f на всю ширину), v открытая сразу вкладка (с 0) */
+export interface CP{k:string;items?:string[];v?:number;on?:1;o?:'h'|'v';s?:'line'|'pill'|'box'|'seg';p?:'s'|'e';a?:'s'|'c'|'f'}
+export const TAB_STYLES=[['line','Линия'],['pill','Таблетки'],['box','Папки'],['seg','Сегмент']] as const;
+export const tabCls=(c:CP)=>` cp-o-${c.o==='v'?'v':'h'} cp-s-${c.s??'line'} cp-p-${c.p==='e'?'e':'s'} cp-a-${c.a??'s'}`;
+/** размер табов по числу вкладок и ориентации */
+export const tabSize=(n:number,o:'h'|'v'='h'):[number,number]=>o==='v'?[480,Math.max(170,n*46+24)]:[440,170];
+/** названия по умолчанию для нового набора вкладок */
+export const tabItems=(n:number):string[]=>Array.from({length:n},(_,i)=>`Вкладка ${i+1} | Текст вкладки ${i+1}`);
+/** готовые виды табов для панели «Табы» */
+export const TAB_PRESETS:{id:string;name:string;cp:Partial<CP>}[]=[
+{id:'h-line',name:'Линия сверху',cp:{o:'h',s:'line'}},{id:'h-pill',name:'Таблетки сверху',cp:{o:'h',s:'pill'}},{id:'h-box',name:'Папки сверху',cp:{o:'h',s:'box'}},{id:'h-seg',name:'Сегмент сверху',cp:{o:'h',s:'seg',a:'f'}},
+{id:'v-line',name:'Линия слева',cp:{o:'v',s:'line',p:'s'}},{id:'v-line-e',name:'Линия справа',cp:{o:'v',s:'line',p:'e'}},{id:'v-pill',name:'Таблетки слева',cp:{o:'v',s:'pill',p:'s'}},{id:'v-box',name:'Папки слева',cp:{o:'v',s:'box',p:'s'}}];
 export interface CmpKind{k:string;l:string;w:number;h:number;text:string;items?:string[];v?:number;on?:1;hint?:string}
 export const CMP_KINDS:CmpKind[]=[
 {k:'radio',l:'Радиокнопки',w:280,h:130,text:'Способ связи',items:['+Телефон','Мессенджер','Почта'],hint:'Один пункт на строку. Знак «+» в начале: выбран сразу'},
@@ -21,7 +32,7 @@ const mark=(s:string)=>s[0]==='+'?{on:true,t:s.slice(1).trim()}:{on:false,t:s};
 const pair=(s:string)=>{const i=s.indexOf('|');return i<0?{h:s.trim(),b:''}:{h:s.slice(0,i).trim(),b:s.slice(i+1).trim()}};
 /** разметка компонента; интерактив включает просмотр по классам и атрибутам data-cp */
 export function cmpHtml(e:El):string{const c=e.cp;if(!c)return'';const k=c.k;const it=c.items??[];const tx=esc(e.text??'');const v=Math.max(0,Math.min(100,Math.round(c.v??50)));
-const lab=tx?`<div class="cp-l">${tx}</div>`:'';const root=(x:string)=>`<div class="cp cp-${k}" data-cp="${k}">${x}</div>`;
+const lab=tx?`<div class="cp-l">${tx}</div>`:'';const root=(x:string,m='')=>`<div class="cp cp-${k}${m}" data-cp="${k}">${x}</div>`;
 if(k==='radio'||k==='check'){let seen=false;return root(lab+it.map(r=>{const m=mark(r);const on=m.on&&(k==='check'||!seen);if(on)seen=true;return`<div class="cp-o${on?' on':''}"><i></i><span>${esc(m.t)}</span></div>`}).join(''))}
 if(k==='switch')return root(`<div class="cp-sw${c.on?' on':''}"><i></i></div><span>${tx}</span>`);
 if(k==='slider')return root(`<div class="cp-h"><span>${tx}</span><b>${v}</b></div><input class="cp-rg" type="range" min="0" max="100" value="${v}">`);
@@ -30,5 +41,5 @@ if(k==='rating'){const n=Math.max(0,Math.min(5,Math.round(c.v??0)));return root(
 if(k==='tooltip')return root(`<span class="cp-tr">${tx}<i>?</i></span><div class="cp-tip">${esc(it[0]??'')}</div>`);
 if(k==='table'){const rows=it.map(r=>r.split('|').map(x=>esc(x.trim())));if(!rows.length)return root(lab);const [hd,...bd]=rows;return root(lab+`<table class="cp-t"><thead><tr>${hd.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${bd.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>`)}
 if(k==='accordion')return root(lab+it.map(r=>{const m=mark(r);const p=pair(m.t);return`<div class="cp-a${m.on?' open':''}"><div class="cp-ah"><span>${esc(p.h)}</span><i></i></div><div class="cp-ab">${esc(p.b)}</div></div>`}).join(''));
-if(k==='tabs'){const ps=it.map(pair);return root(lab+`<div class="cp-tbs">${ps.map((p,i)=>`<span class="cp-tb${i?'':' on'}" data-i="${i}">${esc(p.h)}</span>`).join('')}</div>`+ps.map((p,i)=>`<div class="cp-tp${i?'':' on'}" data-i="${i}">${esc(p.b)}</div>`).join(''))}
+if(k==='tabs'){const ps=it.map(pair);const a=Math.max(0,Math.min(ps.length-1,Math.round(c.v??0)));return root(lab+`<div class="cp-tw"><div class="cp-tbs">${ps.map((p,i)=>`<span class="cp-tb${i===a?' on':''}" data-i="${i}">${esc(p.h)}</span>`).join('')}</div><div class="cp-tpw">${ps.map((p,i)=>`<div class="cp-tp${i===a?' on':''}" data-i="${i}">${esc(p.b)}</div>`).join('')}</div></div>`,tabCls(c))}
 return root(lab)}

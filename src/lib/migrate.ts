@@ -1,8 +1,8 @@
-import {uid} from './uid';import {fixCm} from './comments';import {fixEl} from './migrateEl';import {buildByName} from './tpl';import {emptyBuild,fresh} from './tplCore';import {normalizeQuiz} from './quiz';import {defStyle} from './art';
+import {uid} from './uid';import {autoGroupAll} from './autoGroup';import {fixCm} from './comments';import {fixEl} from './migrateEl';import {buildByName} from './tpl';import {emptyBuild,fresh} from './tplCore';import {normalizeQuiz} from './quiz';import {defStyle} from './art';
 import type {Data,Block,BlockTpl,El} from '../store';import type {Dev} from './dev';
 export {uid};
 export const noEls=():Record<Dev,El[]>=>({desktop:[],tablet:[],mobile:[]});
-export const mkBlock=(title:string,text=''):Block=>{const b=buildByName(title)??emptyBuild();return{id:uid(),title,text,h:b.h,els:b.els,...(b.quiz?{quiz:b.quiz}:{})}};
+export const mkBlock=(title:string,text=''):Block=>{const b=buildByName(title)??emptyBuild();return{id:uid(),title,text,h:b.h,els:autoGroupAll(b.els),...(b.quiz?{quiz:b.quiz}:{})}};
 export const mkFromTpl=(t:BlockTpl):Block=>({id:uid(),title:t.name,text:t.text,h:{...t.h},els:fresh(t.els),...(t.quiz?{quiz:normalizeQuiz(t.quiz)}:{})});
 /** v1 string blocks -> v2 objects -> v3 sheet.els -> v4 blocks own wireframes. Idempotent. */
 export function migrate(d:any):Data{

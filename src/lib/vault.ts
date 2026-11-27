@@ -5,6 +5,10 @@ export async function createVault(pin:string,data:unknown){const salt=crypto.get
 export async function unlockVault(pin:string){const k=await keyFrom(pin,unb64(localStorage.getItem('igp.salt')!));try{const d=await unseal(k,localStorage.getItem('igp.data')!);key=k;return d}catch{return null}}
 export async function save(data:unknown){if(key)localStorage.setItem('igp.data',await seal(key,data))}
 export const lock=()=>{key=null};
+/** небольшие секреты (ключ синхронизации): отдельная запись, зашифрована ключом ПИН; в резервные копии не попадает */
+export async function saveSecret(name:string,v:unknown){if(key)localStorage.setItem('igp.'+name,await seal(key,v))}
+export async function loadSecret<T>(name:string):Promise<T|null>{if(!key)return null;try{const t=localStorage.getItem('igp.'+name);return t?await unseal(key,t) as T:null}catch{return null}}
+export const dropSecret=(name:string)=>localStorage.removeItem('igp.'+name);
 /** снимки версий: отдельная запись, зашифрована тем же ключом */
 export async function loadSnapsRaw():Promise<unknown>{if(!key)return null;try{const t=localStorage.getItem('igp.snaps');return t?await unseal(key,t):null}catch{return null}}
 export async function saveSnapsRaw(data:unknown){if(!key)throw new Error('locked');localStorage.setItem('igp.snaps',await seal(key,data))}
@@ -22,4 +26,4 @@ const kv=async(m:IDBTransactionMode,f:(s:IDBObjectStore)=>IDBRequest):Promise<an
 export const rememberDevice=async()=>{if(key)await kv('readwrite',s=>s.put(key,'dev'))};
 export const forgetDevice=()=>kv('readwrite',s=>s.delete('dev')).catch(()=>{});
 export async function autoUnlock(){try{const k=await kv('readonly',s=>s.get('dev'));if(!k||!hasVault())return null;const d=await unseal(k,localStorage.getItem('igp.data')!);key=k;return d}catch{return null}}
-export async function wipe(){await forgetDevice();localStorage.removeItem('igp.data');localStorage.removeItem('igp.salt');localStorage.removeItem('igp.rem');localStorage.removeItem('igp.snaps');key=null}
+export async function wipe(){await forgetDevice();localStorage.removeItem('igp.data');localStorage.removeItem('igp.salt');localStorage.removeItem('igp.rem');localStorage.removeItem('igp.snaps');localStorage.removeItem('igp.sync');key=null}
