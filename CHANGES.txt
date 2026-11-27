@@ -1,3 +1,23 @@
+Версия 1.76 «Рассрочка». Новые и изменённые файлы:
+
+src/lib/tplInstall.ts — новый: 7 вариантов группы «Рассрочка»
+src/lib/tplExtra.ts — подключение INSTALL и INSTALL_TIPS
+src/lib/tpl.ts — «Рассрочка» в порядке категорий после «Каталог»
+scripts/checkInstall.ts — проверка геометрии и текстов
+docs/refs/install.md — разбор референсов
+
+--- предыдущая версия ---
+Версия 1.75 «Каталог». Измененные и новые файлы:
+
+src/lib/tplCatalog.ts — новый: 9 вариантов группы «Каталог»
+src/lib/tplExtra.ts — подключение CATALOG и CATALOG_TIPS
+src/lib/tpl.ts — «Каталог» в порядке категорий после «Продажа»
+scripts/checkCatalog.ts — новый: проверка геометрии и текстов
+docs_refs_catalog.md — новый: разбор 10 референсов
+docs_PROGRESS.md — сессия 45
+package.json, package-lock.json — версия 1.75.0
+
+--- предыдущая версия ---
 Версия 1.46 «Честное сохранение». Измененные и новые файлы:
 
 docs/PROGRESS.md — версия 1.46, журнал сессии 56

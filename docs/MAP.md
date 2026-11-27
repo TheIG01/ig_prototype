@@ -783,7 +783,15 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 
 ### `src/lib/tplScale.ts` — 7 блоков группы «Масштаб» (от и до), ПК вручную, планшет и мобилка общей стопкой `stk`, подключён в `tplExtra.ts`; проверка `scripts/checkScale.ts`
 - `src/lib/tplCerts.ts`: группа «Сертификаты», 7 блоков (CERTS, CERTS_TIPS), подключена в `tplExtra.ts`; проверка `scripts/checkCerts.ts`.
+- `src/lib/tplStyle.ts`: группа «Выбрать стиль», 7 блоков (STYLE, STYLE_TIPS), ПК вручную `d1`–`d7`, планшет и мобилка общей стопкой `stk`, подключена в `tplExtra.ts`; проверка `scripts/checkStyle.ts`; разбор `docs/refs/style.md`.
 
 - `src/lib/tplFirst4.ts`: первые экраны, часть 4 (8 шаблонов), подключены в `tplExtra.ts`
 
 - `src/lib/tplFirst5.ts`: первые экраны, часть 5 (9 блоков: остаток подарков, лист ожидания, два формата, плашка выгоды, вопрос по центру, запись на время, проверка адреса, выбор подарка, аудит по ссылке); экспорт FIRST5, FIRST5_TIPS, подключён в tplExtra.ts
+- src/lib/tplFounder.ts: группа «Основатель» (7 блоков), подключена в tplExtra.ts; проверка scripts/checkFounder.ts
+- src/lib/tplProd.ts: группа «Производство» (8 блоков), подключена в tplExtra.ts; проверка scripts/checkProd.ts
+- src/lib/tplCompare.ts: группа «Сравнение» (7 блоков), подключена в tplExtra.ts; проверка scripts/checkCompare.ts
+- `src/lib/tplAddress.ts`: группа «Адреса» (7 блоков: карта и карточка офиса, форма филиала, плашка по центру карты, список филиалов, города вкладками, самовывоз и доставка, офис с фото); экспорт ADDRESS, ADDRESS_TIPS, подключён в tplExtra.ts
+
+- `src/lib/tplVideo.ts`: группа «Видео», 7 блоков (ролик-плейсхолдер 16:9, play, одна кнопка); проверка `scripts/checkVideo.ts`; разбор `docs/refs/video.md`.
+- `src/lib/tplForWhom.ts`: группа «Для кого», 7 блоков (4 группы с итогом, карточки с плашкой, две широкие, 6 плашек, карточки с фото, 3 стадии, список и проверка); проверка `scripts/checkForWhom.ts`; разбор `docs/refs/forwhom.md`.
