@@ -795,3 +795,5 @@ _1.54: у `Canvas.tsx`, `store.ts`, `Shell.tsx`, `export.ts` номера стр
 
 - `src/lib/tplVideo.ts`: группа «Видео», 7 блоков (ролик-плейсхолдер 16:9, play, одна кнопка); проверка `scripts/checkVideo.ts`; разбор `docs/refs/video.md`.
 - `src/lib/tplForWhom.ts`: группа «Для кого», 7 блоков (4 группы с итогом, карточки с плашкой, две широкие, 6 плашек, карточки с фото, 3 стадии, список и проверка); проверка `scripts/checkForWhom.ts`; разбор `docs/refs/forwhom.md`.
+- `src/lib/tplPopup.ts` — группа «Поп-апы», 7 блоков (POPUP, POPUP_TIPS), проверка: scripts/checkPopup.ts
+- src/lib/tplThanks.ts — группа «Страница спасибо», 7 вариантов (фото человека, подпись, часы, телефон, мессенджеры)
